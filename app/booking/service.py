@@ -241,8 +241,12 @@ def n8n_event_payload(event: NotificationOutbox) -> dict[str, object]:
     }
 
 
-def push_one_pending_event_to_n8n(session: Session) -> NotificationOutbox:
-    """Manually send one claimed synthetic event to the opt-in n8n test webhook."""
+def push_one_pending_event_to_n8n(
+    session: Session,
+    *,
+    ignore_retry_schedule: bool = True,
+) -> NotificationOutbox:
+    """Send one claimed synthetic event to the configured n8n webhook."""
     webhook_url = os.getenv("AIRCON_N8N_WEBHOOK_URL")
     webhook_key = os.getenv("AIRCON_N8N_WEBHOOK_KEY")
     if not webhook_url or not webhook_key:
@@ -250,7 +254,7 @@ def push_one_pending_event_to_n8n(session: Session) -> NotificationOutbox:
     if not webhook_url.startswith("https://"):
         raise ValueError("the n8n webhook URL must use HTTPS")
 
-    event = claim_next_eligible_outbox_event(session, ignore_retry_schedule=True)
+    event = claim_next_eligible_outbox_event(session, ignore_retry_schedule=ignore_retry_schedule)
     if event is None:
         raise ValueError("no pending automation event is available")
 
@@ -321,6 +325,13 @@ def push_one_pending_event_to_n8n(session: Session) -> NotificationOutbox:
         )
     session.flush()
     return event
+
+
+def run_automatic_delivery_worker(session: Session) -> NotificationOutbox | None:
+    """Deliver one due event when automatic delivery is explicitly enabled."""
+    if not automatic_delivery_enabled():
+        return None
+    return push_one_pending_event_to_n8n(session, ignore_retry_schedule=False)
 
 
 def create_pending_booking(
