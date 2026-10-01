@@ -11,8 +11,8 @@
 ## Release planning
 
 - [UNCONFIRMED] Confirm the current VPS security, n8n, and service state with a read-only audit immediately before any project connection or deployment; existing findings are historical.
-- Deferred until Phase 7: create the private `aircon-service-automation` repository, choose the private staging route/subdomain, and approve any VPS user/database/reverse-proxy changes.
-- Deferred until after staging: decide whether to create a separately sanitized public GitHub repository or expose a public portfolio demo.
+- Resolved 2026-10-01: Created and pushed the public portfolio repository `Vince-aboy/aircon-service-automation` at commit `9d02f79`.
+- Resolved 2026-10-01: Approved the intended public portfolio route `https://vinceaboy.com/balik-lamig/`. VPS user/database/reverse-proxy changes and deployment remain pending.
 
 ## Security follow-up
 

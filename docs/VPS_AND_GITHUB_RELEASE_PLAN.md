@@ -4,7 +4,7 @@
 
 This project will be developed locally, versioned in a **private GitHub repository**, and later transferred to the personal VPS for a private staging deployment. A public demo or public repository is a separate release decision and requires explicit approval after the security gate passes.
 
-The planned repository name is `aircon-service-automation`. No repository, remote, VPS directory, database, service, domain, or deployment has been created or changed by this plan.
+The repository is `Vince-aboy/aircon-service-automation`. The approved target route is `https://vinceaboy.com/balik-lamig/`, alongside the existing `/profiles/` site. No VPS directory, database, service, reverse-proxy route, or deployment has been changed by this plan.
 
 ## Release sequence
 

@@ -29,3 +29,4 @@
 - `2026-09-30` - Notifications and reminders are simulated through a local outbox/log until explicit authorization for real delivery is received.
 - `2026-09-30` - Begin with synthetic data and a controlled booking workflow; defer Facebook/Meta integration, payments, AI, real customer data, and production deployment until explicitly authorized.
 - `2026-09-30` - Build incrementally and test each major feature before moving to the next stage.
+- `2026-10-01` - Vince approved the intended public portfolio route `https://vinceaboy.com/balik-lamig/` beside the existing `/profiles/` site. This approves the target URL only; VPS deployment, reverse-proxy changes, and always-on automation still require separate implementation and verification.
