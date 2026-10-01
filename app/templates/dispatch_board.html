@@ -1,0 +1,101 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Dispatcher Board | Balik-Lamig</title>
+  <link rel="stylesheet" href="{{ url_for('static', path='booking.css') }}">
+  <script defer src="{{ url_for('static', path='dispatch_board.js') }}"></script>
+</head>
+<body>
+  <main class="page-shell staff-page">
+    <header class="staff-header">
+      <p class="eyebrow">Local dispatcher board · synthetic data only</p>
+      <h1>Team schedule</h1>
+      <p class="intro">Assign approved requests to an open team block. No message is sent automatically.</p>
+    </header>
+
+    <form class="dispatch-date-form" method="get" action="/staff/dispatch">
+      <label>Schedule date
+        <input name="selected_date" type="date" value="{{ selected_date }}">
+      </label>
+      <button type="submit">View day</button>
+    </form>
+
+    {% if scheduled %}
+      <p class="staff-feedback">Request scheduled successfully. No customer message was created.</p>
+    {% endif %}
+    {% if job_updated %}
+      <p class="staff-feedback">Job status updated to {{ job_updated }}. No customer message was created.</p>
+    {% endif %}
+
+    <section class="dispatch-section">
+      <h2>Approved requests waiting for a team</h2>
+      {% if approved_requests %}
+        <div class="approved-request-list">
+          {% for booking, customer, address, service_type in approved_requests %}
+            <article class="approved-request-card">
+              <strong>{{ booking.reference_code }}</strong>
+              <span>{{ customer.full_name }} · {{ service_type.name }} · prefers {{ booking.preferred_date }}</span>
+            </article>
+          {% endfor %}
+        </div>
+      {% else %}
+        <p class="muted">No approved requests are waiting to be scheduled.</p>
+      {% endif %}
+    </section>
+
+    <section class="dispatch-section">
+      <h2>Team blocks for {{ selected_date }}</h2>
+      {% if teams %}
+        <div class="dispatch-board" role="table" aria-label="Team schedule">
+          <div class="dispatch-row dispatch-heading" role="row">
+            <div role="columnheader">Team</div>
+            {% for slot_key, slot_label in slots %}<div role="columnheader">{{ slot_label }}</div>{% endfor %}
+          </div>
+          {% for team in teams %}
+            <div class="dispatch-row" role="row">
+              <div class="team-name" role="rowheader">{{ team.name }}</div>
+              {% for slot_key, slot_label in slots %}
+                {% set entry = appointments.get((team.id, slot_key)) %}
+                <div class="dispatch-cell" role="cell">
+                  {% if entry %}
+                    {% set appointment, booking, customer, service_type = entry %}
+                    <a class="scheduled-card" href="/staff/appointments/{{ appointment.id }}" data-detail-url="/staff/appointments/{{ appointment.id }}/fragment">
+                      <p class="scheduled-reference">{{ booking.reference_code }}</p>
+                      <strong>{{ customer.full_name }}</strong>
+                      <span>{{ service_type.name }}</span>
+                      <span class="appointment-status">{{ appointment.status.replace('_', ' ') }}</span>
+                    </a>
+                  {% elif approved_requests %}
+                    <form method="post" action="/staff/dispatch/assign">
+                      <input type="hidden" name="service_team_id" value="{{ team.id }}">
+                      <input type="hidden" name="appointment_date" value="{{ selected_date }}">
+                      <input type="hidden" name="slot_key" value="{{ slot_key }}">
+                      <label class="visually-hidden" for="request-{{ team.id }}-{{ slot_key }}">Request for {{ team.name }} at {{ slot_label }}</label>
+                      <select id="request-{{ team.id }}-{{ slot_key }}" name="booking_request_id">
+                        {% for booking, customer, address, service_type in approved_requests %}
+                          <option value="{{ booking.id }}">{{ booking.reference_code }} · {{ customer.full_name }}</option>
+                        {% endfor %}
+                      </select>
+                      <button type="submit">Assign</button>
+                    </form>
+                  {% else %}
+                    <span class="open-slot">Open</span>
+                  {% endif %}
+                </div>
+              {% endfor %}
+            </div>
+          {% endfor %}
+        </div>
+      {% else %}
+        <p class="muted">Teams have not been seeded yet. Run the local reference-data seed after the migration.</p>
+      {% endif %}
+    </section>
+  </main>
+  <dialog class="job-modal" id="job-detail-modal" aria-label="Scheduled job details">
+    <button class="modal-close" type="button" aria-label="Close job details">×</button>
+    <div id="job-detail-content"></div>
+  </dialog>
+</body>
+</html>

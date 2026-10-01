@@ -1,0 +1,158 @@
+# Worklog History
+
+## Purpose
+- Track meaningful project actions in chronological order.
+
+## Format
+- `YYYY-MM-DD`
+  - short note about what changed
+
+## Entries
+- `2026-09-30`
+  - Started Phase 6 safe automation groundwork: scheduling and field-job status changes now create local `notification_outbox` events with a masked recipient and synthetic-only payload. Added `/staff/automation`, where a local simulation marks pending events recorded without any network call or message delivery. Added isolated end-to-end coverage. Verification passed: `30 passed, 5 skipped`; compilation passed.
+  - Vince clarified that n8n is already installed on the personal VPS. This is recorded as a current user statement; the project-specific VPS/n8n security and configuration state has not been audited and no connection, credentials, webhook, or external data transfer was made.
+  - Created and tested the VPS n8n draft workflow `AIRCON - Phase 6 - Synthetic Event Processor`. The manual trigger creates a synthetic appointment event; an IF node checks `synthetic_only`; the true branch adds processed metadata; the false branch records a rejection reason. Both paths executed successfully. The workflow remains unpublished and disconnected from the application and external services.
+  - Created and tested a separate draft `AIRCON - Phase 6 - Webhook Synthetic Inbound`. A PowerShell POST carrying only synthetic fields reached the n8n test webhook, passed the synthetic-only check, and was marked processed. Corrected the workflow timestamp expression to `{{ $now.setZone('Asia/Manila').toISO() }}`; the result now reports `+08:00`. The workflow remains unpublished and test-only.
+  - Added Header Auth to the draft webhook, rotated a test key after it appeared in a screenshot, and successfully re-tested a synthetic POST with the replacement key. No credential value was recorded or retained in project files.
+  - Implemented the first application-to-n8n bridge: `/staff/automation/push` selects one pending SQL outbox event, normalizes it to the n8n webhook schema, sends it only to an HTTPS URL with Header Auth, and marks it recorded only after a successful 2xx response. Added runtime configuration guardrails and a disabled-by-default test. Verification passed: `31 passed, 5 skipped`; no live app-to-n8n request was made by the coding environment.
+  - Started Phase 5: added controlled local field-job progress to the scheduled-job modal and fallback page. A job can move from confirmed to en route, then in progress, then completed; it can be cancelled before completion. Each allowed change creates an `appointment_status_history` audit row, and closed jobs cannot be changed again. Added reversible migration `20260930_0006` for the explicit `in_progress` database status. No message, Facebook/Meta connection, automation, calendar, or public access was added.
+  - Added isolated end-to-end coverage for initial confirmed appointment history, an en-route transition, and rejection of an invalid status skip. Verification passed: `29 passed, 5 skipped`; compilation passed. The remaining warning is the existing upstream FastAPI/Starlette TestClient deprecation warning.
+  - Manually verified the complete Phase 5 field-job path in the loopback dispatcher board: the user moved Jamie Test from confirmed to en route, then in progress, then completed. Each status appeared on the board and each confirmation stated that no customer message was created.
+  - Researched local and international aircon/HVAC booking patterns. Chose a concise single-page service-request CTA because this prototype uses human review rather than live availability or automatic confirmation.
+  - Updated local page copy to `Request Service`, added transparent submit/review/confirmation expectations, and documented aircon-type capture as a later schema increment.
+  - Regression verification after the wording update passed: `20 passed, 5 skipped`; compilation and dependency checks also passed. The remaining warning is from an upstream FastAPI/Starlette TestClient deprecation, not an application failure.
+  - Simplified the customer-facing form after review: removed the prototype disclosure and multi-step explanation from the visible page, leaving the single concise instruction: `Choose a service and your preferred schedule.` The receipt and controlled `pending_review` backend behavior are unchanged.
+  - Restyled the form to a minimalist, reference-inspired layout: spacious two-column fields, clear required markers, deep-blue underline inputs, and a concise service-oriented heading. Existing validated fields and controlled workflow behavior remain unchanged. Verification passed: `20 passed, 5 skipped`.
+  - Rolled back that experimental visual restyle at the user's request. Restored the compact working form and paused layout changes pending a deliberate field-set discussion. Regression verification passed: `20 passed, 5 skipped`.
+  - Simplified the visible service-location fields at the user's request: renamed `Address line` to `Full Address / Decca Address` and removed visible Barangay and City inputs. The form now sends controlled prototype defaults (`Urban Deca Homes`, `Manila`) for those required internal fields. Verification passed: `20 passed, 5 skipped`.
+  - Removed the redundant visible coverage-area field and explanatory text. The single-area prototype now sends the fixed `Urban Deca Homes, Tondo` coverage value internally; altered location values remain server-validated. Verification passed: `20 passed, 5 skipped`.
+  - Simplified the visible service-request fields at the user's request: added stored Aircon type with `Window Type` as the form default; made `Aircon Cleaning` the default service; retained Preferred date; and removed visible units, preferred-time, and notes inputs. The backend supplies a controlled single-unit, morning-window request default. Added migration `20260930_0003` to persist `aircon_type` and rename the existing local reference service. Non-database verification passed: `21 passed, 5 skipped`.
+  - User applied migration `20260930_0003` to the local PostgreSQL database using terminal-only credentials. Alembic confirmed `20260930_0003 (head)`; the local schema can now persist selected aircon types.
+  - Refined compact form layout at the user's request: Email now spans the row beneath Full name and Phone number; section, field, and input spacing were reduced without changing stored data or booking behavior. Verification passed: `21 passed, 5 skipped`.
+  - Revised the desktop field layout at the user's request: Full name, Phone number, and Email now share one three-column contact row; Full Address remains full-width; and Aircon type, Choose service, and Preferred date share a three-column service row. Mobile remains one column. Verification passed: `21 passed, 5 skipped`.
+  - Applied the approved dark form theme: dark page and panel surfaces, high-contrast labels, slate input controls, and a teal action button. The Balik-Lamig asset, booking fields, accessibility focus styling, and responsive layout remain intact. Verification passed: `21 passed, 5 skipped`.
+  - Removed the example phone-number placeholder at the user's request so the contact field is visually empty until entered. Philippine mobile validation is unchanged. Focused page verification passed: `3 passed`.
+  - Manually verified the complete local request flow in the browser: the receipt displayed a generated reference code and `pending_review` status, explicitly requiring staff review and confirming that no appointment or notification was created. Phase 3 is complete; next is a local staff-review view.
+  - Started Phase 4 Lesson 1: implemented a local, read-only staff-review queue at `GET /staff/requests`. It joins pending requests with the associated customer, address, and service reference data and displays only staff-review information. No mutation, appointment, notification, or public-access behavior was added. Verification passed: `22 passed, 5 skipped`; compilation and dependency checks passed.
+  - Manually verified the staff queue in the browser. It displayed one pending request (`AC-20260930-51AB3A76`) with the expected synthetic details, selected aircon type, service, and preferred date. Phase 4 Lesson 1 is complete.
+  - Completed Phase 4 Lesson 2 implementation: added explicit local-staff approve/decline actions. An approval records `approved_for_scheduling`; a decline records `cancelled`. Added the `booking_request_status_history` audit table/model and migration `20260930_0004`; no review action creates an appointment or notification. Verification passed: `24 passed, 5 skipped`; compilation and dependency checks passed. Local migration and browser verification are pending.
+  - Manually verified the local staff approval flow in the browser. The synthetic request changed to `approved_for_scheduling`, a feedback message confirmed that no appointment/message was created, and the pending queue became empty. Phase 4 Lesson 2 is complete.
+  - Researched real HVAC/field-service dispatch practices and defined a bounded two-team scheduling model: Team A and Team B, three planned two-hour blocks per team/day, and a protected late-afternoon buffer. Recorded the data-model requirements and deliberately deferred maps, live routing, real staff, calendar integrations, and automated dispatch. No scheduling code or external connection was added.
+  - Completed Phase 4 Lesson 3 implementation: added two-team dispatcher-board schema and local UI at `GET /staff/dispatch`. Approved requests can be assigned to one fixed Team A/B time block; an appointment and audit history row are created, request status changes to `scheduled`, and same-team/same-start duplicate assignments are rejected. Added migration `20260930_0005` and idempotent fictional team seed data. No notification, map, external calendar, public access, or automated routing was added. Verification passed: `27 passed, 5 skipped`; compilation and dependency checks passed. Local migration, seed, and browser verification are pending.
+  - Manually verified the two-team dispatcher board in the browser. The approved synthetic request `AC-20260930-51AB3A76` was assigned to Team A, 09:00-11:00 on 2026-10-10; the request left the waiting list, the occupied board cell displayed its reference/customer/service, and the other five blocks remained open. Phase 4 is complete.
+  - Added a local read-only job-details page at `GET /staff/appointments/{id}`. Scheduled dispatcher cards now link to customer contact, full address, service, team/time, and recorded status history. No database change, appointment mutation, notification, map, or public link was added. Verification passed: `28 passed, 5 skipped`; compilation and dependency checks passed. Browser inspection is pending.
+  - Changed dispatcher-card interaction to an in-page read-only modal at the user's request. The board now fetches a local detail fragment when a scheduled card is clicked; staff can close it and remain on the schedule. The full page remains a non-JavaScript fallback. No booking or appointment data is changed. Verification passed: `28 passed, 5 skipped`; compilation and dependency checks passed.
+  - Manual browser evidence now shows the dispatcher board handling several scheduled synthetic jobs across Team A and Team B while leaving open capacity visible. This confirms the board communicates real office-dispatch state at a glance.
+  - Manually verified the complete local request flow in the browser: the receipt displayed a generated reference code and `pending_review` status, explicitly requiring staff review and confirming that no appointment or notification was created. Phase 3 is complete; next is a local staff-review view.
+- `2026-09-30`
+  - Manually verified the local loopback booking form at `http://127.0.0.1:8000/book`. The form rendered Balik-Lamig branding, the local-prototype boundary, and Urban Deca Homes, Tondo, Manila coverage. Synthetic receipt verification remains pending.
+- `2026-09-30`
+  - Post-migration PostgreSQL integration verification passed: `5 passed, 20 deselected`. The Urban Deca Homes, Tondo coverage change is verified at the live database layer; manual loopback page preview remains pending.
+- `2026-09-30`
+  - Applied Alembic migration `20260930_0002` successfully to local `aircon_service_dev`; the `addresses.coverage_area` field now stores the Urban Deca Homes, Tondo coverage value. Alembic reports `20260930_0002 (head)`.
+- `2026-09-30`
+  - Replaced the initial Quezon City coverage default with Urban Deca Homes, Tondo, Manila after location review. Added explicit `coverage_area` validation/storage, updated the booking form, and created reversible migration `20260930_0002`.
+  - Corrected one outdated API test expectation caused by the coverage change. Verification passed: `20 passed, 5 skipped`; the local database migration remains pending.
+- `2026-09-30`
+  - Reviewed RGL Air Conditioning's public contact page as a UI reference for a minimalist booking experience. It uses a concise contact-page form with contact details, aircon/service selection, address, and message fields. No source content, contact details, or branding was copied.
+- `2026-09-30`
+  - Added the user-supplied Balik-Lamig PNG as a local static asset and applied it to the booking form and receipt pages. The original file in Downloads was preserved.
+- `2026-09-30`
+  - Completed Phase 3 Lesson 8 implementation: added local `/book` form and receipt templates, responsive styling, and FastAPI form handling. The form uses the existing validation and controlled booking service; it cannot create confirmed appointments or send notifications.
+  - Added disposable in-memory page tests for service display, valid pending-review receipt, and invalid-form error display. Verification passed: `19 passed, 5 skipped`; compilation and dependency checks passed. Manual loopback-browser verification remains pending.
+- `2026-09-30`
+  - Synced the active project's Markdown into the local Second Brain index on Vince's request. The sync created 27 indexed source-file entries and 133 searchable chunks.
+  - [UNCONFIRMED] The current sync tool recursively included 14 third-party `.venv` Markdown files and `.pytest_cache/README.md` alongside the project source. The 12 project memory/planning Markdown files plus `README.md` were indexed successfully; no source files were modified or deleted.
+- `2026-09-30`
+  - Added a local FastAPI application with `GET /health` and `POST /bookings`. Valid requests return a `pending_review` receipt; validation failures return no records; unavailable service types are handled safely.
+  - Added disposable in-memory API tests. Verification passed: `16 passed, 5 skipped`; compilation and dependency checks passed. A third-party test-client deprecation warning is present but does not affect behavior.
+- `2026-09-30`
+  - Implemented controlled booking persistence: a validated synthetic request checks active service availability first, reuses a customer by mobile when present, creates an address and booking request, and leaves the request at `pending_review`.
+  - Added rolled-back PostgreSQL integration tests for successful pending-review creation and no partial records on unavailable service type. Static verification passed: `13 passed, 5 skipped`.
+- `2026-09-30`
+  - Completed Phase 3 Lesson 6: added Pydantic booking-input validation for Philippine mobile numbers, optional email, Quezon City only, future dates, two approved booking windows, 1–10 units, and forbidden extra fields.
+  - Added validation tests. Verification passed: `13 passed, 3 skipped`; compilation and dependency checks passed. No customer or booking data was written.
+- `2026-09-30`
+  - Ran PostgreSQL integration tests through the restricted `aircon_app` role using temporary terminal-only credentials. Result: `3 passed, 6 deselected`.
+  - Completed Phase 2: eight-table schema migrated, fictional reference data seeded and verified, and database constraints proven with rolled-back invalid-write tests.
+- `2026-09-30`
+  - Verified the seeded service and technician reference records as `aircon_app`.
+  - Added three PostgreSQL integration tests for service duration, booking unit count, and appointment time-range constraints. Non-database verification passed: `6 passed, 3 skipped`; the skipped tests require temporary terminal-only database credentials.
+- `2026-09-30`
+  - Executed the idempotent reference-data seed successfully as `aircon_app`: 3 synthetic service types and 2 explicitly fictional technicians added. No customer or booking records were created.
+- `2026-09-30`
+  - Added idempotent synthetic reference-data seed code for three service types and two explicitly fictional technicians. No customer, booking, or real-person data is included.
+  - Added seed-data tests; verification passed: `6 passed`, Python compilation passed, and dependency check passed. Database seed execution remains pending terminal-only authentication.
+- `2026-09-30`
+  - Applied Alembic migration `20260930_0001` successfully to local `aircon_service_dev`; Alembic reports current revision `20260930_0001 (head)`.
+  - Replaced the migration authentication approach with a safer terminal-only `PGPASSWORD` method after rotating a password exposed by the earlier failed configuration attempt. No password was stored in source, documentation, or environment files.
+- `2026-09-30`
+  - A failed local Alembic configuration attempt displayed the application database password in a terminal traceback because URL-encoded percent characters were passed through ConfigParser interpolation. No migration was applied.
+  - Fixed the configuration handling and recorded the required password-rotation follow-up. The password value is intentionally not recorded.
+- `2026-09-30`
+  - Completed Phase 2 model design: added eight SQLAlchemy tables and initial Alembic migration `20260930_0001` for the controlled booking workflow.
+  - Added schema tests for required tables, positive booking unit counts, review status, and simulated-only notifications. Verification passed: `4 passed`; compilation and dependency checks also passed. The local PostgreSQL migration is intentionally pending user-supplied terminal-only authentication.
+- `2026-09-30`
+  - Completed Phase 1 Lesson 3 with Vince: created local database `aircon_service_dev` and restricted role `aircon_app` without recording its password.
+  - Verified `aircon_app` can connect to `aircon_service_dev` and has `CREATE` privilege in the intended `public` schema. Phase 1 local foundation is complete.
+- `2026-09-30`
+  - Completed Phase 1 Lesson 2: created the minimal Python application/test scaffold, project metadata, README, and security-oriented `.gitignore`.
+  - Created isolated `.venv`, installed Pytest there, and verified `tests/test_project_info.py`: `1 passed`. Dependency check reported no broken requirements. No database, GitHub, VPS, or external business service was changed.
+- `2026-09-30`
+  - Selected a repository-specific, read-only GitHub SSH deploy key as the future VPS source-access method; personal GitHub credentials/tokens will not be stored on the VPS.
+- `2026-09-30`
+  - Reviewed all active-project Markdown files and used the read-only Second Brain index to retrieve prior VPS/GitHub/security guidance. Directly validated the relevant VPS GitHub workflow and decisions source files.
+  - Added a gated release plan: local development, private GitHub repository, security-reviewed private VPS staging, and separate explicit approval for public release. No GitHub, VPS, credentials, or external service was changed.
+- `2026-09-30`
+  - Completed read-only Phase 1 environment preflight: Python 3.11, Git, PostgreSQL 17 client/server, and Docker are installed; PostgreSQL is running. Node.js/n8n are unavailable and Docker Desktop is stopped.
+  - Chose the available Python 3.11 runtime and deferred n8n setup until Phase 6. No software, service, database, or credentials were changed.
+- `2026-09-30`
+  - Confirmed initial synthetic operating defaults: Quezon City; Monday–Saturday, 09:00–17:00; two appointment windows per technician daily.
+  - Completed Phase 0 MVP planning and set Phase 1 local-foundation readiness as the next priority.
+- `2026-09-30`
+  - Started Phase 0. Converted the initial brief into a bounded MVP plan, manual booking process, proposed data model, technology choices, and incremental learning roadmap.
+  - Recorded unknown business and environment details in `docs/OPEN_LOOPS.md`; no external systems or real data were used.
+- `2026-09-30`
+  - Initialized the project folder and copied the standard project memory files from `PROJECT_TEMPLATE`.
+  - Recorded the initial goal, next steps, and scope constraints in `00_HANDOFF.md`.
+- `2026-09-30`
+  - Completed manual end-to-end synthetic bridge verification: local SQL outbox event `AC-20260930-564E26DF` moved from `pending` to `recorded` only after the app received a successful response from the authenticated n8n test webhook.
+  - Verified n8n received the normalized event, accepted `synthetic_only = true`, and routed it through `Mark Processed` with a processing timestamp. No customer message was created or delivered.
+  - Verified the rejection path with a separate direct test payload using `synthetic_only = false`; n8n routed it through `Reject Event` successfully. The local booking and SQL outbox were not modified by that direct test.
+  - Fixed the local restart procedure by restoring temporary database and n8n environment variables in the same PowerShell session. Secrets remain unrecorded.
+  - Current next step: add an explicit n8n response payload so the app can distinguish processed and rejected outcomes. Keep n8n unpublished and synthetic-only.
+- `2026-10-01`
+  - Added explicit n8n outcome handling to the local bridge. The app now parses the webhook JSON response, records `processed`, marks `rejected` as local `failed`, and refuses unexpected response shapes without recording the event.
+  - Added local feedback for rejected n8n outcomes. No customer messaging behavior was added.
+  - Verification passed: `31 passed, 5 skipped`; the existing Starlette/httpx deprecation warning remains unrelated.
+- `2026-10-01`
+  - Completed the first realistic local lifecycle test with synthetic job `AC-20260930-564E26DF`: confirmed → en_route → in_progress → completed.
+  - Sent the three lifecycle events to the n8n test webhook one at a time. `en_route` and `in_progress` followed the normal processed path; `appointment_completed` followed the completed-event branch and produced `Appointment AC-20260930-564E26DF is completed. The team is ready to move to the next area.`
+  - Confirmed the local outbox changed all three events to `recorded`. No customer or external dispatcher message was delivered.
+- `2026-10-01`
+  - Added the dispatcher `Complete job now` shortcut for confirmed appointments. It preserves the three normal status transitions, audit rows, and synthetic lifecycle events while reducing the UI to one action.
+  - Added regression coverage for the shortcut and full history. Verification passed: `32 passed, 5 skipped`.
+- `2026-10-01`
+  - Recorded the future automatic-delivery requirement: the manual n8n send button is for testing only; approved future behavior will emit events automatically on job status changes after security, retry/idempotency, and publishing gates are complete.
+- `2026-10-01`
+  - Added local recording and display of the `dispatcher_message` returned by n8n for completed synthetic appointments. This is a prepared internal notice only; no external delivery was added.
+  - Verification passed: `32 passed, 5 skipped`.
+- `2026-10-01`
+  - Verified Phase 8 with synthetic job `AC-20260930-132E4A43`: Complete job now created three pending lifecycle events; each was sent to n8n one at a time; the completed event returned a dispatcher message; and the local outbox displayed the saved notice.
+  - Verified Phase 9 failure/retry behavior with Thalia event `AC-20261001-387113CE`: n8n HTTP 404 left the event pending; after the n8n test listener started, retry changed it to recorded. Updated `/staff/automation/push` to return a friendly retry message instead of raw JSON on delivery failure. Verification: `32 passed, 5 skipped`.
+  - Completed the operator retest with Venice event `AC-20261001-235C0367`: the outbox displayed the friendly failure message, preserved `pending`, then recorded the event after n8n recovery and retry. n8n showed successful execution; no customer message was delivered.
+  - Started Phase 10 by documenting the future automatic delivery design in `07_PHASE_10_AUTOMATIC_DELIVERY_DESIGN.md`. The design keeps automatic sending disabled until claim/in-flight state, retries, idempotency, security review, and explicit publishing approval are complete.
+  - Added Phase 10 outbox delivery-state fields (`attempt_count`, `last_error`, `next_attempt_at`, `claimed_at`) and migration `20261001_0007_add_outbox_delivery_state.py`. Verification: `32 passed, 5 skipped`. Applying the migration is pending the configured database terminal because `AIRCON_DATABASE_URL` is not present in this session.
+  - Applied migration `20261001_0007` successfully to the local development database using terminal-only credentials.
+  - Added and tested local-only delivery claiming: one eligible pending event receives a five-minute claim lease and incremented attempt count; a simultaneous second claim finds no event; an expired lease can be reclaimed. Added a stable `synthetic-outbox-<id>` idempotency helper. Verification: `33 passed, 5 skipped`. No n8n call was added.
+  - Connected the manual n8n test send to the claim/result handlers. Temporary webhook failures now save the error while retaining `pending`; processed responses clear retry state; explicit rejections become `failed`. The outbox shows delivery attempts and last error. Verification: `34 passed, 5 skipped`. Automatic delivery remains disabled.
+  - Updated the outbox to display delivery attempts for every event, including historical events with zero attempts, so the Phase 10 delivery state is visible immediately.
+  - Manually verified the full Phase 10 result flow with synthetic event `AC-20261001-22C2A472`: attempt 1 received HTTP 404 and remained pending with saved error; attempt 2 ran through the n8n test listener and changed to recorded. The outbox displayed `Delivery attempts: 2`; no customer message was delivered.
+  - Added the disabled-by-default automatic delivery feature flag and bounded future retry schedule (1, 2, 4 … up to 30 minutes). The outbox displays that automatic delivery is disabled; manual test sends may override retry timing. Verification: `35 passed, 5 skipped`. No background worker or automatic send was added.
+  - Added the visible no-send worker check. It reports how many pending events are due, but while automatic delivery is disabled it cannot claim, change, or send them. Verification: `36 passed, 5 skipped`.
+  - Manually verified the no-send worker check in the local outbox: it reported `0 due event(s) found` and confirmed automatic delivery was disabled, so nothing was sent.
+  - Added a visual local Phase 0–9 roadmap at `/staff/documentation/phases` and companion Mermaid documentation `08_PHASES_0_TO_9_ROADMAP.md`. The diagram maps the completed path from MVP planning through retry protection. Verification: `37 passed, 5 skipped`.
+  - Confirmed no customer or external dispatcher message was delivered.
+- `2026-10-01`
+  - Verified initial duplicate protection with synthetic event `AC-20261001-F3D5DB1E`: the first n8n push recorded the event, and the second push attempt was rejected because no pending event remained.
+  - Confirmed the application did not make a second webhook call for the recorded event.

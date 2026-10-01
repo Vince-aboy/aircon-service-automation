@@ -1,0 +1,83 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Automation Simulation | Balik-Lamig</title>
+  <link rel="stylesheet" href="{{ url_for('static', path='booking.css') }}">
+</head>
+<body>
+  <main class="page-shell staff-page">
+    <header class="staff-header">
+      <p class="eyebrow">Local automation simulation · synthetic data only</p>
+      <h1>Automation outbox</h1>
+      <p class="intro">These are internal events for a future n8n workflow. Nothing is sent to customers.</p>
+    </header>
+
+    {% if automatic_delivery_enabled %}
+      <p class="staff-feedback">Automatic delivery is enabled for this terminal. This prototype does not start a background worker.</p>
+    {% else %}
+      <p class="staff-feedback">Automatic delivery is disabled. Events are sent only when staff use the manual test button.</p>
+    {% endif %}
+
+    {% if processed is not none %}
+      <p class="staff-feedback">{{ processed }} simulated event(s) recorded locally. No message was delivered.</p>
+    {% endif %}
+    {% if pushed is not none %}
+      <p class="staff-feedback">One synthetic event was sent to the n8n test webhook and recorded locally. No customer message was delivered.</p>
+    {% endif %}
+    {% if rejected is not none %}
+      <p class="staff-feedback">n8n rejected the synthetic event. It was marked failed locally. No customer message was delivered.</p>
+    {% endif %}
+    {% if push_error is not none %}
+      <p class="staff-feedback">Delivery failed. The event remains pending and can be retried. No customer message was delivered.</p>
+    {% endif %}
+    {% if worker == 'disabled' %}
+      <p class="staff-feedback">Worker check finished: {{ due }} due event(s) found. Automatic delivery is disabled, so nothing was sent.</p>
+    {% elif worker == 'approval_required' %}
+      <p class="staff-feedback">Worker check finished: {{ due }} due event(s) found. Automatic sending is not approved, so nothing was sent.</p>
+    {% endif %}
+
+    <section class="dispatch-section">
+      <form method="post" action="/staff/automation/process">
+        <button type="submit">Run local automation simulation</button>
+      </form>
+      <form method="post" action="/staff/automation/push">
+        <button class="button-secondary" type="submit">Send one synthetic event to n8n</button>
+      </form>
+      <form method="post" action="/staff/automation/worker-check">
+        <button class="button-secondary" type="submit">Check due delivery worker</button>
+      </form>
+      <p class="hint">The n8n push is disabled unless the HTTPS webhook URL and Header Auth key are supplied temporarily in the terminal.</p>
+    </section>
+
+    <section class="dispatch-section">
+      <h2>Event log</h2>
+      {% if events %}
+        <div class="automation-event-list">
+          {% for event in events %}
+            <article class="automation-event">
+              <strong>{{ event.event_type.replace('_', ' ') }}</strong>
+              <span class="status-badge">{{ event.status }}</span>
+              <p>{{ event.payload['booking_reference'] }} · {{ event.recipient_masked }}</p>
+              <p class="muted">{{ event.payload['note'] }}</p>
+              <p class="muted">Delivery attempts: {{ event.attempt_count }}.</p>
+              {% if event.last_error %}
+                <p class="muted">Last delivery error: {{ event.last_error }}.</p>
+              {% endif %}
+              {% if event.next_attempt_at %}
+                <p class="muted">Next automatic retry: {{ event.next_attempt_at }}.</p>
+              {% endif %}
+              {% if event.payload.get('dispatcher_message') %}
+                <p class="dispatcher-notice"><strong>Dispatcher notice prepared:</strong> {{ event.payload['dispatcher_message'] }}</p>
+              {% endif %}
+            </article>
+          {% endfor %}
+        </div>
+      {% else %}
+        <p class="muted">No automation events exist yet. Schedule or update a synthetic job to create one.</p>
+      {% endif %}
+    </section>
+  </main>
+</body>
+</html>

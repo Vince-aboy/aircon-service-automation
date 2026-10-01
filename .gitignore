@@ -1,0 +1,25 @@
+# Python virtual environments and generated files
+.venv/
+*.egg-info/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Local configuration and data
+.env
+.env.*
+!.env.example
+*.sqlite3
+*.db
+*.log
+*.pem
+*.key
+id_rsa*
+
+# Editor and operating-system files
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db

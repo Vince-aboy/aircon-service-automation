@@ -1,0 +1,1 @@
+"""Controlled booking-domain logic."""

@@ -1,0 +1,58 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Staff Review Queue | Balik-Lamig</title>
+  <link rel="stylesheet" href="{{ url_for('static', path='booking.css') }}">
+</head>
+<body>
+  <main class="page-shell staff-page">
+    <header class="staff-header">
+      <p class="eyebrow">Local staff view · loopback only</p>
+      <h1>Pending service requests</h1>
+      <p class="intro">Read-only queue. Review requests here before any appointment is created.</p>
+    </header>
+
+    {% if reviewed == "approved_for_scheduling" %}
+      <p class="staff-feedback">Request approved for scheduling. No appointment or message was created.</p>
+    {% elif reviewed == "cancelled" %}
+      <p class="staff-feedback">Request declined. No appointment or message was created.</p>
+    {% endif %}
+
+    {% if requests %}
+      <p class="queue-count">{{ requests|length }} request{% if requests|length != 1 %}s{% endif %} awaiting review</p>
+      <div class="request-list">
+        {% for booking, customer, address, service_type in requests %}
+          <article class="request-card">
+            <div class="request-card-header">
+              <div>
+                <p class="reference-code">{{ booking.reference_code }}</p>
+                <h2>{{ customer.full_name }}</h2>
+              </div>
+              <span class="status-badge">{{ booking.status }}</span>
+            </div>
+            <dl class="request-details">
+              <div><dt>Phone</dt><dd>{{ customer.mobile }}</dd></div>
+              <div><dt>Email</dt><dd>{{ customer.email or "Not supplied" }}</dd></div>
+              <div><dt>Address</dt><dd>{{ address.address_line }}</dd></div>
+              <div><dt>Aircon type</dt><dd>{{ booking.aircon_type }}</dd></div>
+              <div><dt>Service</dt><dd>{{ service_type.name }}</dd></div>
+              <div><dt>Preferred date</dt><dd>{{ booking.preferred_date }}</dd></div>
+            </dl>
+            <form class="review-actions" method="post" action="/staff/requests/{{ booking.id }}/review">
+              <button type="submit" name="decision" value="approve">Approve for scheduling</button>
+              <button class="button-secondary" type="submit" name="decision" value="decline">Decline request</button>
+            </form>
+          </article>
+        {% endfor %}
+      </div>
+    {% else %}
+      <section class="empty-queue">
+        <h2>No pending requests</h2>
+        <p>New local service requests will appear here for staff review.</p>
+      </section>
+    {% endif %}
+  </main>
+</body>
+</html>

@@ -1,0 +1,61 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Project Roadmap | Balik-Lamig</title>
+  <link rel="stylesheet" href="{{ url_for('static', path='booking.css') }}">
+</head>
+<body class="roadmap-page">
+  <main class="page-shell staff-page roadmap-shell">
+    <div class="roadmap-grid" aria-hidden="true"></div>
+    <header class="phase-hero">
+      <a class="back-link roadmap-back-link" href="/staff/automation">&larr; Automation outbox</a>
+      <div class="phase-hero-meta"><span class="hero-pulse" aria-hidden="true"></span><span>Balik-Lamig project map</span><span class="hero-divider" aria-hidden="true"></span><span>Synthetic local prototype</span></div>
+      <p class="eyebrow">Completed delivery journey</p>
+      <h1>From idea to<br><span>traceable automation.</span></h1>
+      <p class="intro">A visual record of the completed Phases 0&ndash;9: each milestone created a safer, more observable local workflow.</p>
+      <div class="phase-hero-stats" aria-label="Roadmap summary">
+        <div><strong>10</strong><span>completed phases</span></div>
+        <div><strong>0</strong><span>customer messages sent</span></div>
+        <div><strong>100%</strong><span>synthetic test data</span></div>
+      </div>
+    </header>
+
+    <section class="journey-panel" aria-labelledby="journey-title">
+      <div class="journey-heading"><div><p class="eyebrow">System journey</p><h2 id="journey-title">How work moves through the prototype</h2></div><span class="journey-status"><i aria-hidden="true"></i> Controlled flow</span></div>
+      <div class="journey-map" aria-label="Service request to n8n test workflow flowchart">
+        <div class="journey-step"><b>01</b><span>Service request</span></div><div class="journey-link" aria-hidden="true"></div>
+        <div class="journey-step"><b>02</b><span>Staff review</span></div><div class="journey-link" aria-hidden="true"></div>
+        <div class="journey-step"><b>03</b><span>Team schedule</span></div><div class="journey-link" aria-hidden="true"></div>
+        <div class="journey-step"><b>04</b><span>Job progress</span></div><div class="journey-link" aria-hidden="true"></div>
+        <div class="journey-step"><b>05</b><span>Outbox event</span></div><div class="journey-link journey-link--automation" aria-hidden="true"></div>
+        <div class="journey-step journey-step--automation"><b>06</b><span>n8n test workflow</span></div>
+      </div>
+      <p class="journey-note">Local SQL remains the source of truth. n8n is an unpublished, protected test workflow.</p>
+    </section>
+
+    <section class="timeline-section" aria-labelledby="timeline-title">
+      <div class="timeline-heading"><div><p class="eyebrow">Milestone timeline</p><h2 id="timeline-title">Completed phases 0&ndash;9</h2></div><p>Foundation first. Automation last.</p></div>
+      <div class="phase-roadmap" aria-label="Completed project phases">
+        {% for phase in phases %}
+          <article class="phase-card {% if phase.number >= 6 %}phase-card--automation{% endif %}">
+            <div class="phase-marker" aria-hidden="true"><span>{{ '%02d'|format(phase.number) }}</span></div>
+            <div class="phase-card-content">
+              <div class="phase-card-topline"><p class="phase-number">Phase {{ phase.number }}</p>{% if phase.number >= 6 %}<span class="automation-label">Automation</span>{% endif %}</div>
+              <h3>{{ phase.title }}</h3>
+              <p>{{ phase.summary }}</p>
+              <footer><span class="phase-check" aria-hidden="true">&check;</span><span>{{ phase.result }}</span><b>Complete</b></footer>
+            </div>
+          </article>
+        {% endfor %}
+      </div>
+    </section>
+
+    <section class="roadmap-boundary" aria-label="Prototype boundary">
+      <span class="boundary-icon" aria-hidden="true">&#9670;</span>
+      <div><p class="eyebrow">Current boundary</p><h2>Phase 10 continues with guarded automation foundations.</h2><p>Automatic delivery remains disabled. No customer notification, production workflow, or real customer data has been introduced.</p></div>
+    </section>
+  </main>
+</body>
+</html>

@@ -1,0 +1,549 @@
+"""Controlled persistence for validated booking requests."""
+
+from __future__ import annotations
+
+from datetime import UTC, date, datetime, time, timedelta
+import json
+import os
+from urllib.error import HTTPError, URLError
+from urllib.request import Request, urlopen
+from uuid import uuid4
+from zoneinfo import ZoneInfo
+
+from sqlalchemy import func, or_, select
+from sqlalchemy.orm import Session
+
+from app.booking.validation import BookingRequestInput
+from app.database.models import (
+    Address,
+    Appointment,
+    AppointmentStatusHistory,
+    BookingRequest,
+    BookingRequestStatusHistory,
+    Customer,
+    NotificationOutbox,
+    ServiceTeam,
+    ServiceType,
+    TeamMembership,
+)
+
+
+MANILA_TIMEZONE = ZoneInfo("Asia/Manila")
+DISPATCH_SLOTS: dict[str, tuple[str, time, time]] = {
+    "09:00": ("09:00-11:00", time(9, 0), time(11, 0)),
+    "11:30": ("11:30-13:30", time(11, 30), time(13, 30)),
+    "14:00": ("14:00-16:00", time(14, 0), time(16, 0)),
+}
+
+APPOINTMENT_STATUS_TRANSITIONS: dict[str, dict[str, str]] = {
+    "confirmed": {
+        "en_route": "Team marked en route in the local dispatcher board; no customer message sent.",
+        "cancelled": "Appointment cancelled in the local dispatcher board; no customer message sent.",
+    },
+    "en_route": {
+        "in_progress": "Team marked on site and work in progress in the local dispatcher board; no customer message sent.",
+        "cancelled": "Appointment cancelled in the local dispatcher board; no customer message sent.",
+    },
+    "in_progress": {
+        "completed": "Work marked completed in the local dispatcher board; no customer message sent.",
+        "cancelled": "Appointment cancelled in the local dispatcher board; no customer message sent.",
+    },
+}
+OUTBOX_CLAIM_LEASE = timedelta(minutes=5)
+AUTOMATIC_DELIVERY_ENVIRONMENT_VARIABLE = "AIRCON_AUTOMATIC_DELIVERY_ENABLED"
+
+
+def automatic_delivery_enabled() -> bool:
+    """Return whether a future automatic delivery worker is explicitly enabled."""
+    return os.getenv(AUTOMATIC_DELIVERY_ENVIRONMENT_VARIABLE, "").strip().lower() == "true"
+
+
+def next_retry_time(*, attempt_count: int, now: datetime | None = None) -> datetime:
+    """Calculate a bounded retry delay for a future automatic worker."""
+    retry_base = now or datetime.now(UTC)
+    delay_minutes = min(2 ** max(attempt_count - 1, 0), 30)
+    return retry_base + timedelta(minutes=delay_minutes)
+
+
+def due_outbox_event_count(session: Session, *, now: datetime | None = None) -> int:
+    """Count unclaimed pending events that a future worker may consider."""
+    check_time = now or datetime.now(UTC)
+    stale_claim_before = check_time - OUTBOX_CLAIM_LEASE
+    return session.scalar(
+        select(func.count())
+        .select_from(NotificationOutbox)
+        .where(
+            NotificationOutbox.status == "pending",
+            or_(
+                NotificationOutbox.next_attempt_at.is_(None),
+                NotificationOutbox.next_attempt_at <= check_time,
+            ),
+            or_(
+                NotificationOutbox.claimed_at.is_(None),
+                NotificationOutbox.claimed_at <= stale_claim_before,
+            ),
+        )
+    ) or 0
+
+
+def run_due_delivery_worker_check(session: Session, *, now: datetime | None = None) -> tuple[str, int]:
+    """Safely inspect the future delivery queue without sending an event.
+
+    This remains a no-send worker check even if the feature flag is enabled.
+    A real background sender requires the separate security and publishing gate.
+    """
+    due_events = due_outbox_event_count(session, now=now)
+    if not automatic_delivery_enabled():
+        return "disabled", due_events
+    return "approval_required", due_events
+
+
+def generate_reference_code() -> str:
+    """Generate a customer-safe reference without exposing an internal ID."""
+    return f"AC-{date.today():%Y%m%d}-{uuid4().hex[:8].upper()}"
+
+
+def masked_mobile(mobile: str) -> str:
+    """Keep automation evidence useful without displaying a full phone number."""
+    return f"{mobile[:4]}****{mobile[-3:]}" if len(mobile) >= 7 else "masked"
+
+
+def record_simulated_event(
+    session: Session,
+    *,
+    booking: BookingRequest,
+    customer: Customer,
+    event_type: str,
+    note: str,
+) -> NotificationOutbox:
+    """Place a local-only event in the outbox for later n8n simulation."""
+    event = NotificationOutbox(
+        booking_request_id=booking.id,
+        event_type=event_type,
+        channel="simulated",
+        recipient_masked=masked_mobile(customer.mobile),
+        status="pending",
+        payload={
+            "mode": "synthetic_only",
+            "booking_reference": booking.reference_code,
+            "note": note,
+        },
+    )
+    session.add(event)
+    session.flush()
+    return event
+
+
+def process_pending_simulated_events(session: Session) -> int:
+    """Record pending outbox events as locally processed; never deliver a message."""
+    events = list(session.scalars(select(NotificationOutbox).where(NotificationOutbox.status == "pending")).all())
+    for event in events:
+        event.status = "recorded"
+    session.flush()
+    return len(events)
+
+
+def outbox_idempotency_key(event: NotificationOutbox) -> str:
+    """Return the stable future-delivery identity for one local outbox event."""
+    if event.id is None:
+        raise ValueError("the outbox event must be saved before it receives an idempotency key")
+    return f"synthetic-outbox-{event.id}"
+
+
+def claim_next_eligible_outbox_event(
+    session: Session,
+    *,
+    now: datetime | None = None,
+    ignore_retry_schedule: bool = False,
+) -> NotificationOutbox | None:
+    """Reserve one retry-eligible event for a future delivery worker.
+
+    The lease prevents another worker from selecting the event for five minutes.
+    This function is local-only; it does not contact n8n or send any message.
+    """
+    claimed_at = now or datetime.now(UTC)
+    stale_claim_before = claimed_at - OUTBOX_CLAIM_LEASE
+    conditions = [
+        NotificationOutbox.status == "pending",
+        or_(
+            NotificationOutbox.claimed_at.is_(None),
+            NotificationOutbox.claimed_at <= stale_claim_before,
+        ),
+    ]
+    if not ignore_retry_schedule:
+        conditions.append(
+            or_(
+                NotificationOutbox.next_attempt_at.is_(None),
+                NotificationOutbox.next_attempt_at <= claimed_at,
+            )
+        )
+    event = session.scalar(
+        select(NotificationOutbox)
+        .where(*conditions)
+        .order_by(NotificationOutbox.created_at.asc(), NotificationOutbox.id.asc())
+        .with_for_update(skip_locked=True)
+    )
+    if event is None:
+        return None
+
+    event.claimed_at = claimed_at
+    event.attempt_count = (event.attempt_count or 0) + 1
+    session.flush()
+    return event
+
+
+def record_delivery_success(event: NotificationOutbox, result: dict[str, object]) -> None:
+    """Record a successful synthetic delivery and release its claim."""
+    event.status = "recorded"
+    event.claimed_at = None
+    event.last_error = None
+    event.next_attempt_at = None
+    if result.get("dispatcher_message"):
+        event.payload = {
+            **event.payload,
+            "dispatcher_message": result["dispatcher_message"],
+        }
+
+
+def record_retryable_delivery_failure(
+    event: NotificationOutbox,
+    error_message: str,
+    *,
+    next_attempt_at: datetime | None = None,
+) -> None:
+    """Keep an event pending after a temporary delivery failure."""
+    event.status = "pending"
+    event.claimed_at = None
+    event.last_error = error_message
+    event.next_attempt_at = next_attempt_at
+
+
+def record_permanent_delivery_rejection(event: NotificationOutbox, rejection_reason: str) -> None:
+    """Stop retries after n8n explicitly rejects an event."""
+    event.status = "failed"
+    event.claimed_at = None
+    event.last_error = rejection_reason
+    event.next_attempt_at = None
+    event.payload = {
+        **event.payload,
+        "n8n_rejection_reason": rejection_reason,
+    }
+
+
+def n8n_event_payload(event: NotificationOutbox) -> dict[str, object]:
+    """Convert one local outbox row into the stable n8n webhook shape."""
+    return {
+        "event_type": event.event_type,
+        "booking_reference": event.payload.get("booking_reference"),
+        "status": event.status,
+        "synthetic_only": event.payload.get("mode") == "synthetic_only",
+        "recipient_masked": event.recipient_masked,
+    }
+
+
+def push_one_pending_event_to_n8n(session: Session) -> NotificationOutbox:
+    """Manually send one claimed synthetic event to the opt-in n8n test webhook."""
+    webhook_url = os.getenv("AIRCON_N8N_WEBHOOK_URL")
+    webhook_key = os.getenv("AIRCON_N8N_WEBHOOK_KEY")
+    if not webhook_url or not webhook_key:
+        raise ValueError("n8n delivery is disabled; set AIRCON_N8N_WEBHOOK_URL and AIRCON_N8N_WEBHOOK_KEY for this terminal session")
+    if not webhook_url.startswith("https://"):
+        raise ValueError("the n8n webhook URL must use HTTPS")
+
+    event = claim_next_eligible_outbox_event(session, ignore_retry_schedule=True)
+    if event is None:
+        raise ValueError("no pending automation event is available")
+
+    request = Request(
+        webhook_url,
+        data=json.dumps(n8n_event_payload(event)).encode("utf-8"),
+        headers={
+            "Content-Type": "application/json",
+            "X-Aircon-Webhook-Key": webhook_key,
+        },
+        method="POST",
+    )
+    try:
+        with urlopen(request, timeout=10) as response:
+            if not 200 <= response.status < 300:
+                record_retryable_delivery_failure(
+                    event,
+                    f"n8n returned HTTP {response.status}",
+                    next_attempt_at=next_retry_time(attempt_count=event.attempt_count),
+                )
+                session.flush()
+                return event
+            try:
+                result = json.loads(response.read().decode("utf-8"))
+            except (UnicodeDecodeError, json.JSONDecodeError) as error:
+                record_retryable_delivery_failure(
+                    event,
+                    "n8n returned an invalid JSON response",
+                    next_attempt_at=next_retry_time(attempt_count=event.attempt_count),
+                )
+                session.flush()
+                return event
+    except HTTPError as error:
+        record_retryable_delivery_failure(
+            event,
+            f"n8n rejected the event with HTTP {error.code}",
+            next_attempt_at=next_retry_time(attempt_count=event.attempt_count),
+        )
+        session.flush()
+        return event
+    except (URLError, TimeoutError) as error:
+        record_retryable_delivery_failure(
+            event,
+            "the n8n webhook could not be reached",
+            next_attempt_at=next_retry_time(attempt_count=event.attempt_count),
+        )
+        session.flush()
+        return event
+
+    if not isinstance(result, dict):
+        record_retryable_delivery_failure(
+            event,
+            "n8n returned an unexpected response shape",
+            next_attempt_at=next_retry_time(attempt_count=event.attempt_count),
+        )
+        session.flush()
+        return event
+    automation_status = result.get("automation_status")
+    if automation_status == "processed":
+        record_delivery_success(event, result)
+    elif automation_status == "rejected":
+        record_permanent_delivery_rejection(event, str(result.get("rejection_reason", "n8n rejected the event")))
+    else:
+        record_retryable_delivery_failure(
+            event,
+            "n8n returned an unexpected automation status",
+            next_attempt_at=next_retry_time(attempt_count=event.attempt_count),
+        )
+    session.flush()
+    return event
+
+
+def create_pending_booking(
+    session: Session,
+    booking_input: BookingRequestInput,
+    *,
+    reference_code: str | None = None,
+) -> BookingRequest:
+    """Create the records for a validated request without committing the session.
+
+    The caller owns the transaction. This makes the operation testable and lets
+    the web layer decide when a successful request is committed.
+    """
+    service_type = session.scalar(
+        select(ServiceType).where(
+            ServiceType.id == booking_input.service_type_id,
+            ServiceType.active.is_(True),
+        )
+    )
+    if service_type is None:
+        raise ValueError("the selected service type is unavailable")
+
+    customer = session.scalar(select(Customer).where(Customer.mobile == booking_input.mobile))
+    if customer is None:
+        customer = Customer(
+            full_name=booking_input.full_name,
+            mobile=booking_input.mobile,
+            email=booking_input.email,
+        )
+        session.add(customer)
+        session.flush()
+
+    address = Address(
+        customer_id=customer.id,
+        address_line=booking_input.address_line,
+        barangay=booking_input.barangay,
+        city=booking_input.city,
+        coverage_area=booking_input.coverage_area,
+        service_area_valid=True,
+    )
+    session.add(address)
+    session.flush()
+
+    booking = BookingRequest(
+        reference_code=reference_code or generate_reference_code(),
+        customer_id=customer.id,
+        address_id=address.id,
+        service_type_id=service_type.id,
+        aircon_type=booking_input.aircon_type,
+        preferred_date=booking_input.preferred_date,
+        preferred_window=booking_input.preferred_window,
+        unit_count=booking_input.unit_count,
+        notes=booking_input.notes,
+        status="pending_review",
+    )
+    session.add(booking)
+    session.flush()
+    return booking
+
+
+def review_booking_request(session: Session, booking_request_id: int, decision: str) -> BookingRequest:
+    """Record one local-staff review decision without creating an appointment."""
+    booking = session.get(BookingRequest, booking_request_id)
+    if booking is None:
+        raise ValueError("the booking request does not exist")
+    if booking.status != "pending_review":
+        raise ValueError("only pending requests can be reviewed")
+
+    transitions = {
+        "approve": ("approved_for_scheduling", "Approved in local staff queue; no appointment created."),
+        "decline": ("cancelled", "Declined in local staff queue; no appointment created."),
+    }
+    if decision not in transitions:
+        raise ValueError("the review decision is invalid")
+
+    next_status, note = transitions[decision]
+    previous_status = booking.status
+    booking.status = next_status
+    session.add(
+        BookingRequestStatusHistory(
+            booking_request_id=booking.id,
+            from_status=previous_status,
+            to_status=next_status,
+            actor_type="local_staff",
+            note=note,
+        )
+    )
+    session.flush()
+    return booking
+
+
+def schedule_approved_booking(
+    session: Session,
+    *,
+    booking_request_id: int,
+    service_team_id: int,
+    appointment_date: date,
+    slot_key: str,
+) -> Appointment:
+    """Assign an approved request to one fixed team/time block without sending messages."""
+    booking = session.get(BookingRequest, booking_request_id)
+    if booking is None:
+        raise ValueError("the booking request does not exist")
+    if booking.status != "approved_for_scheduling":
+        raise ValueError("only approved requests can be scheduled")
+
+    team = session.get(ServiceTeam, service_team_id)
+    if team is None or not team.active:
+        raise ValueError("the selected service team is unavailable")
+    if slot_key not in DISPATCH_SLOTS:
+        raise ValueError("the selected time block is invalid")
+
+    lead_membership = session.scalar(
+        select(TeamMembership).where(
+            TeamMembership.service_team_id == team.id,
+            TeamMembership.is_lead.is_(True),
+        )
+    )
+    if lead_membership is None:
+        raise ValueError("the selected service team has no lead technician")
+
+    _, start_time, end_time = DISPATCH_SLOTS[slot_key]
+    scheduled_start = datetime.combine(appointment_date, start_time, tzinfo=MANILA_TIMEZONE)
+    scheduled_end = datetime.combine(appointment_date, end_time, tzinfo=MANILA_TIMEZONE)
+    existing = session.scalar(
+        select(Appointment).where(
+            Appointment.service_team_id == team.id,
+            Appointment.scheduled_start == scheduled_start,
+        )
+    )
+    if existing is not None:
+        raise ValueError("that team time block is already assigned")
+
+    appointment = Appointment(
+        booking_request_id=booking.id,
+        service_team_id=team.id,
+        technician_id=lead_membership.technician_id,
+        scheduled_start=scheduled_start,
+        scheduled_end=scheduled_end,
+        status="confirmed",
+    )
+    previous_status = booking.status
+    booking.status = "scheduled"
+    session.add(appointment)
+    session.flush()
+    session.add(
+        AppointmentStatusHistory(
+            appointment_id=appointment.id,
+            from_status=None,
+            to_status="confirmed",
+            actor_type="local_staff",
+            note="Scheduled in the local dispatcher board; no customer message sent.",
+        )
+    )
+    session.add(
+        BookingRequestStatusHistory(
+            booking_request_id=booking.id,
+            from_status=previous_status,
+            to_status="scheduled",
+            actor_type="local_staff",
+            note=f"Assigned to {team.name} for {DISPATCH_SLOTS[slot_key][0]}; no message sent.",
+        )
+    )
+    customer = session.get(Customer, booking.customer_id)
+    if customer is None:
+        raise ValueError("the booking customer does not exist")
+    record_simulated_event(
+        session,
+        booking=booking,
+        customer=customer,
+        event_type="appointment_scheduled",
+        note=f"Appointment scheduled for {DISPATCH_SLOTS[slot_key][0]}; simulated only.",
+    )
+    session.flush()
+    return appointment
+
+
+def update_appointment_status(session: Session, appointment_id: int, next_status: str) -> Appointment:
+    """Advance or cancel a scheduled job through the local staff workflow only."""
+    appointment = session.get(Appointment, appointment_id)
+    if appointment is None:
+        raise ValueError("the scheduled appointment does not exist")
+
+    allowed_transitions = APPOINTMENT_STATUS_TRANSITIONS.get(appointment.status, {})
+    if next_status not in allowed_transitions:
+        raise ValueError(f"the appointment cannot move from {appointment.status} to {next_status}")
+
+    previous_status = appointment.status
+    appointment.status = next_status
+    session.add(
+        AppointmentStatusHistory(
+            appointment_id=appointment.id,
+            from_status=previous_status,
+            to_status=next_status,
+            actor_type="local_staff",
+            note=allowed_transitions[next_status],
+        )
+    )
+    booking = session.get(BookingRequest, appointment.booking_request_id)
+    if booking is None:
+        raise ValueError("the appointment booking request does not exist")
+    customer = session.get(Customer, booking.customer_id)
+    if customer is None:
+        raise ValueError("the appointment customer does not exist")
+    record_simulated_event(
+        session,
+        booking=booking,
+        customer=customer,
+        event_type=f"appointment_{next_status}",
+        note=f"Appointment changed from {previous_status} to {next_status}; simulated only.",
+    )
+    session.flush()
+    return appointment
+
+
+def complete_appointment_shortcut(session: Session, appointment_id: int) -> Appointment:
+    """Complete a confirmed job in one staff action while preserving every transition."""
+    appointment = session.get(Appointment, appointment_id)
+    if appointment is None:
+        raise ValueError("the scheduled appointment does not exist")
+    if appointment.status != "confirmed":
+        raise ValueError("the complete-job shortcut is available only from confirmed")
+
+    for next_status in ("en_route", "in_progress", "completed"):
+        appointment = update_appointment_status(session, appointment_id, next_status)
+    return appointment

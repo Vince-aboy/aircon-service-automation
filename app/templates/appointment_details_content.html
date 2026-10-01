@@ -1,0 +1,62 @@
+<header class="staff-header detail-header">
+  <p class="eyebrow">Local scheduled job · synthetic data only</p>
+  <h1>{{ customer.full_name }}</h1>
+  <p class="intro">{{ booking.reference_code }} · {{ appointment.status }}</p>
+</header>
+
+<section class="detail-section">
+  <h2>Assignment</h2>
+  <dl class="detail-grid">
+    <div><dt>Team</dt><dd>{{ team.name }}</dd></div>
+    <div><dt>Scheduled date</dt><dd>{{ scheduled_date }}</dd></div>
+    <div><dt>Time block</dt><dd>{{ scheduled_time }}</dd></div>
+    <div><dt>Service</dt><dd>{{ service_type.name }}</dd></div>
+    <div><dt>Aircon type</dt><dd>{{ booking.aircon_type }}</dd></div>
+  </dl>
+</section>
+
+<section class="detail-section">
+  <h2>Job progress</h2>
+  <p class="job-status">Current status: <strong>{{ appointment.status.replace('_', ' ') }}</strong></p>
+  {% if available_status_updates %}
+    <form class="progress-actions" method="post" action="/staff/appointments/{{ appointment.id }}/status">
+      {% for next_status in available_status_updates %}
+        <button type="submit" name="next_status" value="{{ next_status }}"{% if next_status == 'cancelled' %} class="button-secondary"{% endif %}>
+          {% if next_status == 'en_route' %}Mark en route{% elif next_status == 'in_progress' %}Mark work in progress{% elif next_status == 'completed' %}Mark completed{% else %}Cancel appointment{% endif %}
+        </button>
+      {% endfor %}
+      {% if appointment.status == 'confirmed' %}
+        <button type="submit" name="next_status" value="completed_now" class="button-secondary">Complete job now</button>
+      {% endif %}
+    </form>
+  {% else %}
+    <p class="muted">This job is closed. Its final status cannot be changed in this prototype.</p>
+  {% endif %}
+</section>
+
+<section class="detail-section">
+  <h2>Customer and location</h2>
+  <dl class="detail-grid">
+    <div><dt>Phone</dt><dd>{{ customer.mobile }}</dd></div>
+    <div><dt>Email</dt><dd>{{ customer.email or "Not supplied" }}</dd></div>
+    <div class="detail-wide"><dt>Full address / Decca address</dt><dd>{{ address.address_line }}</dd></div>
+  </dl>
+</section>
+
+<section class="detail-section">
+  <h2>Workflow history</h2>
+  <ol class="history-list">
+    {% for entry in booking_history %}
+      <li>
+        <strong>{{ entry.from_status }} → {{ entry.to_status }}</strong>
+        <span>{{ entry.note }}</span>
+      </li>
+    {% endfor %}
+    {% for entry in appointment_history %}
+      <li>
+        <strong>{{ entry.from_status or 'not scheduled' }} → {{ entry.to_status }}</strong>
+        <span>{{ entry.note }}</span>
+      </li>
+    {% endfor %}
+  </ol>
+</section>

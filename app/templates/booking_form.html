@@ -1,0 +1,81 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Request Service | Balik-Lamig</title>
+  <link rel="stylesheet" href="{{ url_for('static', path='booking.css') }}">
+</head>
+<body>
+  <main class="page-shell">
+    <header class="page-header">
+      <img class="brand-banner" src="{{ url_for('static', path='images/balik-lamig.png') }}" alt="Balik-Lamig Air-Conditioning and Refrigeration Services">
+      <p class="eyebrow">Local prototype · synthetic data only</p>
+      <h1>Request a Balik-Lamig service</h1>
+      <p class="intro">Choose a service and your preferred schedule.</p>
+    </header>
+
+    <form method="post" action="/book" class="booking-form" novalidate>
+      <section>
+        <h2>Contact details</h2>
+        <div class="form-grid">
+          <label>Full name
+            <input name="full_name" value="{{ values.get('full_name', '') }}" required>
+            {% if errors.get('full_name') %}<span class="error">{{ errors['full_name'] }}</span>{% endif %}
+          </label>
+          <label>Phone number
+            <input name="mobile" type="tel" value="{{ values.get('mobile', '') }}" required>
+            {% if errors.get('mobile') %}<span class="error">{{ errors['mobile'] }}</span>{% endif %}
+          </label>
+          <label>Email <span class="optional">(optional)</span>
+            <input name="email" type="email" value="{{ values.get('email', '') }}">
+            {% if errors.get('email') %}<span class="error">{{ errors['email'] }}</span>{% endif %}
+          </label>
+        </div>
+      </section>
+
+      <section>
+        <h2>Service location</h2>
+        <div class="form-grid">
+          <label class="full-width">Full Address / Decca Address
+            <input name="address_line" value="{{ values.get('address_line', '') }}" required>
+            {% if errors.get('address_line') %}<span class="error">{{ errors['address_line'] }}</span>{% endif %}
+          </label>
+          <input name="barangay" type="hidden" value="Urban Deca Homes">
+          <input name="city" type="hidden" value="Manila">
+          <input name="coverage_area" type="hidden" value="Urban Deca Homes, Tondo">
+        </div>
+      </section>
+
+      <section>
+        <h2>Service request</h2>
+        <div class="form-grid">
+          <label>Aircon type
+            <select name="aircon_type" required>
+              {% for aircon_type in ["Window Type", "Split Type Wall Mounted", "Split Type Floor Mounted", "Split Type Ceiling Mounted", "Multi-Split Type Free Match", "Ceiling Cassette", "Ceiling Concealed Ducted Type", "Chilled Water Type", "Big Ducted Type", "VRF/VRV System"] %}
+                <option value="{{ aircon_type }}" {% if values.get('aircon_type', 'Window Type') == aircon_type %}selected{% endif %}>{{ aircon_type }}</option>
+              {% endfor %}
+            </select>
+            {% if errors.get('aircon_type') %}<span class="error">{{ errors['aircon_type'] }}</span>{% endif %}
+          </label>
+          <label>Choose service
+            <select name="service_type_id" required>
+              {% for service in services %}
+                <option value="{{ service.id }}" {% if values.get('service_type_id') == service.id|string or (not values.get('service_type_id') and service.name == 'Aircon Cleaning') %}selected{% endif %}>{{ service.name }}</option>
+              {% endfor %}
+            </select>
+            {% if errors.get('service_type_id') %}<span class="error">{{ errors['service_type_id'] }}</span>{% endif %}
+          </label>
+          <label>Preferred date
+            <input name="preferred_date" type="date" value="{{ values.get('preferred_date', '') }}" required>
+            {% if errors.get('preferred_date') %}<span class="error">{{ errors['preferred_date'] }}</span>{% endif %}
+          </label>
+        </div>
+      </section>
+
+      <button type="submit">Send service request</button>
+      <p class="privacy-note">Use fictional data only. No real booking, payment, or notification is created by this prototype.</p>
+    </form>
+  </main>
+</body>
+</html>
