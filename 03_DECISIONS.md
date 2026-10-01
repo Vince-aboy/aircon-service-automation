@@ -30,3 +30,4 @@
 - `2026-09-30` - Begin with synthetic data and a controlled booking workflow; defer Facebook/Meta integration, payments, AI, real customer data, and production deployment until explicitly authorized.
 - `2026-09-30` - Build incrementally and test each major feature before moving to the next stage.
 - `2026-10-01` - Vince approved the intended public portfolio route `https://vinceaboy.com/balik-lamig/` beside the existing `/profiles/` site. This approves the target URL only; VPS deployment, reverse-proxy changes, and always-on automation still require separate implementation and verification.
+- `2026-10-01` - Verified synthetic-only VPS staging at `https://vinceaboy.com/balik-lamig/`. The n8n production webhook is protected by Header Auth, and a one-minute systemd worker automatically delivers pending outbox events. Automatic delivery remains limited to synthetic events; no customer message channel is connected.

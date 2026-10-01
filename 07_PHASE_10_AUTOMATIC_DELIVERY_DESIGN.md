@@ -2,7 +2,7 @@
 
 ## Scope
 
-Phase 10 defines the future automatic delivery path from the local appointment workflow to the protected n8n webhook. The design remains disabled and synthetic-only until security review and explicit publishing approval.
+Phase 10 defines the automatic delivery path from the local appointment workflow to the protected n8n staging webhook. The implementation is enabled on the VPS for synthetic-only staging after controlled verification; customer messaging remains out of scope.
 
 ## Current safe boundary
 
@@ -54,4 +54,4 @@ Phase 10 defines the future automatic delivery path from the local appointment w
 - Added a visible `Check due delivery worker` action. It counts due pending events but cannot claim, modify, or send them while automatic delivery is disabled.
 - Live evidence: the worker check reported `0 due event(s) found` while automatic delivery was disabled and made no delivery.
 - Live evidence: event `AC-20261001-22C2A472` failed with HTTP 404 on attempt 1, remained pending with the saved error, then was retried against the n8n test listener and recorded on attempt 2. No customer message was delivered.
-- Automatic delivery remains disabled.
+- VPS verification: `balik-lamig-worker.timer` runs every minute, the protected production webhook is published in n8n, and a fictional scheduled event was delivered automatically and recorded successfully.

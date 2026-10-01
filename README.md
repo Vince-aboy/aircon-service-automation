@@ -25,7 +25,7 @@ Service request
   -> Protected n8n test workflow
 ```
 
-Local SQL remains the source of truth. n8n is an unpublished test integration; automatic delivery is disabled unless explicitly configured at runtime.
+Local SQL remains the source of truth. The VPS staging deployment uses a protected n8n webhook and a one-minute synthetic-only delivery worker. No customer messaging or production booking is enabled.
 
 ## Tech stack
 
@@ -86,4 +86,4 @@ Latest local verification: **37 passed, 5 skipped**. Skipped integration tests r
 
 ## Status
 
-Phases 0-9 are complete. Phase 10 has established delivery state, failure tracking, retry timing, and a safe worker-check design. VPS deployment and any always-on automation remain future, explicitly reviewed work.
+Phases 0-9 are complete. Phase 10 has established delivery state, failure tracking, retry timing, and automatic synthetic-only VPS delivery. The public route is portfolio staging only; customer messaging, payments, and production claims remain out of scope.

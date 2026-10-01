@@ -21,6 +21,7 @@
 - Phase 10 automatic-delivery safeguard: `AIRCON_AUTOMATIC_DELIVERY_ENABLED` defaults to disabled; the outbox displays this state. Retry timing is now calculated with a bounded delay, but no background worker exists and no automatic send was added. Verification: `35 passed, 5 skipped`.
 - Phase 10 worker check: the outbox now has a no-send `Check due delivery worker` action. With automatic delivery disabled, it only counts due events and makes no change or webhook call. Verification: `36 passed, 5 skipped`.
 - Phase 10 worker-check evidence: local UI reported `0 due event(s) found` and explicitly confirmed that automatic delivery was disabled, so no send occurred.
+- Phase 10 VPS automation verified: the app was deployed at `https://vinceaboy.com/balik-lamig/`, n8n was published with a protected production webhook, and a systemd worker timer delivered a new synthetic event automatically. The event changed from `pending` to `recorded` with one delivery attempt; no customer message was sent.
 - Documentation: visual completed-phase roadmap is available locally at `/staff/documentation/phases`; source diagram is `08_PHASES_0_TO_9_ROADMAP.md`. Verification: `37 passed, 5 skipped`.
 - Project: 0009_AIRCON_SERVICE_AUTOMATION
 - Goal: Build a realistic, portfolio-grade aircon cleaning and service automation prototype for a Philippine small business. Start with a simple MVP, synthetic data, and a controlled booking workflow; incrementally add validation, human review, notifications, appointment status, reminders, error handling, and documentation.

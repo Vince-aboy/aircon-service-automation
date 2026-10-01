@@ -1,5 +1,7 @@
 # Worklog History
 
+- 2026-10-01: Completed and verified VPS staging automation. Published the protected n8n production webhook, installed `balik-lamig-worker.service` with a one-minute systemd timer, enabled synthetic-only automatic delivery, and confirmed a fictional scheduled event moved from `pending` to `recorded` with one attempt. Updated the dashboard wording and synchronized the result into the project Markdown record. No customer message was sent.
+
 ## Purpose
 - Track meaningful project actions in chronological order.
 
