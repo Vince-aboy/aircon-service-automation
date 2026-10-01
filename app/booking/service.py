@@ -331,6 +331,8 @@ def run_automatic_delivery_worker(session: Session) -> NotificationOutbox | None
     """Deliver one due event when automatic delivery is explicitly enabled."""
     if not automatic_delivery_enabled():
         return None
+    if due_outbox_event_count(session) == 0:
+        return None
     return push_one_pending_event_to_n8n(session, ignore_retry_schedule=False)
 
 
