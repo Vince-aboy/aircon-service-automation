@@ -4,13 +4,13 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Project Roadmap | Balik-Lamig</title>
-  <link rel="stylesheet" href="{{ url_for('static', path='booking.css') }}">
+  <link rel="stylesheet" href="{{ app_path('/static/booking.css') }}">
 </head>
 <body class="roadmap-page">
   <main class="page-shell staff-page roadmap-shell">
     <div class="roadmap-grid" aria-hidden="true"></div>
     <header class="phase-hero">
-      <a class="back-link roadmap-back-link" href="/staff/automation">&larr; Automation outbox</a>
+      <a class="back-link roadmap-back-link" href="{{ app_path('/staff/automation') }}">&larr; Automation outbox</a>
       <div class="phase-hero-meta"><span class="hero-pulse" aria-hidden="true"></span><span>Balik-Lamig project map</span><span class="hero-divider" aria-hidden="true"></span><span>Synthetic local prototype</span></div>
       <p class="eyebrow">Completed delivery journey</p>
       <h1>From idea to<br><span>traceable automation.</span></h1>

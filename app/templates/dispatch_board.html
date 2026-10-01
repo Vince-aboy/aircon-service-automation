@@ -4,8 +4,8 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Dispatcher Board | Balik-Lamig</title>
-  <link rel="stylesheet" href="{{ url_for('static', path='booking.css') }}">
-  <script defer src="{{ url_for('static', path='dispatch_board.js') }}"></script>
+  <link rel="stylesheet" href="{{ app_path('/static/booking.css') }}">
+  <script defer src="{{ app_path('/static/dispatch_board.js') }}"></script>
 </head>
 <body>
   <main class="page-shell staff-page">
@@ -15,7 +15,7 @@
       <p class="intro">Assign approved requests to an open team block. No message is sent automatically.</p>
     </header>
 
-    <form class="dispatch-date-form" method="get" action="/staff/dispatch">
+    <form class="dispatch-date-form" method="get" action="{{ app_path('/staff/dispatch') }}">
       <label>Schedule date
         <input name="selected_date" type="date" value="{{ selected_date }}">
       </label>
@@ -61,14 +61,14 @@
                 <div class="dispatch-cell" role="cell">
                   {% if entry %}
                     {% set appointment, booking, customer, service_type = entry %}
-                    <a class="scheduled-card" href="/staff/appointments/{{ appointment.id }}" data-detail-url="/staff/appointments/{{ appointment.id }}/fragment">
+                    <a class="scheduled-card" href="{{ app_path('/staff/appointments/' ~ appointment.id) }}" data-detail-url="{{ app_path('/staff/appointments/' ~ appointment.id ~ '/fragment') }}">
                       <p class="scheduled-reference">{{ booking.reference_code }}</p>
                       <strong>{{ customer.full_name }}</strong>
                       <span>{{ service_type.name }}</span>
                       <span class="appointment-status">{{ appointment.status.replace('_', ' ') }}</span>
                     </a>
                   {% elif approved_requests %}
-                    <form method="post" action="/staff/dispatch/assign">
+                    <form method="post" action="{{ app_path('/staff/dispatch/assign') }}">
                       <input type="hidden" name="service_team_id" value="{{ team.id }}">
                       <input type="hidden" name="appointment_date" value="{{ selected_date }}">
                       <input type="hidden" name="slot_key" value="{{ slot_key }}">

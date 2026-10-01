@@ -5,6 +5,7 @@ from __future__ import annotations
 from collections.abc import Generator
 from pathlib import Path
 from datetime import date, datetime, time, timedelta
+import os
 from typing import Any
 
 from fastapi import Depends, FastAPI, Form, HTTPException, Request, status
@@ -30,6 +31,16 @@ app = FastAPI(
 APP_DIRECTORY = Path(__file__).resolve().parent
 templates = Jinja2Templates(directory=str(APP_DIRECTORY / "templates"))
 app.mount("/static", StaticFiles(directory=str(APP_DIRECTORY / "static")), name="static")
+PUBLIC_BASE_PATH = os.getenv("AIRCON_PUBLIC_BASE_PATH", "").strip().rstrip("/")
+
+
+def app_path(path: str) -> str:
+    """Prefix browser-facing paths when deployed below a reverse-proxy route."""
+    normalized_path = path if path.startswith("/") else f"/{path}"
+    return f"{PUBLIC_BASE_PATH}{normalized_path}"
+
+
+templates.env.globals["app_path"] = app_path
 
 
 class BookingReceipt(BaseModel):
@@ -176,7 +187,7 @@ def review_staff_request(
         session.rollback()
         raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="The review decision could not be saved safely.") from error
 
-    return RedirectResponse(url=f"/staff/requests?reviewed={booking.status}", status_code=status.HTTP_303_SEE_OTHER)
+    return RedirectResponse(url=app_path(f"/staff/requests?reviewed={booking.status}"), status_code=status.HTTP_303_SEE_OTHER)
 
 
 @app.get("/staff/dispatch", response_class=HTMLResponse)
@@ -231,7 +242,7 @@ def assign_dispatch_slot(
         raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="That time block was just assigned. Refresh the board and try another block.") from error
 
     return RedirectResponse(
-        url=f"/staff/dispatch?selected_date={appointment.scheduled_start.astimezone(MANILA_TIMEZONE).date()}&scheduled=1",
+        url=app_path(f"/staff/dispatch?selected_date={appointment.scheduled_start.astimezone(MANILA_TIMEZONE).date()}&scheduled=1"),
         status_code=status.HTTP_303_SEE_OTHER,
     )
 
@@ -255,7 +266,7 @@ def update_scheduled_job_status(
 
     selected_date = appointment.scheduled_start.astimezone(MANILA_TIMEZONE).date()
     return RedirectResponse(
-        url=f"/staff/dispatch?selected_date={selected_date}&job_updated={appointment.status}",
+        url=app_path(f"/staff/dispatch?selected_date={selected_date}&job_updated={appointment.status}"),
         status_code=status.HTTP_303_SEE_OTHER,
     )
 
@@ -312,14 +323,14 @@ def process_automation_outbox(session: Session = Depends(get_session)) -> Redire
     """Run a local stand-in for a future n8n outbox workflow."""
     processed = process_pending_simulated_events(session)
     session.commit()
-    return RedirectResponse(url=f"/staff/automation?processed={processed}", status_code=status.HTTP_303_SEE_OTHER)
+    return RedirectResponse(url=app_path(f"/staff/automation?processed={processed}"), status_code=status.HTTP_303_SEE_OTHER)
 
 
 @app.post("/staff/automation/worker-check")
 def check_due_delivery_worker(session: Session = Depends(get_session)) -> RedirectResponse:
     """Show whether due events could run without starting an automatic sender."""
     worker, due = run_due_delivery_worker_check(session)
-    return RedirectResponse(url=f"/staff/automation?worker={worker}&due={due}", status_code=status.HTTP_303_SEE_OTHER)
+    return RedirectResponse(url=app_path(f"/staff/automation?worker={worker}&due={due}"), status_code=status.HTTP_303_SEE_OTHER)
 
 
 @app.post("/staff/automation/push")
@@ -330,13 +341,13 @@ def push_automation_event_to_n8n(session: Session = Depends(get_session)) -> Red
         session.commit()
     except ValueError as error:
         session.rollback()
-        return RedirectResponse(url="/staff/automation?push_error=1", status_code=status.HTTP_303_SEE_OTHER)
+        return RedirectResponse(url=app_path("/staff/automation?push_error=1"), status_code=status.HTTP_303_SEE_OTHER)
 
     if event.status == "failed":
-        return RedirectResponse(url=f"/staff/automation?rejected={event.id}", status_code=status.HTTP_303_SEE_OTHER)
+        return RedirectResponse(url=app_path(f"/staff/automation?rejected={event.id}"), status_code=status.HTTP_303_SEE_OTHER)
     if event.status == "pending":
-        return RedirectResponse(url="/staff/automation?push_error=1", status_code=status.HTTP_303_SEE_OTHER)
-    return RedirectResponse(url=f"/staff/automation?pushed={event.id}", status_code=status.HTTP_303_SEE_OTHER)
+        return RedirectResponse(url=app_path("/staff/automation?push_error=1"), status_code=status.HTTP_303_SEE_OTHER)
+    return RedirectResponse(url=app_path(f"/staff/automation?pushed={event.id}"), status_code=status.HTTP_303_SEE_OTHER)
 
 
 def appointment_detail_context(session: Session, appointment_id: int) -> dict[str, Any]:

@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Staff Review Queue | Balik-Lamig</title>
-  <link rel="stylesheet" href="{{ url_for('static', path='booking.css') }}">
+  <link rel="stylesheet" href="{{ app_path('/static/booking.css') }}">
 </head>
 <body>
   <main class="page-shell staff-page">
@@ -40,7 +40,7 @@
               <div><dt>Service</dt><dd>{{ service_type.name }}</dd></div>
               <div><dt>Preferred date</dt><dd>{{ booking.preferred_date }}</dd></div>
             </dl>
-            <form class="review-actions" method="post" action="/staff/requests/{{ booking.id }}/review">
+            <form class="review-actions" method="post" action="{{ app_path('/staff/requests/' ~ booking.id ~ '/review') }}">
               <button type="submit" name="decision" value="approve">Approve for scheduling</button>
               <button class="button-secondary" type="submit" name="decision" value="decline">Decline request</button>
             </form>

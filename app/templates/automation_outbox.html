@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Automation Simulation | Balik-Lamig</title>
-  <link rel="stylesheet" href="{{ url_for('static', path='booking.css') }}">
+  <link rel="stylesheet" href="{{ app_path('/static/booking.css') }}">
 </head>
 <body>
   <main class="page-shell staff-page">
@@ -39,13 +39,13 @@
     {% endif %}
 
     <section class="dispatch-section">
-      <form method="post" action="/staff/automation/process">
+      <form method="post" action="{{ app_path('/staff/automation/process') }}">
         <button type="submit">Run local automation simulation</button>
       </form>
-      <form method="post" action="/staff/automation/push">
+      <form method="post" action="{{ app_path('/staff/automation/push') }}">
         <button class="button-secondary" type="submit">Send one synthetic event to n8n</button>
       </form>
-      <form method="post" action="/staff/automation/worker-check">
+      <form method="post" action="{{ app_path('/staff/automation/worker-check') }}">
         <button class="button-secondary" type="submit">Check due delivery worker</button>
       </form>
       <p class="hint">The n8n push is disabled unless the HTTPS webhook URL and Header Auth key are supplied temporarily in the terminal.</p>

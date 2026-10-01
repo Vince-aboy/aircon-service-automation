@@ -4,17 +4,17 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Service Request Received | Balik-Lamig</title>
-  <link rel="stylesheet" href="{{ url_for('static', path='booking.css') }}">
+  <link rel="stylesheet" href="{{ app_path('/static/booking.css') }}">
 </head>
 <body>
   <main class="page-shell receipt">
-    <img class="brand-banner" src="{{ url_for('static', path='images/balik-lamig.png') }}" alt="Balik-Lamig Air-Conditioning and Refrigeration Services">
+      <img class="brand-banner" src="{{ app_path('/static/images/balik-lamig.png') }}" alt="Balik-Lamig Air-Conditioning and Refrigeration Services">
     <p class="eyebrow">Local prototype · synthetic data only</p>
     <h1>Service request received</h1>
     <p>Your request reference is <strong>{{ reference_code }}</strong>.</p>
     <p>Status: <strong>{{ status }}</strong>. Staff review is required before any appointment is confirmed.</p>
     <p>No real message or appointment has been created.</p>
-    <a class="button-link" href="/book">Submit another synthetic request</a>
+    <a class="button-link" href="{{ app_path('/book') }}">Submit another synthetic request</a>
   </main>
 </body>
 </html>
