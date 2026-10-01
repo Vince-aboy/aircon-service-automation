@@ -27,9 +27,9 @@
             <input name="mobile" type="tel" value="{{ values.get('mobile', '') }}" required>
             {% if errors.get('mobile') %}<span class="error">{{ errors['mobile'] }}</span>{% endif %}
           </label>
-          <label>Email <span class="optional">(optional)</span>
-            <input name="email" type="email" value="{{ values.get('email', '') }}">
-            {% if errors.get('email') %}<span class="error">{{ errors['email'] }}</span>{% endif %}
+          <label>Preferred date
+            <input name="preferred_date" type="date" value="{{ values.get('preferred_date', '') }}" required>
+            {% if errors.get('preferred_date') %}<span class="error">{{ errors['preferred_date'] }}</span>{% endif %}
           </label>
         </div>
       </section>
@@ -66,9 +66,9 @@
             </select>
             {% if errors.get('service_type_id') %}<span class="error">{{ errors['service_type_id'] }}</span>{% endif %}
           </label>
-          <label>Preferred date
-            <input name="preferred_date" type="date" value="{{ values.get('preferred_date', '') }}" required>
-            {% if errors.get('preferred_date') %}<span class="error">{{ errors['preferred_date'] }}</span>{% endif %}
+          <label>Email <span class="optional">(optional)</span>
+            <input name="email" type="email" value="{{ values.get('email', '') }}">
+            {% if errors.get('email') %}<span class="error">{{ errors['email'] }}</span>{% endif %}
           </label>
         </div>
       </section>
