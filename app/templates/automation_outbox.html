@@ -11,11 +11,11 @@
     <header class="staff-header">
       <p class="eyebrow">Local automation simulation · synthetic data only</p>
       <h1>Automation outbox</h1>
-      <p class="intro">These are internal events for a future n8n workflow. Nothing is sent to customers.</p>
+    <p class="intro">These are internal synthetic events for the n8n staging workflow. Nothing is sent to customers.</p>
     </header>
 
     {% if automatic_delivery_enabled %}
-      <p class="staff-feedback">Automatic delivery is enabled for this terminal. This prototype does not start a background worker.</p>
+      <p class="staff-feedback">Automatic delivery is enabled. The VPS worker checks the outbox every minute. No customer message is sent.</p>
     {% else %}
       <p class="staff-feedback">Automatic delivery is disabled. Events are sent only when staff use the manual test button.</p>
     {% endif %}
@@ -24,7 +24,7 @@
       <p class="staff-feedback">{{ processed }} simulated event(s) recorded locally. No message was delivered.</p>
     {% endif %}
     {% if pushed is not none %}
-      <p class="staff-feedback">One synthetic event was sent to the n8n test webhook and recorded locally. No customer message was delivered.</p>
+      <p class="staff-feedback">One synthetic event was delivered to the n8n staging webhook and recorded locally. No customer message was delivered.</p>
     {% endif %}
     {% if rejected is not none %}
       <p class="staff-feedback">n8n rejected the synthetic event. It was marked failed locally. No customer message was delivered.</p>
@@ -48,7 +48,7 @@
       <form method="post" action="{{ app_path('/staff/automation/worker-check') }}">
         <button class="button-secondary" type="submit">Check due delivery worker</button>
       </form>
-      <p class="hint">The n8n push is disabled unless the HTTPS webhook URL and Header Auth key are supplied temporarily in the terminal.</p>
+      <p class="hint">Automatic delivery uses the protected HTTPS n8n staging webhook. Manual sending remains available for controlled testing.</p>
     </section>
 
     <section class="dispatch-section">
