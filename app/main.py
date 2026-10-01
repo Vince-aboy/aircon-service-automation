@@ -43,10 +43,10 @@ def app_path(path: str) -> str:
 templates.env.globals["app_path"] = app_path
 
 
-@app.get("/", include_in_schema=False)
-def home_redirect() -> RedirectResponse:
-    """Open the request form when the app is mounted below a public path."""
-    return RedirectResponse(url=app_path("/book"), status_code=status.HTTP_307_TEMPORARY_REDIRECT)
+@app.get("/", response_class=HTMLResponse, include_in_schema=False)
+def home_page(request: Request) -> HTMLResponse:
+    """Render the public Balik-Lamig landing page."""
+    return templates.TemplateResponse(request=request, name="landing.html")
 
 
 class BookingReceipt(BaseModel):
