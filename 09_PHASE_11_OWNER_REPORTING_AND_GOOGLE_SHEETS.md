@@ -6,6 +6,8 @@ Create an owner-facing reporting layer for the synthetic Balik-Lamig workflow. P
 
 This phase begins with mapping and documentation. Workflow implementation starts only after the data contract, sheet structure, and edge cases are reviewed.
 
+The detailed payload contract is documented in [docs/PHASE_11_EVENT_CONTRACT.md](docs/PHASE_11_EVENT_CONTRACT.md).
+
 ## Proposed flow
 
 ```text
