@@ -15,7 +15,7 @@
       <p class="intro">Choose a service and your preferred schedule.</p>
     </header>
 
-    <form method="post" action="{{ app_path('/book') }}" class="booking-form" novalidate>
+    <form method="post" action="{{ app_path('/book') }}" class="booking-form" novalidate onsubmit="this.querySelector('button[type=submit]').disabled = true; this.querySelector('button[type=submit]').textContent = 'Sending request…';">
       <section>
         <h2>Contact details</h2>
         <div class="form-grid">

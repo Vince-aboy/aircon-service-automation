@@ -445,6 +445,26 @@ def create_pending_booking(
         session.add(customer)
         session.flush()
 
+    existing_booking = session.scalar(
+        select(BookingRequest)
+        .join(Address, BookingRequest.address_id == Address.id)
+        .where(
+            BookingRequest.customer_id == customer.id,
+            BookingRequest.service_type_id == service_type.id,
+            BookingRequest.aircon_type == booking_input.aircon_type,
+            BookingRequest.preferred_date == booking_input.preferred_date,
+            BookingRequest.preferred_window == booking_input.preferred_window,
+            BookingRequest.status != "cancelled",
+            Address.address_line == booking_input.address_line,
+            Address.barangay == booking_input.barangay,
+            Address.city == booking_input.city,
+            Address.coverage_area == booking_input.coverage_area,
+        )
+        .order_by(BookingRequest.id.desc())
+    )
+    if existing_booking is not None:
+        return existing_booking
+
     address = Address(
         customer_id=customer.id,
         address_line=booking_input.address_line,
