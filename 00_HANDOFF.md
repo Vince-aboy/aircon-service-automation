@@ -38,8 +38,19 @@
 - Project: 0009_AIRCON_SERVICE_AUTOMATION
 - Goal: Build a realistic, portfolio-grade aircon cleaning and service automation prototype for a Philippine small business. Start with a simple MVP, synthetic data, and a controlled booking workflow; incrementally add validation, human review, notifications, appointment status, reminders, error handling, and documentation.
 
+## Current Phase 11 snapshot
+
+- The protected, published n8n workflow now reports owner-facing synthetic events to Google Sheets after the local worker delivers them.
+- Verified reporting tabs are `Daily Schedule` (current assignment), `Client Summary` (one current row per booking reference), and `Service History` (append-only event history).
+- The live success path is `Webhook -> safety If nodes -> Mark Processed -> parallel Google Sheets nodes -> Merge (3 inputs, Append) -> Return Processed Response`.
+- `Return Processed Response` must return exactly `automation_status: processed`. Google Sheets node output must not be returned directly, because it does not contain the application acknowledgement and would leave local events pending for retry.
+- Controlled evidence: Jannet Aboy booking `AC-20261003-CC71C4CB` was scheduled, rescheduled, and rescheduled back. The sheet views updated correctly and Service History recorded `outbox-8` with the event note.
+- A future `Customer Directory` tab is approved conceptually, but has not been created or backfilled. It must use a stable customer key and a safe SQL-backed one-time backfill; it must not use `booking_reference` as the customer identity.
+- Do not delete any existing Google Sheets tabs until the exact live tab list has been reviewed and explicitly approved. `Cancelled Requests` and an owner-facing `Automation Log` are deferred; the app outbox and n8n executions remain the technical trace.
+
 ## Next step
-- Begin Phase 11 by reviewing `09_PHASE_11_OWNER_REPORTING_AND_GOOGLE_SHEETS.md`. Map the event contract, Google Sheets tabs/columns, and edge-case behavior before creating or changing any n8n workflow. Keep the data synthetic and PostgreSQL authoritative.
+
+- In a Google-Drive-connected session, list the exact tabs in `Balik-Lamig Owner Operations`, create `Customer Directory`, then implement and verify the safe SQL-backed backfill and its n8n upsert path. Keep PostgreSQL authoritative and do not delete tabs without a reviewed list and explicit approval.
 
 ## Notes
 - Phase 6 implementation started: local scheduling and job-progress changes now create simulated pending outbox events. `GET /staff/automation` displays them, and its local simulation control marks them `recorded` without delivering any message. Verification passed: `30 passed, 5 skipped`.

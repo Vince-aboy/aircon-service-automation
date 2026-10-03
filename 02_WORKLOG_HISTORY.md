@@ -167,3 +167,8 @@
 - `2026-10-01`
   - Verified initial duplicate protection with synthetic event `AC-20261001-F3D5DB1E`: the first n8n push recorded the event, and the second push attempt was rejected because no pending event remained.
   - Confirmed the application did not make a second webhook call for the recorded event.
+- `2026-10-03`
+  - Published and verified the core Phase 11 owner-reporting workflow. After `Mark Processed`, Daily Schedule and Client Summary upserts plus append-only Service History run in parallel, then a three-input Merge feeds a fixed `automation_status: processed` response.
+  - Corrected an acknowledgement defect: returning raw Google Sheets output made the local worker retain successful deliveries as pending. With the final response node in place, the four affected events changed to recorded.
+  - Added the application event `note` to the outbound contract and mapped it to Service History. Controlled Jannet Aboy schedule/reschedule testing confirmed the current reporting views and appended `outbox-8` (`appointment_rescheduled`) with its operator note. No customer message was sent.
+  - Documented the live workflow, recovery checks, deferred Customer Directory design, and safe tab-cleanup boundary. Customer Directory is not yet created or backfilled; no Sheets tab was deleted.

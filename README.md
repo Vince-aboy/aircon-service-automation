@@ -84,9 +84,10 @@ Latest local verification: **44 passed, 5 skipped**. Skipped integration tests r
 - [Architecture and project map](01_PROJECT_MAP.md)
 - [Decisions and safety boundaries](03_DECISIONS.md)
 - [VPS and GitHub release plan](docs/VPS_AND_GITHUB_RELEASE_PLAN.md)
-- [Phase 11 owner reporting plan](09_PHASE_11_OWNER_REPORTING_AND_GOOGLE_SHEETS.md)
+- [Phase 11 owner reporting status](09_PHASE_11_OWNER_REPORTING_AND_GOOGLE_SHEETS.md)
 - [Phase 11 event contract](docs/PHASE_11_EVENT_CONTRACT.md)
 - [Phase 11 n8n Google Sheets workflow](docs/PHASE_11_N8N_GOOGLE_SHEETS_WORKFLOW.md)
+- [Phase 11 live reporting verification](docs/PHASE_11_LIVE_N8N_REPORTING_VERIFICATION.md)
 - [Real-data operations mode](docs/REAL_DATA_OPERATIONS_MODE.md)
 
 ## Security and privacy
@@ -99,4 +100,4 @@ Latest local verification: **44 passed, 5 skipped**. Skipped integration tests r
 
 ## Status
 
-Phases 0-9 are complete. Phase 10 established delivery state, failure tracking, retry timing, and VPS delivery. Phase 11 adds the Google Sheets owner-reporting workflow and controlled live-data mode; customer messaging and payments remain out of scope.
+Phases 0-10 are complete. Phase 11 core owner reporting is live: Daily Schedule and Client Summary upserts plus append-only Service History, all acknowledged by the published protected n8n workflow. Customer Directory backfill and non-core reporting tabs remain deferred; customer messaging and payments remain out of scope.

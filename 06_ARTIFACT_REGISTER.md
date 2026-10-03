@@ -50,6 +50,10 @@
 - `app/templates/staff_requests.html` - loopback-only read-only staff queue for pending requests
 - `app/templates/automation_outbox.html` - local-only simulated automation event log and processor
 - `app/booking/service.py` and `app/main.py` - opt-in one-event SQL outbox to n8n HTTPS bridge
+- `09_PHASE_11_OWNER_REPORTING_AND_GOOGLE_SHEETS.md` - current owner-reporting scope, live workflow boundary, and deferred Google Sheets work
+- `docs/PHASE_11_EVENT_CONTRACT.md` - event payload contract, including the owner-readable event note
+- `docs/PHASE_11_N8N_GOOGLE_SHEETS_WORKFLOW.md` - target workflow design plus the verified live parallel reporting implementation
+- `docs/PHASE_11_LIVE_N8N_REPORTING_VERIFICATION.md` - controlled evidence, acknowledgement safeguard, and operational recovery notes
 - `migrations/versions/20260930_0004_add_booking_request_review_history.py` - reversible audited staff-review status-transition migration
 - `migrations/versions/20260930_0005_add_two_team_dispatch.py` - reversible two-team and appointment-slot foundation migration
 - `migrations/versions/20260930_0006_add_in_progress_appointment_status.py` - reversible field-job progress status migration

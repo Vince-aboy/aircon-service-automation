@@ -53,4 +53,11 @@
   - PASTE THIS — WINDOWS POWERSHELL
   - Expected prompt: `PS D:\0.1_NEW_PROFILE\1. PROJECTS\0009_AIRCON_SERVICE_AUTOMATION>`
   - Run: `.\.venv\Scripts\python -m pytest -q`
-  - Expected current result: `1 passed`.
+  - Last documented full result: `44 passed, 5 skipped`. Treat the actual command output as authoritative.
+
+- n8n owner-reporting verification
+  - Confirm the workflow is published and the protected webhook remains configured with Header Auth.
+  - Confirm `Mark Processed` branches in parallel to `Upsert Daily Schedule Row`, `Upsert Client Summary`, and `Append Service History`.
+  - Confirm Merge uses `Append` mode with `3` inputs and feeds `Return Processed Response`.
+  - Confirm the final response is the fixed JSON acknowledgement `{"automation_status":"processed"}`. Do not return a Google Sheets node output directly.
+  - After a controlled synthetic schedule/reschedule, check the local Automation page first: the event must become `recorded`. Then verify one current row in Daily Schedule and Client Summary and one additional Service History row.

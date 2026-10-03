@@ -1,102 +1,63 @@
 # Phase 11 — Owner Reporting and Google Sheets Synchronization
 
-## Purpose
+## Current status
 
-Create an owner-facing reporting layer for the synthetic Balik-Lamig workflow. PostgreSQL remains the source of truth. Google Sheets becomes a readable operations view updated through n8n.
+Phase 11 core reporting is live and verified for the synthetic owner-operations workflow. PostgreSQL remains authoritative. Google Sheets is a restricted, readable reporting layer updated by the protected n8n webhook; it is not a booking database, customer-messaging system, or payment system.
 
-This phase begins with mapping and documentation. Workflow implementation starts only after the data contract, sheet structure, and edge cases are reviewed.
+The detailed event shape is in [docs/PHASE_11_EVENT_CONTRACT.md](docs/PHASE_11_EVENT_CONTRACT.md). The original broader workflow design and the current live implementation are distinguished in [docs/PHASE_11_N8N_GOOGLE_SHEETS_WORKFLOW.md](docs/PHASE_11_N8N_GOOGLE_SHEETS_WORKFLOW.md). Controlled live evidence is recorded in [docs/PHASE_11_LIVE_N8N_REPORTING_VERIFICATION.md](docs/PHASE_11_LIVE_N8N_REPORTING_VERIFICATION.md).
 
-The detailed payload contract is documented in [docs/PHASE_11_EVENT_CONTRACT.md](docs/PHASE_11_EVENT_CONTRACT.md).
+## Verified live reporting scope
 
-The exact n8n node order, sheet keys, columns, routes, and failure behavior are documented in [docs/PHASE_11_N8N_GOOGLE_SHEETS_WORKFLOW.md](docs/PHASE_11_N8N_GOOGLE_SHEETS_WORKFLOW.md).
+| Tab | Purpose | Write pattern | Key |
+| --- | --- | --- | --- |
+| `Daily Schedule` | Current operational appointment assignment | Upsert | `booking_reference` |
+| `Client Summary` | Current state of one booking/request | Upsert | `booking_reference` |
+| `Service History` | Owner-readable event timeline | Append | one row per delivered event |
 
-## Proposed flow
+The current `Client Summary` is deliberately not a master customer directory: a single customer can have multiple bookings. A later `Customer Directory` will be keyed by stable customer identity and safely backfilled from PostgreSQL.
+
+## Verified n8n path
 
 ```text
-Balik-Lamig event -> validate synthetic event -> normalize data
-  -> identify event type -> upsert Google Sheets records
-  -> update daily schedule -> write automation log
-  -> return processed or rejected response
+Protected Webhook
+  -> synthetic/safety If nodes
+  -> Mark Processed
+  -> parallel reporting fanout
+       -> Upsert Daily Schedule Row
+       -> Upsert Client Summary
+       -> Append Service History
+  -> Merge (Append mode; 3 inputs)
+  -> Return Processed Response
 ```
 
-## Existing source data
+`Return Processed Response` returns the fixed JSON acknowledgement `automation_status: processed`. This final node is required: a Google Sheets node returns sheet-row data rather than the acknowledgement expected by the local delivery worker. Returning sheet data directly makes the worker retain a successfully delivered event as pending and retry it.
 
-| Reporting field | Existing source |
+## Source and reporting boundaries
+
+| Reporting data | Authoritative source |
 | --- | --- |
-| Booking ID | `BookingRequest.reference_code` |
-| Client name | `Customer.full_name` |
-| Phone | Customer mobile; mask in reporting where appropriate |
-| Email | Customer email, when supplied |
-| Address | Service address |
-| Service | Service type |
-| Aircon type | Booking request |
-| Preferred date | Booking request |
-| Assigned date/time | Appointment schedule |
-| Team | Service team |
-| Current status | Booking and appointment status |
-| Event history | Booking, appointment, and outbox history |
-| Delivery result | Outbox status, attempts, errors, and retry time |
+| Booking reference, client, service, address | PostgreSQL booking/customer records |
+| Appointment date, time, team, technician | PostgreSQL appointment records |
+| Current lifecycle state | PostgreSQL booking and appointment records |
+| Event ID, idempotency key, occurrence time, note | PostgreSQL outbox event |
+| Technical delivery state and retries | PostgreSQL outbox and n8n execution history |
 
-## Proposed Google Sheets tabs
+The app payload includes `note`, so Service History can show the operator-readable event explanation without fabricating it in n8n.
 
-- `Daily Schedule` — owner’s primary view of scheduled work.
-- `Client Summary` — one current row per synthetic client/request.
-- `Service History` — status changes and completed work.
-- `Cancelled Requests` — cancelled records and reasons.
-- `Automation Log` — event ID, event type, result, attempts, and errors.
-- `Lists` — controlled teams, statuses, services, and reference values.
+## Controlled verification evidence
 
-## Event-to-sheet map
+Jannet Aboy booking `AC-20261003-CC71C4CB` was used only as a controlled synthetic operations test:
 
-| Event | Owner reporting action |
-| --- | --- |
-| Request submitted | Add or update the client summary as pending review. |
-| Request approved | Update the review status. |
-| Request declined | Add or move the record to cancelled requests. |
-| Appointment scheduled | Add or update the daily schedule. |
-| Appointment cancelled | Mark the schedule row cancelled and log the reason. |
-| Job en route | Update current status and service history. |
-| Job in progress | Update current status and service history. |
-| Job completed | Update status and completion time. |
-| Delivery failed | Add the error to the automation log. |
-| Duplicate event | Ignore safely using the stable event ID. |
+1. It was scheduled for Team A.
+2. It was rescheduled to another time block and the current-state reporting rows updated.
+3. It was rescheduled back to the intended block. Service History appended `outbox-8`, event type `appointment_rescheduled`, with the recorded internal note.
 
-## Edge cases to map before implementation
+The app outbox showed the earlier acknowledgement defect as pending events. Once the final response was corrected, all four affected events became recorded. No customer message was sent at any stage.
 
-- Duplicate event delivery.
-- Same client submits another request.
-- Appointment rescheduling.
-- Cancellation after scheduling.
-- Two appointments on one date.
-- Occupied team or time block.
-- n8n unavailable.
-- Google Sheets unavailable.
-- Missing optional email.
-- Invalid or non-synthetic event.
-- Events arriving out of order.
-- Retry after partial processing.
-- Existing target sheet row.
-- Multiple historical bookings for one client.
+## Deferred work and safety rules
 
-## Design rules
-
-- PostgreSQL is authoritative.
-- Google Sheets is a reporting and visibility layer.
-- n8n synchronizes events; it does not become the booking database.
-- Every event needs a stable idempotency key before a sheet write.
-- Sheet writes must be repeatable without duplicate owner records.
-- Scope remains synthetic-only; no real messaging, payments, or customer data.
-- Use one normalized event path with small, documented branches.
-
-## Acceptance criteria
-
-- Event contract, sheet schemas, and edge cases are documented first.
-- Every current lifecycle event has a defined sheet action.
-- Duplicate, retry, reschedule, cancellation, and failure behavior is defined.
-- A synthetic event can update owner reporting without changing PostgreSQL source data.
-- The owner can see the day’s schedule and current request status in one place.
-- n8n executions and sheet errors remain traceable in the automation log.
-
-## Status
-
-Application payload enrichment and workflow design are complete. The VPS worker and owner-reporting Google Sheets path are operational for the current deployment; PostgreSQL remains authoritative and no customer messaging or payment workflow is enabled. The operations dashboard now exposes automation health, pending/failed event counts, activity history, and safe requeue for failed events.
+- Create `Customer Directory` only after defining its stable key, columns, one-time SQL backfill, and future upsert behavior.
+- Do not delete, rename, or repurpose Sheets tabs until the exact live tab list has been reviewed and deletion is explicitly approved. Potential deferred tabs include `Cancelled Requests`, `Automation Log`, and blank/default tabs.
+- `Cancelled Requests` and owner-facing `Automation Log` are not part of the present core reporting scope. Technical delivery review belongs in the app Automation page and n8n executions.
+- The `Prepare Dispatcher Notice` and `Reject Event` branches require their own final-response handling before enabling event types that route through them.
+- Keep Google credential material only in n8n; never place it in Git, application environment files, or project documentation.

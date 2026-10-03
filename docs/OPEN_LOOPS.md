@@ -18,7 +18,11 @@
 - [UNCONFIRMED] Confirm the current VPS security, n8n, and service state with a read-only audit immediately before any project connection or deployment; existing findings are historical.
 - Resolved 2026-10-01: Created and pushed the public portfolio repository `Vince-aboy/aircon-service-automation` at commit `9d02f79`.
 - Resolved 2026-10-01: Deployed and verified synthetic-only staging at `https://vinceaboy.com/balik-lamig/`; the n8n production webhook and one-minute VPS worker automatically processed a fictional outbox event.
-- Open 2026-10-03: Create the n8n Google Sheets nodes and connect a synthetic test spreadsheet after reviewing the completed event contract and workflow design.
+- Resolved 2026-10-03: The published protected n8n workflow now updates the three core owner-reporting views: Daily Schedule, Client Summary, and append-only Service History. Its final response is a fixed `automation_status: processed` acknowledgement after all three paths merge.
+- Open 2026-10-03: Create `Customer Directory` in the owner spreadsheet and implement a safe SQL-backed one-time backfill plus a future upsert path. It must be keyed by stable customer identity, not booking reference.
+- Open 2026-10-03: Review the exact live Google Sheets tab list before deleting or repurposing any tab. Potentially deferred tabs include Cancelled Requests, Automation Log, and blank/default tabs; none may be deleted until explicitly approved.
+- Open 2026-10-03: Finish the final-response behavior for the `Prepare Dispatcher Notice` and `Reject Event` n8n branches before activating event types that route through either branch.
+- Open 2026-10-03: This Codex conversation does not currently have access to the user's connected Google Drive, although another VS Code Codex conversation does. Use a Drive-connected session for tab listing, creation, or deletion.
 
 ## Security follow-up
 

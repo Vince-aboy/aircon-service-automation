@@ -1,5 +1,7 @@
 # Phase 11 n8n → Google Sheets Workflow
 
+> **Live implementation note — 2026-10-03:** The sections below preserve the broader target design. The verified published workflow currently implements the smaller core path: `Mark Processed` fans out in parallel to `Upsert Daily Schedule Row`, `Upsert Client Summary`, and `Append Service History`; a three-input Merge then feeds a final fixed `automation_status: processed` response. `Cancelled Requests`, owner-facing `Automation Log`, validation/normalization nodes, and other target-design branches remain deferred. See [PHASE_11_LIVE_N8N_REPORTING_VERIFICATION.md](PHASE_11_LIVE_N8N_REPORTING_VERIFICATION.md) for the operational truth.
+
 ## Goal
 
 Create an owner-facing reporting workflow for Balik-Lamig events in either local prototype mode or live owner-reporting mode. PostgreSQL remains authoritative; Google Sheets is only a readable operations view. This workflow must not send customer messages, make payments, or change booking records.
@@ -102,4 +104,4 @@ The Google Sheets credential is created only inside n8n. It must not be placed i
 
 ## Implementation status
 
-Application payload enrichment and the controlled live-mode boundary are implemented locally. Update the existing n8n Google Sheets nodes to use the live mappings before enabling live operation.
+Application payload enrichment and the core live reporting nodes are implemented and published. The protected workflow has passed controlled schedule/reschedule reporting verification. Preserve the final acknowledgement node after the three-input Merge; returning raw Google Sheets output is not a valid local-worker acknowledgement. Broader design sections in this document remain planned until separately implemented and tested.
