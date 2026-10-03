@@ -1,0 +1,10 @@
+{% extends "admin_base.html" %}
+{% block title %}{{ customer.full_name }}{% endblock %}
+{% block content %}
+  <a class="back-link" href="{{ app_path('/staff/customers') }}">← Back to customers</a>
+  <section class="staff-page">
+    <header class="staff-header"><p class="eyebrow">Customer profile</p><h1>{{ customer.full_name }}</h1><p class="intro">{{ customer.mobile }} · {{ customer.email or 'No email supplied' }}</p></header>
+    <section class="detail-section"><h2>Service addresses</h2><div class="detail-grid">{% for address in addresses %}<div class="detail-wide"><dt>Full address</dt><dd>{{ address_display(address) }}</dd></div>{% else %}<p class="muted">No address is recorded.</p>{% endfor %}</div></section>
+    <section class="detail-section"><h2>Service history</h2>{% if bookings %}<div class="history-card-list">{% for booking, service_type, appointment, team in bookings %}<article><div><strong>{{ booking.reference_code }}</strong><span>{{ service_type.name }} · preferred {{ booking.preferred_date }}</span></div><div><span class="status-badge">{{ (appointment.status if appointment else booking.status).replace('_',' ') }}</span>{% if appointment %}<a href="{{ app_path('/staff/appointments/' ~ appointment.id) }}">View appointment →</a>{% endif %}</div></article>{% endfor %}</div>{% else %}<p class="muted">No service history exists.</p>{% endif %}</section>
+  </section>
+{% endblock %}

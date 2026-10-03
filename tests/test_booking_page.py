@@ -87,6 +87,73 @@ def test_staff_dashboard_uses_shared_owner_operations_navigation() -> None:
         app.dependency_overrides.clear()
 
 
+def test_admin_directories_render_and_customer_search_finds_booking() -> None:
+    client, session = create_test_client()
+    try:
+        client.post("/book", data=valid_form_data())
+        customer = session.scalar(select(Customer))
+
+        appointments = client.get("/staff/appointments")
+        customers = client.get("/staff/customers?q=Synthetic")
+        customer_details = client.get(f"/staff/customers/{customer.id}")
+        teams = client.get("/staff/teams")
+        activity = client.get("/staff/activity")
+        settings = client.get("/staff/settings")
+
+        assert appointments.status_code == 200
+        assert "Search and manage every scheduled job" in appointments.text
+        assert customers.status_code == 200
+        assert "Synthetic Form Customer" in customers.text
+        assert customer_details.status_code == 200
+        assert "Service history" in customer_details.text
+        assert teams.status_code == 200
+        assert "Maintain the people and team leads" in teams.text
+        assert activity.status_code == 200
+        assert "Activity history" in activity.text
+        assert settings.status_code == 200
+        assert "Read-only operational configuration" in settings.text
+    finally:
+        session.close()
+        app.dependency_overrides.clear()
+
+
+def test_staff_can_create_team_and_assign_a_lead() -> None:
+    client, session = create_test_client()
+    try:
+        technician_response = client.post(
+            "/staff/technicians",
+            data={"display_name": "New Technician"},
+            follow_redirects=False,
+        )
+        team_response = client.post(
+            "/staff/teams",
+            data={"name": "Team C"},
+            follow_redirects=False,
+        )
+        technician = session.scalar(select(Technician).where(Technician.display_name == "New Technician"))
+        team = session.scalar(select(ServiceTeam).where(ServiceTeam.name == "Team C"))
+        member_response = client.post(
+            f"/staff/teams/{team.id}/members",
+            data={"technician_id": technician.id, "is_lead": "true"},
+            follow_redirects=False,
+        )
+        membership = session.scalar(
+            select(TeamMembership).where(
+                TeamMembership.service_team_id == team.id,
+                TeamMembership.technician_id == technician.id,
+            )
+        )
+
+        assert technician_response.status_code == 303
+        assert team_response.status_code == 303
+        assert member_response.status_code == 303
+        assert membership is not None
+        assert membership.is_lead is True
+    finally:
+        session.close()
+        app.dependency_overrides.clear()
+
+
 def test_booking_page_lists_active_services() -> None:
     client, session = create_test_client()
     try:

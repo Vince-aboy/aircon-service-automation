@@ -1,0 +1,6 @@
+{% extends "admin_base.html" %}
+{% block title %}Settings{% endblock %}
+{% block content %}
+  <header class="admin-page-header"><div><p class="eyebrow">Deployment</p><h1>Settings</h1><p class="intro">Read-only operational configuration. Secret values are never displayed.</p></div></header>
+  <section class="staff-page"><div class="settings-list"><div><span>Operation mode</span><strong>{{ settings.operation_mode }}</strong></div><div><span>Business timezone</span><strong>{{ settings.timezone }}</strong></div><div><span>Public base path</span><strong>{{ settings.public_base_path }}</strong></div><div><span>Automatic owner reporting</span><strong>{% if settings.automatic_delivery %}Enabled{% else %}Disabled{% endif %}</strong></div><div><span>n8n webhook credentials</span><strong>{% if settings.webhook_configured %}Configured{% else %}Missing{% endif %}</strong></div><div><span>Staff authentication</span><strong>{% if settings.staff_auth_configured %}Configured{% else %}Missing{% endif %}</strong></div></div><p class="hint">Environment-backed settings are changed on the VPS and require an application restart.</p></section>
+{% endblock %}

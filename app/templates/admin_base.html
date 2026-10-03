@@ -18,15 +18,13 @@
         <a{% if request.url.path.endswith('/staff') %} class="active"{% endif %} href="{{ app_path('/staff') }}"><span>⌂</span> Dashboard</a>
         <a{% if '/staff/requests' in request.url.path %} class="active"{% endif %} href="{{ app_path('/staff/requests') }}"><span>▤</span> Service requests</a>
         <a{% if '/staff/dispatch' in request.url.path or '/staff/appointments/' in request.url.path %} class="active"{% endif %} href="{{ app_path('/staff/dispatch') }}"><span>▦</span> Team schedule</a>
+        <a{% if request.url.path.endswith('/staff/appointments') %} class="active"{% endif %} href="{{ app_path('/staff/appointments') }}"><span>◫</span> Appointments</a>
+        <a{% if '/staff/customers' in request.url.path %} class="active"{% endif %} href="{{ app_path('/staff/customers') }}"><span>◉</span> Customers</a>
+        <a{% if '/staff/teams' in request.url.path %} class="active"{% endif %} href="{{ app_path('/staff/teams') }}"><span>♟</span> Teams & technicians</a>
         <a{% if '/staff/automation' in request.url.path %} class="active"{% endif %} href="{{ app_path('/staff/automation') }}"><span>↻</span> Automation</a>
+        <a{% if '/staff/activity' in request.url.path %} class="active"{% endif %} href="{{ app_path('/staff/activity') }}"><span>≡</span> Activity history</a>
+        <a{% if '/staff/settings' in request.url.path %} class="active"{% endif %} href="{{ app_path('/staff/settings') }}"><span>⚙</span> Settings</a>
       </nav>
-      <div class="admin-nav-future">
-        <p>Coming next</p>
-        <span>Customers</span>
-        <span>Teams & technicians</span>
-        <span>Activity history</span>
-        <span>Settings</span>
-      </div>
       <a class="admin-public-link" href="{{ app_path('/') }}" target="_blank" rel="noopener">Open public website ↗</a>
     </aside>
     <div class="admin-workspace">

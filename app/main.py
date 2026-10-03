@@ -20,7 +20,7 @@ from sqlalchemy.orm import Session
 
 from app.booking.service import APPOINTMENT_STATUS_TRANSITIONS, DISPATCH_SLOTS, MANILA_TIMEZONE, automatic_delivery_enabled, complete_appointment_shortcut, create_pending_booking, display_address, process_pending_simulated_events, push_one_pending_event_to_n8n, reschedule_appointment, review_booking_request, run_due_delivery_worker_check, schedule_approved_booking, update_appointment_status
 from app.booking.validation import BookingRequestInput
-from app.database.models import Address, Appointment, AppointmentStatusHistory, BookingRequest, BookingRequestStatusHistory, Customer, NotificationOutbox, ServiceTeam, ServiceType
+from app.database.models import Address, Appointment, AppointmentStatusHistory, BookingRequest, BookingRequestStatusHistory, Customer, NotificationOutbox, ServiceTeam, ServiceType, TeamMembership, Technician
 from app.database.session import create_database_engine
 from app.core.project_info import is_live_mode
 
@@ -300,6 +300,275 @@ def staff_dashboard(request: Request, session: Session = Depends(get_session)) -
             "automatic_delivery_enabled": automatic_delivery_enabled(),
         },
     )
+
+
+@app.get("/staff/appointments", response_class=HTMLResponse)
+def appointment_directory(
+    request: Request,
+    q: str = "",
+    appointment_status: str = "",
+    scheduled_date: date | None = None,
+    session: Session = Depends(get_session),
+) -> HTMLResponse:
+    """List scheduled work with operational filters."""
+    statement = (
+        select(Appointment, BookingRequest, Customer, Address, ServiceTeam, ServiceType)
+        .join(BookingRequest, Appointment.booking_request_id == BookingRequest.id)
+        .join(Customer, BookingRequest.customer_id == Customer.id)
+        .join(Address, BookingRequest.address_id == Address.id)
+        .join(ServiceTeam, Appointment.service_team_id == ServiceTeam.id)
+        .join(ServiceType, BookingRequest.service_type_id == ServiceType.id)
+        .order_by(Appointment.scheduled_start.desc())
+    )
+    if q.strip():
+        pattern = f"%{q.strip()}%"
+        statement = statement.where(
+            or_(
+                BookingRequest.reference_code.ilike(pattern),
+                Customer.full_name.ilike(pattern),
+                Customer.mobile.ilike(pattern),
+                Address.address_line.ilike(pattern),
+                ServiceTeam.name.ilike(pattern),
+            )
+        )
+    if appointment_status:
+        statement = statement.where(Appointment.status == appointment_status)
+    if scheduled_date is not None:
+        day_start = datetime.combine(scheduled_date, time.min, tzinfo=MANILA_TIMEZONE)
+        day_end = datetime.combine(scheduled_date + timedelta(days=1), time.min, tzinfo=MANILA_TIMEZONE)
+        statement = statement.where(Appointment.scheduled_start >= day_start, Appointment.scheduled_start < day_end)
+    return templates.TemplateResponse(
+        request,
+        "appointment_directory.html",
+        {
+            "appointments": list(session.execute(statement).all()),
+            "q": q,
+            "appointment_status_filter": appointment_status,
+            "scheduled_date_filter": scheduled_date,
+        },
+    )
+
+
+@app.get("/staff/customers", response_class=HTMLResponse)
+def customer_directory(request: Request, q: str = "", session: Session = Depends(get_session)) -> HTMLResponse:
+    """List customers and their booking volume."""
+    statement = select(Customer).order_by(Customer.full_name.asc())
+    if q.strip():
+        pattern = f"%{q.strip()}%"
+        statement = statement.where(
+            or_(Customer.full_name.ilike(pattern), Customer.mobile.ilike(pattern), Customer.email.ilike(pattern))
+        )
+    customers = list(session.scalars(statement).all())
+    booking_counts = {
+        customer.id: session.scalar(
+            select(func.count()).select_from(BookingRequest).where(BookingRequest.customer_id == customer.id)
+        ) or 0
+        for customer in customers
+    }
+    return templates.TemplateResponse(
+        request,
+        "customer_directory.html",
+        {"customers": customers, "booking_counts": booking_counts, "q": q},
+    )
+
+
+@app.get("/staff/customers/{customer_id}", response_class=HTMLResponse)
+def customer_details(customer_id: int, request: Request, session: Session = Depends(get_session)) -> HTMLResponse:
+    """Show one customer's addresses and complete service history."""
+    customer = session.get(Customer, customer_id)
+    if customer is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="The customer does not exist.")
+    addresses = list(session.scalars(select(Address).where(Address.customer_id == customer.id)).all())
+    bookings = list(
+        session.execute(
+            select(BookingRequest, ServiceType, Appointment, ServiceTeam)
+            .join(ServiceType, BookingRequest.service_type_id == ServiceType.id)
+            .outerjoin(Appointment, Appointment.booking_request_id == BookingRequest.id)
+            .outerjoin(ServiceTeam, Appointment.service_team_id == ServiceTeam.id)
+            .where(BookingRequest.customer_id == customer.id)
+            .order_by(BookingRequest.created_at.desc())
+        ).all()
+    )
+    return templates.TemplateResponse(
+        request,
+        "customer_details.html",
+        {"customer": customer, "addresses": addresses, "bookings": bookings},
+    )
+
+
+@app.get("/staff/teams", response_class=HTMLResponse)
+def team_directory(request: Request, session: Session = Depends(get_session)) -> HTMLResponse:
+    """Manage service teams and technician memberships."""
+    teams = list(session.scalars(select(ServiceTeam).order_by(ServiceTeam.name)).all())
+    technicians = list(session.scalars(select(Technician).order_by(Technician.display_name)).all())
+    memberships = list(session.scalars(select(TeamMembership)).all())
+    members_by_team: dict[int, list[tuple[TeamMembership, Technician]]] = {team.id: [] for team in teams}
+    technicians_by_id = {technician.id: technician for technician in technicians}
+    for membership in memberships:
+        technician = technicians_by_id.get(membership.technician_id)
+        if technician is not None:
+            members_by_team.setdefault(membership.service_team_id, []).append((membership, technician))
+    return templates.TemplateResponse(
+        request,
+        "team_directory.html",
+        {"teams": teams, "technicians": technicians, "members_by_team": members_by_team},
+    )
+
+
+@app.post("/staff/technicians")
+def create_technician(display_name: str = Form(), session: Session = Depends(get_session)) -> RedirectResponse:
+    name = display_name.strip()
+    if not name:
+        raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_CONTENT, detail="Technician name is required.")
+    try:
+        session.add(Technician(display_name=name, active=True))
+        session.commit()
+    except IntegrityError as error:
+        session.rollback()
+        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="A technician with that name already exists.") from error
+    return RedirectResponse(url=app_path("/staff/teams"), status_code=status.HTTP_303_SEE_OTHER)
+
+
+@app.post("/staff/teams")
+def create_service_team(name: str = Form(), session: Session = Depends(get_session)) -> RedirectResponse:
+    team_name = name.strip()
+    if not team_name:
+        raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_CONTENT, detail="Team name is required.")
+    try:
+        session.add(ServiceTeam(name=team_name, active=True))
+        session.commit()
+    except IntegrityError as error:
+        session.rollback()
+        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="A service team with that name already exists.") from error
+    return RedirectResponse(url=app_path("/staff/teams"), status_code=status.HTTP_303_SEE_OTHER)
+
+
+@app.post("/staff/teams/{team_id}/members")
+def assign_team_member(
+    team_id: int,
+    technician_id: int = Form(),
+    is_lead: bool = Form(default=False),
+    session: Session = Depends(get_session),
+) -> RedirectResponse:
+    team = session.get(ServiceTeam, team_id)
+    technician = session.get(Technician, technician_id)
+    if team is None or technician is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="The selected team or technician does not exist.")
+    if is_lead:
+        for current_lead in session.scalars(
+            select(TeamMembership).where(TeamMembership.service_team_id == team.id, TeamMembership.is_lead.is_(True))
+        ):
+            current_lead.is_lead = False
+    membership = session.scalar(
+        select(TeamMembership).where(
+            TeamMembership.service_team_id == team.id,
+            TeamMembership.technician_id == technician.id,
+        )
+    )
+    if membership is None:
+        membership = TeamMembership(service_team_id=team.id, technician_id=technician.id, is_lead=is_lead)
+        session.add(membership)
+    else:
+        membership.is_lead = is_lead
+    session.commit()
+    return RedirectResponse(url=app_path("/staff/teams"), status_code=status.HTTP_303_SEE_OTHER)
+
+
+@app.post("/staff/teams/{team_id}/toggle")
+def toggle_team(team_id: int, session: Session = Depends(get_session)) -> RedirectResponse:
+    team = session.get(ServiceTeam, team_id)
+    if team is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="The service team does not exist.")
+    if team.active:
+        future_work = session.scalar(
+            select(func.count()).select_from(Appointment).where(
+                Appointment.service_team_id == team.id,
+                Appointment.status.not_in(("completed", "cancelled")),
+                Appointment.scheduled_start >= datetime.now(MANILA_TIMEZONE),
+            )
+        ) or 0
+        if future_work:
+            raise HTTPException(
+                status_code=status.HTTP_409_CONFLICT,
+                detail=f"{team.name} still has {future_work} active or future appointment(s). Reassign or finish them first.",
+            )
+    team.active = not team.active
+    session.commit()
+    return RedirectResponse(url=app_path("/staff/teams"), status_code=status.HTTP_303_SEE_OTHER)
+
+
+@app.post("/staff/technicians/{technician_id}/toggle")
+def toggle_technician(technician_id: int, session: Session = Depends(get_session)) -> RedirectResponse:
+    technician = session.get(Technician, technician_id)
+    if technician is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="The technician does not exist.")
+    if technician.active:
+        future_work = session.scalar(
+            select(func.count()).select_from(Appointment).where(
+                Appointment.technician_id == technician.id,
+                Appointment.status.not_in(("completed", "cancelled")),
+                Appointment.scheduled_start >= datetime.now(MANILA_TIMEZONE),
+            )
+        ) or 0
+        if future_work:
+            raise HTTPException(
+                status_code=status.HTTP_409_CONFLICT,
+                detail=f"{technician.display_name} still has {future_work} active or future appointment(s). Reassign or finish them first.",
+            )
+    technician.active = not technician.active
+    session.commit()
+    return RedirectResponse(url=app_path("/staff/teams"), status_code=status.HTTP_303_SEE_OTHER)
+
+
+@app.post("/staff/teams/{team_id}/members/{membership_id}/remove")
+def remove_team_member(
+    team_id: int,
+    membership_id: int,
+    session: Session = Depends(get_session),
+) -> RedirectResponse:
+    membership = session.get(TeamMembership, membership_id)
+    if membership is None or membership.service_team_id != team_id:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="That team membership does not exist.")
+    session.delete(membership)
+    session.commit()
+    return RedirectResponse(url=app_path("/staff/teams"), status_code=status.HTTP_303_SEE_OTHER)
+
+
+@app.get("/staff/activity", response_class=HTMLResponse)
+def activity_history(request: Request, session: Session = Depends(get_session)) -> HTMLResponse:
+    """Display the latest booking and appointment audit events."""
+    events: list[dict[str, Any]] = []
+    for history, booking in session.execute(
+        select(BookingRequestStatusHistory, BookingRequest)
+        .join(BookingRequest, BookingRequestStatusHistory.booking_request_id == BookingRequest.id)
+        .order_by(BookingRequestStatusHistory.occurred_at.desc())
+        .limit(75)
+    ):
+        events.append({"occurred_at": history.occurred_at, "reference": booking.reference_code, "kind": "Request", "from_status": history.from_status, "to_status": history.to_status, "note": history.note})
+    for history, booking in session.execute(
+        select(AppointmentStatusHistory, BookingRequest)
+        .join(Appointment, AppointmentStatusHistory.appointment_id == Appointment.id)
+        .join(BookingRequest, Appointment.booking_request_id == BookingRequest.id)
+        .order_by(AppointmentStatusHistory.occurred_at.desc())
+        .limit(75)
+    ):
+        events.append({"occurred_at": history.occurred_at, "reference": booking.reference_code, "kind": "Appointment", "from_status": history.from_status, "to_status": history.to_status, "note": history.note})
+    events.sort(key=lambda event: event["occurred_at"], reverse=True)
+    return templates.TemplateResponse(request, "activity_history.html", {"events": events[:100]})
+
+
+@app.get("/staff/settings", response_class=HTMLResponse)
+def staff_settings(request: Request) -> HTMLResponse:
+    """Show deployment-safe operational settings without exposing secrets."""
+    settings = {
+        "operation_mode": "Live owner operations" if is_live_mode() else "Local prototype",
+        "timezone": "Asia/Manila",
+        "public_base_path": PUBLIC_BASE_PATH or "/",
+        "automatic_delivery": automatic_delivery_enabled(),
+        "webhook_configured": bool(os.getenv("AIRCON_N8N_WEBHOOK_URL") and os.getenv("AIRCON_N8N_WEBHOOK_KEY")),
+        "staff_auth_configured": bool(os.getenv("AIRCON_STAFF_USERNAME") and os.getenv("AIRCON_STAFF_PASSWORD")),
+    }
+    return templates.TemplateResponse(request, "staff_settings.html", {"settings": settings})
 
 
 @app.get("/staff/requests", response_class=HTMLResponse)

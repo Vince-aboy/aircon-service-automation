@@ -1,0 +1,8 @@
+{% extends "admin_base.html" %}
+{% block title %}Activity History{% endblock %}
+{% block content %}
+  <header class="admin-page-header"><div><p class="eyebrow">Audit trail</p><h1>Activity history</h1><p class="intro">The latest request decisions, assignments, reschedules, and job updates.</p></div></header>
+  <section class="staff-page">
+    {% if events %}<div class="activity-timeline">{% for event in events %}<article><time>{{ to_manila(event.occurred_at).strftime('%b %d, %Y · %I:%M %p') }}</time><div><span class="activity-kind">{{ event.kind }}</span><strong>{{ event.reference }}</strong><p>{{ event.from_status or 'created' }} → {{ event.to_status }}</p><small>{{ event.note or 'No additional note.' }}</small></div></article>{% endfor %}</div>{% else %}<section class="empty-queue"><h2>No activity recorded</h2><p>Operational actions will appear here.</p></section>{% endif %}
+  </section>
+{% endblock %}
