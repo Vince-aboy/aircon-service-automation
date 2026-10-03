@@ -136,7 +136,10 @@ def record_simulated_event(
     event = NotificationOutbox(
         booking_request_id=booking.id,
         event_type=event_type,
-        channel="owner_reporting" if is_live_mode() else "simulated",
+        # The local outbox remains simulation-only in every mode.  Live mode
+        # means owner reporting through the payload/n8n workflow; it must not
+        # turn this local record into a customer-delivery channel.
+        channel="simulated",
         recipient_masked=masked_mobile(customer.mobile),
         status="pending",
         payload={
