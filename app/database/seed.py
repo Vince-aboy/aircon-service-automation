@@ -5,7 +5,7 @@ from __future__ import annotations
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
-from app.database.models import ServiceTeam, ServiceType, TeamMembership, Technician
+from app.database.models import Appointment, ServiceTeam, ServiceType, TeamMembership, Technician
 from app.database.session import create_database_engine
 
 
@@ -78,6 +78,28 @@ def seed_reference_data(session: Session) -> tuple[int, int, int, int]:
         if membership is None:
             session.add(TeamMembership(service_team_id=team.id, technician_id=technician.id, is_lead=True))
             added_memberships += 1
+
+    # Retire the original demo technicians without breaking existing appointments.
+    # Existing jobs are transferred to the real lead for their current team first.
+    real_leads = {
+        team_name: session.scalar(
+            select(Technician).where(Technician.display_name == technician_name)
+        )
+        for team_name, technician_name in TEAM_ASSIGNMENTS
+    }
+    legacy_names = ("Alex Reyes (fictional)", "Jamie Santos (fictional)")
+    for legacy_name in legacy_names:
+        legacy = session.scalar(select(Technician).where(Technician.display_name == legacy_name))
+        if legacy is None:
+            continue
+        appointments = list(session.scalars(select(Appointment).where(Appointment.technician_id == legacy.id)).all())
+        for appointment in appointments:
+            team = session.get(ServiceTeam, appointment.service_team_id)
+            replacement = real_leads.get(team.name if team else "")
+            if replacement is not None:
+                appointment.technician_id = replacement.id
+        session.query(TeamMembership).filter(TeamMembership.technician_id == legacy.id).delete(synchronize_session=False)
+        legacy.active = False
 
     session.commit()
     return added_services, added_technicians, added_teams, added_memberships
