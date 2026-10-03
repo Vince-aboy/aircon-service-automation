@@ -12,6 +12,7 @@
 - `05_RUNBOOK.md` - operational steps and procedures if used
 - `06_ARTIFACT_REGISTER.md` - important files and assets
 - `docs/` - business planning, implementation roadmap, release/security plan, and unresolved project questions
+- `09_PHASE_11_OWNER_REPORTING_AND_GOOGLE_SHEETS.md` - owner reporting, event map, sheet plan, and edge cases for the next phase
 - `app/` - Python application package; currently contains stable prototype metadata
 - `app/database/` - SQLAlchemy table definitions for the controlled booking workflow
 - `app/templates/` and `app/static/` - local booking form, receipt, staff-review queue, dispatcher board, job-progress controls, local automation outbox, and responsive prototype styling

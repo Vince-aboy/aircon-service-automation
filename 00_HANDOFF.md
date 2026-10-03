@@ -27,7 +27,7 @@
 - Goal: Build a realistic, portfolio-grade aircon cleaning and service automation prototype for a Philippine small business. Start with a simple MVP, synthetic data, and a controlled booking workflow; incrementally add validation, human review, notifications, appointment status, reminders, error handling, and documentation.
 
 ## Next step
-- Use the running loopback development server and click the scheduled Jamie Test card on `/staff/dispatch`. Confirm an in-page modal shows the job’s contact, address, service, team/time, and history, then close it and remain on the board. Keep all tracking local and synthetic; do not connect calendars or send messages.
+- Begin Phase 11 by reviewing `09_PHASE_11_OWNER_REPORTING_AND_GOOGLE_SHEETS.md`. Map the event contract, Google Sheets tabs/columns, and edge-case behavior before creating or changing any n8n workflow. Keep the data synthetic and PostgreSQL authoritative.
 
 ## Notes
 - Phase 6 implementation started: local scheduling and job-progress changes now create simulated pending outbox events. `GET /staff/automation` displays them, and its local simulation control marks them `recorded` without delivering any message. Verification passed: `30 passed, 5 skipped`.

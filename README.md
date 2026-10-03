@@ -76,6 +76,7 @@ Latest local verification: **37 passed, 5 skipped**. Skipped integration tests r
 - [Architecture and project map](01_PROJECT_MAP.md)
 - [Decisions and safety boundaries](03_DECISIONS.md)
 - [VPS and GitHub release plan](docs/VPS_AND_GITHUB_RELEASE_PLAN.md)
+- [Phase 11 owner reporting plan](09_PHASE_11_OWNER_REPORTING_AND_GOOGLE_SHEETS.md)
 
 ## Security and privacy
 

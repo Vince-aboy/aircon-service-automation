@@ -13,6 +13,7 @@
 - [UNCONFIRMED] Confirm the current VPS security, n8n, and service state with a read-only audit immediately before any project connection or deployment; existing findings are historical.
 - Resolved 2026-10-01: Created and pushed the public portfolio repository `Vince-aboy/aircon-service-automation` at commit `9d02f79`.
 - Resolved 2026-10-01: Deployed and verified synthetic-only staging at `https://vinceaboy.com/balik-lamig/`; the n8n production webhook and one-minute VPS worker automatically processed a fictional outbox event.
+- Open 2026-10-03: Complete the Phase 11 event contract, Google Sheets column schema, and edge-case review before creating the owner-reporting n8n workflow.
 
 ## Security follow-up
 
