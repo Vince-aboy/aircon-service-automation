@@ -77,6 +77,8 @@ Latest local verification: **37 passed, 5 skipped**. Skipped integration tests r
 - [Decisions and safety boundaries](03_DECISIONS.md)
 - [VPS and GitHub release plan](docs/VPS_AND_GITHUB_RELEASE_PLAN.md)
 - [Phase 11 owner reporting plan](09_PHASE_11_OWNER_REPORTING_AND_GOOGLE_SHEETS.md)
+- [Phase 11 event contract](docs/PHASE_11_EVENT_CONTRACT.md)
+- [Phase 11 n8n Google Sheets workflow](docs/PHASE_11_N8N_GOOGLE_SHEETS_WORKFLOW.md)
 
 ## Security and privacy
 

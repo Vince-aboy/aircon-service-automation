@@ -25,6 +25,7 @@ from app.database.models import (
     ServiceTeam,
     ServiceType,
     TeamMembership,
+    Technician,
 )
 
 
@@ -230,14 +231,68 @@ def record_permanent_delivery_rejection(event: NotificationOutbox, rejection_rea
     }
 
 
-def n8n_event_payload(event: NotificationOutbox) -> dict[str, object]:
-    """Convert one local outbox row into the stable n8n webhook shape."""
+def n8n_event_payload(session: Session, event: NotificationOutbox) -> dict[str, object]:
+    """Convert one outbox row and its booking records into the owner-reporting payload."""
+    booking = session.get(BookingRequest, event.booking_request_id)
+    if booking is None:
+        raise ValueError("the outbox booking request does not exist")
+    customer = session.get(Customer, booking.customer_id)
+    address = session.get(Address, booking.address_id)
+    service_type = session.get(ServiceType, booking.service_type_id)
+    appointment = session.scalar(
+        select(Appointment).where(Appointment.booking_request_id == booking.id)
+    )
+    team = session.get(ServiceTeam, appointment.service_team_id) if appointment else None
+    technician = session.get(Technician, appointment.technician_id) if appointment else None
+    if customer is None or address is None or service_type is None:
+        raise ValueError("the outbox booking records are incomplete")
+
+    scheduled_start = appointment.scheduled_start.isoformat() if appointment else None
+    scheduled_end = appointment.scheduled_end.isoformat() if appointment else None
     return {
+        "event_id": f"synthetic-outbox-{event.id}",
+        "idempotency_key": outbox_idempotency_key(event),
         "event_type": event.event_type,
-        "booking_reference": event.payload.get("booking_reference"),
+        # Keep the legacy outbox status while consumers migrate to the nested
+        # delivery object.
         "status": event.status,
-        "synthetic_only": event.payload.get("mode") == "synthetic_only",
-        "recipient_masked": event.recipient_masked,
+        "occurred_at": event.created_at.isoformat() if event.created_at else datetime.now(UTC).isoformat(),
+        "booking_reference": booking.reference_code,
+        "booking_status": booking.status,
+        "appointment_status": appointment.status if appointment else None,
+        "synthetic_only": True,
+        "client": {
+            "name": customer.full_name,
+            "phone_masked": masked_mobile(customer.mobile),
+            "email": customer.email,
+        },
+        "service": {
+            "name": service_type.name,
+            "aircon_type": booking.aircon_type,
+            "unit_count": booking.unit_count,
+        },
+        "location": {
+            "address_line": address.address_line,
+            "barangay": address.barangay,
+            "city": address.city,
+            "coverage_area": address.coverage_area,
+        },
+        "schedule": {
+            "preferred_date": booking.preferred_date.isoformat(),
+            "scheduled_date": appointment.scheduled_start.date().isoformat() if appointment else None,
+            "preferred_window": booking.preferred_window,
+            "scheduled_start": scheduled_start,
+            "scheduled_end": scheduled_end,
+            "time_window": f"{appointment.scheduled_start:%H:%M}-{appointment.scheduled_end:%H:%M}" if appointment else None,
+            "team": team.name if team else None,
+            "technician": technician.display_name if technician else None,
+        },
+        "delivery": {
+            "outbox_status": event.status,
+            "attempt_count": event.attempt_count,
+            "last_error": event.last_error,
+            "next_attempt_at": event.next_attempt_at.isoformat() if event.next_attempt_at else None,
+        },
     }
 
 
@@ -260,7 +315,7 @@ def push_one_pending_event_to_n8n(
 
     request = Request(
         webhook_url,
-        data=json.dumps(n8n_event_payload(event)).encode("utf-8"),
+        data=json.dumps(n8n_event_payload(session, event)).encode("utf-8"),
         headers={
             "Content-Type": "application/json",
             "X-Aircon-Webhook-Key": webhook_key,

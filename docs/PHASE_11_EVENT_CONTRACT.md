@@ -4,9 +4,9 @@
 
 Define the canonical synthetic event that the Balik-Lamig application will send to n8n for owner reporting. This contract is the reference for the future Google Sheets workflow.
 
-## Current payload
+## Previous minimal payload
 
-The current bridge sends only the following fields:
+Before Phase 11 enrichment, the bridge sent only the following fields:
 
 ```json
 {
@@ -116,4 +116,4 @@ The owner-reporting event should contain the following shape:
 
 ## Status
 
-Documented for review. The application payload has not been changed and no Google Sheets node has been added.
+Documented and implemented in the application payload. No Google Sheets node or Google credential has been added yet.

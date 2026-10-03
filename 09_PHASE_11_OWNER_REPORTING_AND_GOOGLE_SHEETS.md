@@ -8,6 +8,8 @@ This phase begins with mapping and documentation. Workflow implementation starts
 
 The detailed payload contract is documented in [docs/PHASE_11_EVENT_CONTRACT.md](docs/PHASE_11_EVENT_CONTRACT.md).
 
+The exact n8n node order, sheet keys, columns, routes, and failure behavior are documented in [docs/PHASE_11_N8N_GOOGLE_SHEETS_WORKFLOW.md](docs/PHASE_11_N8N_GOOGLE_SHEETS_WORKFLOW.md).
+
 ## Proposed flow
 
 ```text
@@ -97,4 +99,4 @@ Balik-Lamig event -> validate synthetic event -> normalize data
 
 ## Status
 
-Planning started. No Google Sheets connection or n8n workflow change has been made yet.
+Application payload enrichment and workflow design are complete. No Google Sheets connection, credential, or n8n workflow change has been made yet.
