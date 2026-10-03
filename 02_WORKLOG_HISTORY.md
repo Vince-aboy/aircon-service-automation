@@ -7,6 +7,7 @@
   - Applied the VPS SQL seed successfully: 0 new service types, 0 new technicians, 0 new teams, and 0 new memberships; the seed also retired fictional technicians and transferred their appointments to the real team leads.
   - Added the temporary supervised-demo auth switch and changed the dashboard label to `Boss EMER` without changing the login username.
   - Verification: `44 passed, 5 skipped`.
+  - Synchronized the updated project Markdown into the local Second Brain PostgreSQL index: 37 files found, 6 new, 11 updated, 20 unchanged, and 185 searchable chunks written.
 
 - 2026-10-01: Completed and verified VPS staging automation. Published the protected n8n production webhook, installed `balik-lamig-worker.service` with a one-minute systemd timer, enabled synthetic-only automatic delivery, and confirmed a fictional scheduled event moved from `pending` to `recorded` with one attempt. Updated the dashboard wording and synchronized the result into the project Markdown record. No customer message was sent.
 
