@@ -41,24 +41,9 @@
             <input name="address_line" value="{{ values.get('address_line', '') }}" required>
             {% if errors.get('address_line') %}<span class="error">{{ errors['address_line'] }}</span>{% endif %}
           </label>
-          {% if is_live_mode() %}
-          <label>Barangay
-            <input name="barangay" value="{{ values.get('barangay', '') }}" required>
-            {% if errors.get('barangay') %}<span class="error">{{ errors['barangay'] }}</span>{% endif %}
-          </label>
-          <label>City
-            <input name="city" value="{{ values.get('city', '') }}" required>
-            {% if errors.get('city') %}<span class="error">{{ errors['city'] }}</span>{% endif %}
-          </label>
-          <label>Coverage area / service zone
-            <input name="coverage_area" value="{{ values.get('coverage_area', '') }}" required>
-            {% if errors.get('coverage_area') %}<span class="error">{{ errors['coverage_area'] }}</span>{% endif %}
-          </label>
-          {% else %}
           <input name="barangay" type="hidden" value="Urban Deca Homes">
           <input name="city" type="hidden" value="Manila">
           <input name="coverage_area" type="hidden" value="Urban Deca Homes, Tondo">
-          {% endif %}
         </div>
       </section>
 
