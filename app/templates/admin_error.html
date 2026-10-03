@@ -1,0 +1,14 @@
+{% extends "admin_base.html" %}
+{% block title %}Action could not be completed{% endblock %}
+{% block content %}
+  <section class="admin-error-card">
+    <p class="eyebrow">Action not completed</p>
+    <h1>{{ status_code }}</h1>
+    <h2>{{ detail }}</h2>
+    <p class="intro">Your existing records were not changed. Return to the previous page and try again.</p>
+    <div class="dashboard-actions">
+      <button type="button" onclick="history.back()">Go back</button>
+      <a class="button-link button-secondary" href="{{ app_path('/staff') }}">Open dashboard</a>
+    </div>
+  </section>
+{% endblock %}

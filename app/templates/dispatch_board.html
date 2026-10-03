@@ -15,6 +15,11 @@
       </label>
       <button type="submit">View day</button>
     </form>
+    <nav class="day-navigation" aria-label="Schedule day navigation">
+      <a href="{{ app_path('/staff/dispatch?selected_date=' ~ previous_date) }}">← Previous day</a>
+      <a href="{{ app_path('/staff/dispatch?selected_date=' ~ today) }}">Today</a>
+      <a href="{{ app_path('/staff/dispatch?selected_date=' ~ next_date) }}">Next day →</a>
+    </nav>
 
     {% if scheduled %}
       <p class="staff-feedback">Request scheduled successfully. No customer message was created.</p>
@@ -55,26 +60,29 @@
                 {% set entry = appointments.get((team.id, slot_key)) %}
                 <div class="dispatch-cell" role="cell">
                   {% if entry %}
-                    {% set appointment, booking, customer, service_type = entry %}
+                    {% set appointment, booking, customer, service_type, address = entry %}
                     <a class="scheduled-card" href="{{ app_path('/staff/appointments/' ~ appointment.id) }}" data-detail-url="{{ app_path('/staff/appointments/' ~ appointment.id ~ '/fragment') }}">
                       <p class="scheduled-reference">{{ booking.reference_code }}</p>
                       <strong>{{ customer.full_name }}</strong>
                       <span>{{ service_type.name }}</span>
+                      <span>{{ booking.unit_count }} unit{% if booking.unit_count != 1 %}s{% endif %} · {{ address.barangay }}</span>
                       <span class="appointment-status">{{ appointment.status.replace('_', ' ') }}</span>
                     </a>
-                  {% elif approved_requests %}
-                    <form method="post" action="{{ app_path('/staff/dispatch/assign') }}">
+                  {% elif assignable_requests %}
+                    <form method="post" action="{{ app_path('/staff/dispatch/assign') }}" data-lock-submit>
                       <input type="hidden" name="service_team_id" value="{{ team.id }}">
                       <input type="hidden" name="appointment_date" value="{{ selected_date }}">
                       <input type="hidden" name="slot_key" value="{{ slot_key }}">
                       <label class="visually-hidden" for="request-{{ team.id }}-{{ slot_key }}">Request for {{ team.name }} at {{ slot_label }}</label>
                       <select id="request-{{ team.id }}-{{ slot_key }}" name="booking_request_id">
-                        {% for booking, customer, address, service_type in approved_requests %}
-                          <option value="{{ booking.id }}">{{ booking.reference_code }} · {{ customer.full_name }}</option>
+                        {% for booking, customer, address, service_type in assignable_requests %}
+                          <option value="{{ booking.id }}">{{ booking.reference_code }} · {{ customer.full_name }} · {{ booking.unit_count }} unit{% if booking.unit_count != 1 %}s{% endif %}</option>
                         {% endfor %}
                       </select>
                       <button type="submit">Assign</button>
                     </form>
+                  {% elif approved_requests %}
+                    <span class="open-slot">Open</span><small class="slot-note">No approved request prefers this date.</small>
                   {% else %}
                     <span class="open-slot">Open</span>
                   {% endif %}

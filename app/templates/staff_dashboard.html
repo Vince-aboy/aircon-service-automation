@@ -39,4 +39,32 @@
       <a class="panel-link" href="{{ app_path('/staff/automation') }}">Open automation monitor →</a>
     </article>
   </section>
+
+  <section class="dashboard-grid dashboard-grid-wide">
+    <article class="dashboard-panel">
+      <div class="panel-heading"><div><p class="eyebrow">Forward schedule</p><h2>Upcoming appointments</h2></div><a class="panel-link" href="{{ app_path('/staff/dispatch') }}">Open schedule →</a></div>
+      {% if upcoming_appointments %}
+        <div class="upcoming-list">
+          {% for appointment, booking, customer, team, service_type in upcoming_appointments %}
+            {% set local_start = to_manila(appointment.scheduled_start) %}
+            <a href="{{ app_path('/staff/appointments/' ~ appointment.id) }}">
+              <time datetime="{{ local_start.isoformat() }}"><strong>{{ local_start.strftime('%b %d') }}</strong><span>{{ local_start.strftime('%I:%M %p') }}</span></time>
+              <div><strong>{{ customer.full_name }}</strong><span>{{ service_type.name }} · {{ team.name }}</span></div>
+              <span class="appointment-status">{{ appointment.status.replace('_', ' ') }}</span>
+            </a>
+          {% endfor %}
+        </div>
+      {% else %}
+        <p class="muted">No upcoming appointments are scheduled.</p>
+      {% endif %}
+    </article>
+    <article class="dashboard-panel">
+      <div class="panel-heading"><div><p class="eyebrow">Job lifecycle</p><h2>All appointment statuses</h2></div></div>
+      <dl class="status-summary">
+        {% for label, key in [('Confirmed', 'confirmed'), ('En route', 'en_route'), ('In progress', 'in_progress'), ('Completed', 'completed'), ('Cancelled', 'cancelled')] %}
+          <div><dt>{{ label }}</dt><dd>{{ appointment_status_counts[key] }}</dd></div>
+        {% endfor %}
+      </dl>
+    </article>
+  </section>
 {% endblock %}

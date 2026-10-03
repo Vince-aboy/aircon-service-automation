@@ -14,7 +14,7 @@ from fastapi.responses import HTMLResponse, RedirectResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from pydantic import BaseModel, ValidationError
-from sqlalchemy import func, select
+from sqlalchemy import func, or_, select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
@@ -48,6 +48,7 @@ templates.env.globals["address_display"] = display_address
 templates.env.globals["operation_mode_label"] = lambda: "Live owner operations" if is_live_mode() else "Local prototype · synthetic data only"
 templates.env.globals["staff_operator_name"] = lambda: os.getenv("AIRCON_STAFF_USERNAME", "Operator").strip() or "Operator"
 templates.env.globals["manila_now"] = lambda: datetime.now(MANILA_TIMEZONE)
+templates.env.globals["to_manila"] = lambda value: value.astimezone(MANILA_TIMEZONE)
 
 
 def _staff_credentials_valid(request: Request) -> bool:
@@ -88,6 +89,20 @@ async def protect_staff_routes(request: Request, call_next: Any) -> Any:
     return await call_next(request)
 
 
+@app.exception_handler(HTTPException)
+async def friendly_http_error(request: Request, error: HTTPException) -> HTMLResponse | JSONResponse:
+    """Render staff workflow errors as usable admin pages instead of raw JSON."""
+    if "/staff" in request.url.path:
+        return templates.TemplateResponse(
+            request,
+            "admin_error.html",
+            {"status_code": error.status_code, "detail": error.detail},
+            status_code=error.status_code,
+            headers=error.headers,
+        )
+    return JSONResponse({"detail": error.detail}, status_code=error.status_code, headers=error.headers)
+
+
 @app.get("/", response_class=HTMLResponse, include_in_schema=False)
 def home_page(request: Request) -> HTMLResponse:
     """Render the public Balik-Lamig landing page."""
@@ -119,18 +134,36 @@ def active_service_types(session: Session) -> list[ServiceType]:
     )
 
 
-def pending_staff_requests(session: Session) -> list[tuple[BookingRequest, Customer, Address, ServiceType]]:
+def pending_staff_requests(
+    session: Session,
+    *,
+    search: str = "",
+    preferred_date: date | None = None,
+) -> list[tuple[BookingRequest, Customer, Address, ServiceType]]:
     """Return pending requests for the local staff-review queue only."""
-    return list(
-        session.execute(
-            select(BookingRequest, Customer, Address, ServiceType)
+    statement = (
+        select(BookingRequest, Customer, Address, ServiceType)
             .join(Customer, BookingRequest.customer_id == Customer.id)
             .join(Address, BookingRequest.address_id == Address.id)
             .join(ServiceType, BookingRequest.service_type_id == ServiceType.id)
             .where(BookingRequest.status == "pending_review")
             .order_by(BookingRequest.created_at.asc(), BookingRequest.id.asc())
-        ).all()
     )
+    normalized_search = search.strip()
+    if normalized_search:
+        pattern = f"%{normalized_search}%"
+        statement = statement.where(
+            or_(
+                BookingRequest.reference_code.ilike(pattern),
+                Customer.full_name.ilike(pattern),
+                Customer.mobile.ilike(pattern),
+                Customer.email.ilike(pattern),
+                Address.address_line.ilike(pattern),
+            )
+        )
+    if preferred_date is not None:
+        statement = statement.where(BookingRequest.preferred_date == preferred_date)
+    return list(session.execute(statement).all())
 
 
 def active_service_teams(session: Session) -> list[ServiceTeam]:
@@ -151,14 +184,15 @@ def approved_unscheduled_requests(session: Session) -> list[tuple[BookingRequest
     )
 
 
-def dispatch_appointments(session: Session, selected_date: date) -> dict[tuple[int, str], tuple[Appointment, BookingRequest, Customer, ServiceType]]:
+def dispatch_appointments(session: Session, selected_date: date) -> dict[tuple[int, str], tuple[Appointment, BookingRequest, Customer, ServiceType, Address]]:
     start_of_day = datetime.combine(selected_date, time.min, tzinfo=MANILA_TIMEZONE)
     end_of_day = datetime.combine(selected_date + timedelta(days=1), time.min, tzinfo=MANILA_TIMEZONE)
     rows = session.execute(
-        select(Appointment, BookingRequest, Customer, ServiceType)
+        select(Appointment, BookingRequest, Customer, ServiceType, Address)
         .join(BookingRequest, Appointment.booking_request_id == BookingRequest.id)
         .join(Customer, BookingRequest.customer_id == Customer.id)
         .join(ServiceType, BookingRequest.service_type_id == ServiceType.id)
+        .join(Address, BookingRequest.address_id == Address.id)
         .where(Appointment.scheduled_start >= start_of_day, Appointment.scheduled_start < end_of_day)
     ).all()
     return {
@@ -237,12 +271,32 @@ def staff_dashboard(request: Request, session: Session = Depends(get_session)) -
             select(func.count()).select_from(NotificationOutbox).where(NotificationOutbox.status == "failed")
         ) or 0,
     }
+    upcoming_appointments = list(
+        session.execute(
+            select(Appointment, BookingRequest, Customer, ServiceTeam, ServiceType)
+            .join(BookingRequest, Appointment.booking_request_id == BookingRequest.id)
+            .join(Customer, BookingRequest.customer_id == Customer.id)
+            .join(ServiceTeam, Appointment.service_team_id == ServiceTeam.id)
+            .join(ServiceType, BookingRequest.service_type_id == ServiceType.id)
+            .where(Appointment.scheduled_start >= start_of_day, Appointment.status != "cancelled")
+            .order_by(Appointment.scheduled_start.asc())
+            .limit(6)
+        ).all()
+    )
+    appointment_status_counts = {
+        appointment_status: session.scalar(
+            select(func.count()).select_from(Appointment).where(Appointment.status == appointment_status)
+        ) or 0
+        for appointment_status in ("confirmed", "en_route", "in_progress", "completed", "cancelled")
+    }
     return templates.TemplateResponse(
         request,
         "staff_dashboard.html",
         {
             "metrics": metrics,
             "today": today,
+            "upcoming_appointments": upcoming_appointments,
+            "appointment_status_counts": appointment_status_counts,
             "automatic_delivery_enabled": automatic_delivery_enabled(),
         },
     )
@@ -252,13 +306,20 @@ def staff_dashboard(request: Request, session: Session = Depends(get_session)) -
 def staff_request_queue(
     request: Request,
     reviewed: str | None = None,
+    q: str = "",
+    preferred_date: date | None = None,
     session: Session = Depends(get_session),
 ) -> HTMLResponse:
     """Render the loopback-only read-only queue for pending staff review."""
     return templates.TemplateResponse(
         request,
         "staff_requests.html",
-        {"requests": pending_staff_requests(session), "reviewed": reviewed},
+        {
+            "requests": pending_staff_requests(session, search=q, preferred_date=preferred_date),
+            "reviewed": reviewed,
+            "q": q,
+            "preferred_date_filter": preferred_date,
+        },
     )
 
 
@@ -293,14 +354,19 @@ def dispatch_board(
     """Render a small local two-team dispatcher board for one selected day."""
     approved_requests = approved_unscheduled_requests(session)
     board_date = selected_date or (approved_requests[0][0].preferred_date if approved_requests else date.today())
+    assignable_requests = [row for row in approved_requests if row[0].preferred_date == board_date]
     return templates.TemplateResponse(
         request,
         "dispatch_board.html",
         {
             "teams": active_service_teams(session),
             "approved_requests": approved_requests,
+            "assignable_requests": assignable_requests,
             "appointments": dispatch_appointments(session, board_date),
             "selected_date": board_date,
+            "previous_date": board_date - timedelta(days=1),
+            "next_date": board_date + timedelta(days=1),
+            "today": datetime.now(MANILA_TIMEZONE).date(),
             "slots": [(key, label) for key, (label, _, _) in DISPATCH_SLOTS.items()],
             "scheduled": scheduled,
             "job_updated": job_updated,

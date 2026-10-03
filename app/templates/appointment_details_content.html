@@ -19,7 +19,7 @@
 <section class="detail-section">
   <h2>Reschedule appointment</h2>
   <p class="muted">Move this confirmed job to the customer’s preferred date or another open team block.</p>
-  <form class="reschedule-form" method="post" action="{{ app_path('/staff/appointments/' ~ appointment.id ~ '/reschedule') }}">
+    <form class="reschedule-form" method="post" action="{{ app_path('/staff/appointments/' ~ appointment.id ~ '/reschedule') }}" data-confirm="Reschedule this appointment? The previous assignment will be preserved in workflow history.">
     <label>Date
       <input name="appointment_date" type="date" value="{{ booking.preferred_date }}" required>
     </label>
@@ -39,9 +39,9 @@
   <h2>Job progress</h2>
   <p class="job-status">Current status: <strong>{{ appointment.status.replace('_', ' ') }}</strong></p>
   {% if available_status_updates %}
-    <form class="progress-actions" method="post" action="{{ app_path('/staff/appointments/' ~ appointment.id ~ '/status') }}">
+    <form class="progress-actions" method="post" action="{{ app_path('/staff/appointments/' ~ appointment.id ~ '/status') }}" data-lock-submit>
       {% for next_status in available_status_updates %}
-        <button type="submit" name="next_status" value="{{ next_status }}"{% if next_status == 'cancelled' %} class="button-secondary"{% endif %}>
+        <button type="submit" name="next_status" value="{{ next_status }}"{% if next_status == 'cancelled' %} class="button-secondary" onclick="return confirm('Cancel this appointment? This action will be recorded in workflow history.')"{% endif %}>
           {% if next_status == 'en_route' %}Mark en route{% elif next_status == 'in_progress' %}Mark work in progress{% elif next_status == 'completed' %}Mark completed{% else %}Cancel appointment{% endif %}
         </button>
       {% endfor %}

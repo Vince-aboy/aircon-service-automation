@@ -8,6 +8,17 @@
       <p class="intro">Read-only queue. Review requests here before any appointment is created.</p>
     </header>
 
+    <form class="request-filter-form" method="get" action="{{ app_path('/staff/requests') }}">
+      <label>Search requests
+        <input name="q" type="search" value="{{ q }}" placeholder="Reference, name, phone, email, or address">
+      </label>
+      <label>Preferred date
+        <input name="preferred_date" type="date" value="{{ preferred_date_filter or '' }}">
+      </label>
+      <button type="submit">Filter</button>
+      {% if q or preferred_date_filter %}<a class="button-link button-secondary" href="{{ app_path('/staff/requests') }}">Clear</a>{% endif %}
+    </form>
+
     {% if reviewed == "approved_for_scheduling" %}
       <p class="staff-feedback">Request approved for scheduling. No appointment or message was created.</p>
       <a class="button-link" href="{{ app_path('/staff/dispatch') }}">Continue to scheduling</a>
@@ -35,9 +46,9 @@
               <div><dt>Service</dt><dd>{{ service_type.name }}</dd></div>
               <div><dt>Preferred date</dt><dd>{{ booking.preferred_date }}</dd></div>
             </dl>
-            <form class="review-actions" method="post" action="{{ app_path('/staff/requests/' ~ booking.id ~ '/review') }}">
+            <form class="review-actions" method="post" action="{{ app_path('/staff/requests/' ~ booking.id ~ '/review') }}" data-lock-submit>
               <button type="submit" name="decision" value="approve">Approve for scheduling</button>
-              <button class="button-secondary" type="submit" name="decision" value="decline">Decline request</button>
+              <button class="button-secondary" type="submit" name="decision" value="decline" onclick="return confirm('Decline {{ booking.reference_code }}? This request will leave the pending queue.')">Decline request</button>
             </form>
           </article>
         {% endfor %}

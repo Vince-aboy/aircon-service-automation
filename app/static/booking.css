@@ -191,6 +191,29 @@ button:hover, .button-link:hover { background: #107f95; }
 .health-list dt { color: #8fa5b7; font-size: 0.76rem; }
 .health-list dd { color: #eaf1fa; font-size: 0.8rem; font-weight: 750; margin: 0; }
 .panel-link { color: #69daec; font-size: 0.78rem; font-weight: 700; text-decoration: none; }
+.request-filter-form { align-items: end; display: grid; gap: 0.75rem; grid-template-columns: minmax(240px, 1fr) minmax(170px, 0.35fr) auto auto; margin: 1.25rem 0; }
+.request-filter-form button, .request-filter-form .button-link { margin: 0; }
+.day-navigation { display: flex; flex-wrap: wrap; gap: 0.55rem; margin: -0.65rem 0 1.25rem; }
+.day-navigation a { background: #1b2832; border: 1px solid #334957; border-radius: 999px; color: #9eddea; font-size: 0.75rem; font-weight: 700; padding: 0.42rem 0.7rem; text-decoration: none; }
+.day-navigation a:hover { border-color: #2ab8cf; color: #eafcff; }
+.slot-note { color: #758b9b; display: block; font-size: 0.7rem; line-height: 1.35; margin-top: 0.45rem; }
+.dashboard-grid-wide { grid-template-columns: minmax(0, 1.5fr) minmax(260px, 0.55fr); }
+.upcoming-list { display: grid; gap: 0.55rem; margin-top: 1rem; }
+.upcoming-list a { align-items: center; background: #1b2832; border: 1px solid #304553; border-radius: 10px; color: #edf4fc; display: grid; gap: 0.8rem; grid-template-columns: 5rem 1fr auto; padding: 0.72rem 0.8rem; text-decoration: none; }
+.upcoming-list a:hover { border-color: #2ab8cf; }
+.upcoming-list time, .upcoming-list time strong, .upcoming-list time span, .upcoming-list div strong, .upcoming-list div span { display: block; }
+.upcoming-list time { border-right: 1px solid #38505e; }
+.upcoming-list time strong { color: #70deef; font-size: 0.8rem; }
+.upcoming-list time span, .upcoming-list div span { color: #8fa5b7; font-size: 0.7rem; margin-top: 0.12rem; }
+.upcoming-list div strong { font-size: 0.82rem; }
+.status-summary { display: grid; gap: 0.55rem; margin: 1rem 0 0; }
+.status-summary div { align-items: center; background: #1b2832; border-radius: 8px; display: flex; justify-content: space-between; padding: 0.62rem 0.75rem; }
+.status-summary dt { color: #9fb1bf; font-size: 0.76rem; }
+.status-summary dd { color: #72dced; font-size: 0.88rem; font-weight: 800; margin: 0; }
+.admin-error-card { background: #151f28; border: 1px solid #344a59; border-radius: 16px; margin: clamp(2rem, 8vh, 6rem) auto; max-width: 680px; padding: clamp(1.5rem, 4vw, 2.5rem); }
+.admin-error-card h1 { color: #ffb0b0; font-size: 3.5rem; margin-bottom: 0.35rem; }
+.admin-error-card h2 { font-size: 1.25rem; line-height: 1.45; }
+form.is-submitting { opacity: 0.65; pointer-events: none; }
 
 /* Phase roadmap: local documentation dashboard */
 .roadmap-page { background: #071018; overflow-x: hidden; }
@@ -297,4 +320,7 @@ button:hover, .button-link:hover { background: #107f95; }
   .dashboard-actions { display: grid; }
   .metric-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .dashboard-grid { grid-template-columns: 1fr; }
+  .request-filter-form { grid-template-columns: 1fr; }
+  .upcoming-list a { grid-template-columns: 4.5rem 1fr; }
+  .upcoming-list .appointment-status { grid-column: 2; }
 }

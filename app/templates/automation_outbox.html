@@ -36,7 +36,7 @@
       {% if not is_live_mode() %}<form method="post" action="{{ app_path('/staff/automation/process') }}">
         <button type="submit">Run local automation simulation</button>
       </form>{% endif %}
-      <form method="post" action="{{ app_path('/staff/automation/push') }}">
+      <form method="post" action="{{ app_path('/staff/automation/push') }}" data-confirm="Send the next pending event to owner reporting now?">
         <button class="button-secondary" type="submit">Send one event to owner reporting</button>
       </form>
       <form method="post" action="{{ app_path('/staff/automation/worker-check') }}">

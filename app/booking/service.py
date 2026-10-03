@@ -266,8 +266,10 @@ def n8n_event_payload(session: Session, event: NotificationOutbox) -> dict[str, 
     if customer is None or address is None or service_type is None:
         raise ValueError("the outbox booking records are incomplete")
 
-    scheduled_start = appointment.scheduled_start.isoformat() if appointment else None
-    scheduled_end = appointment.scheduled_end.isoformat() if appointment else None
+    local_scheduled_start = appointment.scheduled_start.astimezone(MANILA_TIMEZONE) if appointment else None
+    local_scheduled_end = appointment.scheduled_end.astimezone(MANILA_TIMEZONE) if appointment else None
+    scheduled_start = local_scheduled_start.isoformat() if local_scheduled_start else None
+    scheduled_end = local_scheduled_end.isoformat() if local_scheduled_end else None
     live_mode = is_live_mode()
     occurred_at = event.created_at or datetime.now(UTC)
     local_occurred_at = occurred_at.astimezone(MANILA_TIMEZONE)
@@ -306,11 +308,11 @@ def n8n_event_payload(session: Session, event: NotificationOutbox) -> dict[str, 
         },
         "schedule": {
             "preferred_date": booking.preferred_date.isoformat(),
-            "scheduled_date": appointment.scheduled_start.date().isoformat() if appointment else None,
+            "scheduled_date": local_scheduled_start.date().isoformat() if local_scheduled_start else None,
             "preferred_window": booking.preferred_window,
             "scheduled_start": scheduled_start,
             "scheduled_end": scheduled_end,
-            "time_window": f"{appointment.scheduled_start:%H:%M}-{appointment.scheduled_end:%H:%M}" if appointment else None,
+            "time_window": f"{local_scheduled_start:%H:%M}-{local_scheduled_end:%H:%M}" if local_scheduled_start and local_scheduled_end else None,
             "team": team.name if team else None,
             "technician": technician.display_name if technician else None,
         },
@@ -541,6 +543,8 @@ def schedule_approved_booking(
         raise ValueError("the booking request does not exist")
     if booking.status != "approved_for_scheduling":
         raise ValueError("only approved requests can be scheduled")
+    if appointment_date < datetime.now(MANILA_TIMEZONE).date():
+        raise ValueError("appointments cannot be scheduled in the past")
     if appointment_date != booking.preferred_date:
         raise ValueError(f"choose the customer's preferred date: {booking.preferred_date}")
 
@@ -628,6 +632,8 @@ def reschedule_appointment(
         raise ValueError("the scheduled appointment does not exist")
     if appointment.status != "confirmed":
         raise ValueError("only confirmed appointments can be rescheduled")
+    if appointment_date < datetime.now(MANILA_TIMEZONE).date():
+        raise ValueError("appointments cannot be rescheduled into the past")
     if slot_key not in DISPATCH_SLOTS:
         raise ValueError("the selected time block is invalid")
 
