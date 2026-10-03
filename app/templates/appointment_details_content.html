@@ -15,6 +15,26 @@
   </dl>
 </section>
 
+{% if appointment.status == 'confirmed' %}
+<section class="detail-section">
+  <h2>Reschedule appointment</h2>
+  <p class="muted">Move this confirmed job to the customer’s preferred date or another open team block.</p>
+  <form class="reschedule-form" method="post" action="{{ app_path('/staff/appointments/' ~ appointment.id ~ '/reschedule') }}">
+    <label>Date
+      <input name="appointment_date" type="date" value="{{ booking.preferred_date }}" required>
+    </label>
+    <label>Time block
+      <select name="slot_key">
+        {% for slot_key, slot_label in [('09:00', '09:00-11:00'), ('11:30', '11:30-13:30'), ('14:00', '14:00-16:00')] %}
+          <option value="{{ slot_key }}"{% if scheduled_time.startswith(slot_key) %} selected{% endif %}>{{ slot_label }}</option>
+        {% endfor %}
+      </select>
+    </label>
+    <button type="submit">Reschedule appointment</button>
+  </form>
+</section>
+{% endif %}
+
 <section class="detail-section">
   <h2>Job progress</h2>
   <p class="job-status">Current status: <strong>{{ appointment.status.replace('_', ' ') }}</strong></p>

@@ -18,7 +18,7 @@ from sqlalchemy import select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
-from app.booking.service import APPOINTMENT_STATUS_TRANSITIONS, DISPATCH_SLOTS, MANILA_TIMEZONE, automatic_delivery_enabled, complete_appointment_shortcut, create_pending_booking, display_address, process_pending_simulated_events, push_one_pending_event_to_n8n, review_booking_request, run_due_delivery_worker_check, schedule_approved_booking, update_appointment_status
+from app.booking.service import APPOINTMENT_STATUS_TRANSITIONS, DISPATCH_SLOTS, MANILA_TIMEZONE, automatic_delivery_enabled, complete_appointment_shortcut, create_pending_booking, display_address, process_pending_simulated_events, push_one_pending_event_to_n8n, reschedule_appointment, review_booking_request, run_due_delivery_worker_check, schedule_approved_booking, update_appointment_status
 from app.booking.validation import BookingRequestInput
 from app.database.models import Address, Appointment, AppointmentStatusHistory, BookingRequest, BookingRequestStatusHistory, Customer, NotificationOutbox, ServiceTeam, ServiceType
 from app.database.session import create_database_engine
@@ -316,6 +316,32 @@ def update_scheduled_job_status(
     selected_date = appointment.scheduled_start.astimezone(MANILA_TIMEZONE).date()
     return RedirectResponse(
         url=app_path(f"/staff/dispatch?selected_date={selected_date}&job_updated={appointment.status}"),
+        status_code=status.HTTP_303_SEE_OTHER,
+    )
+
+
+@app.post("/staff/appointments/{appointment_id}/reschedule")
+def reschedule_scheduled_job(
+    appointment_id: int,
+    appointment_date: date = Form(),
+    slot_key: str = Form(),
+    session: Session = Depends(get_session),
+) -> RedirectResponse:
+    """Move a confirmed appointment to another open team time block."""
+    try:
+        appointment = reschedule_appointment(
+            session,
+            appointment_id=appointment_id,
+            appointment_date=appointment_date,
+            slot_key=slot_key,
+        )
+        session.commit()
+    except ValueError as error:
+        session.rollback()
+        raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_CONTENT, detail=str(error)) from error
+    selected_date = appointment.scheduled_start.astimezone(MANILA_TIMEZONE).date()
+    return RedirectResponse(
+        url=app_path(f"/staff/dispatch?selected_date={selected_date}&scheduled=1"),
         status_code=status.HTTP_303_SEE_OTHER,
     )
 

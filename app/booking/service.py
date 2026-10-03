@@ -541,6 +541,8 @@ def schedule_approved_booking(
         raise ValueError("the booking request does not exist")
     if booking.status != "approved_for_scheduling":
         raise ValueError("only approved requests can be scheduled")
+    if appointment_date != booking.preferred_date:
+        raise ValueError(f"choose the customer's preferred date: {booking.preferred_date}")
 
     team = session.get(ServiceTeam, service_team_id)
     if team is None or not team.active:
@@ -608,6 +610,66 @@ def schedule_approved_booking(
         customer=customer,
         event_type="appointment_scheduled",
         note=f"Appointment scheduled for {DISPATCH_SLOTS[slot_key][0]}; simulated only.",
+    )
+    session.flush()
+    return appointment
+
+
+def reschedule_appointment(
+    session: Session,
+    *,
+    appointment_id: int,
+    appointment_date: date,
+    slot_key: str,
+) -> Appointment:
+    """Move a confirmed appointment while preserving its audit trail."""
+    appointment = session.get(Appointment, appointment_id)
+    if appointment is None:
+        raise ValueError("the scheduled appointment does not exist")
+    if appointment.status != "confirmed":
+        raise ValueError("only confirmed appointments can be rescheduled")
+    if slot_key not in DISPATCH_SLOTS:
+        raise ValueError("the selected time block is invalid")
+
+    _, start_time, end_time = DISPATCH_SLOTS[slot_key]
+    scheduled_start = datetime.combine(appointment_date, start_time, tzinfo=MANILA_TIMEZONE)
+    scheduled_end = datetime.combine(appointment_date, end_time, tzinfo=MANILA_TIMEZONE)
+    existing = session.scalar(
+        select(Appointment).where(
+            Appointment.service_team_id == appointment.service_team_id,
+            Appointment.scheduled_start == scheduled_start,
+            Appointment.id != appointment.id,
+        )
+    )
+    if existing is not None:
+        raise ValueError("that team time block is already assigned")
+
+    previous_start = appointment.scheduled_start.astimezone(MANILA_TIMEZONE)
+    previous_end = appointment.scheduled_end.astimezone(MANILA_TIMEZONE)
+    appointment.scheduled_start = scheduled_start
+    appointment.scheduled_end = scheduled_end
+    session.add(
+        AppointmentStatusHistory(
+            appointment_id=appointment.id,
+            from_status="confirmed",
+            to_status="confirmed",
+            actor_type="local_staff",
+            note=(
+                f"Rescheduled from {previous_start:%Y-%m-%d %H:%M}-{previous_end:%H:%M} "
+                f"to {scheduled_start:%Y-%m-%d %H:%M}-{scheduled_end:%H:%M}; no customer message sent."
+            ),
+        )
+    )
+    booking = session.get(BookingRequest, appointment.booking_request_id)
+    customer = session.get(Customer, booking.customer_id) if booking else None
+    if booking is None or customer is None:
+        raise ValueError("the appointment booking records are incomplete")
+    record_simulated_event(
+        session,
+        booking=booking,
+        customer=customer,
+        event_type="appointment_rescheduled",
+        note="Appointment rescheduled in the local dispatcher board; no customer message sent.",
     )
     session.flush()
     return appointment
