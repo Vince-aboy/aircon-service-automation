@@ -70,7 +70,12 @@ def _staff_credentials_valid(request: Request) -> bool:
 @app.middleware("http")
 async def protect_staff_routes(request: Request, call_next: Any) -> Any:
     """Require Basic Auth for owner/staff pages when live mode is enabled."""
-    if is_live_mode() and request.url.path.startswith(f"{PUBLIC_BASE_PATH}/staff"):
+    staff_paths = ("/staff", "/staff/")
+    prefixed_staff_path = f"{PUBLIC_BASE_PATH}/staff" if PUBLIC_BASE_PATH else ""
+    is_staff_path = request.url.path == "/staff" or request.url.path.startswith(staff_paths[1]) or (
+        prefixed_staff_path and (request.url.path == prefixed_staff_path or request.url.path.startswith(f"{prefixed_staff_path}/"))
+    )
+    if is_live_mode() and is_staff_path:
         if not _staff_credentials_valid(request):
             return JSONResponse(
                 {"detail": "Staff authentication is required."},
