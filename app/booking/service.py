@@ -278,6 +278,7 @@ def n8n_event_payload(session: Session, event: NotificationOutbox) -> dict[str, 
         "event_id": f"outbox-{event.id}" if live_mode else f"synthetic-outbox-{event.id}",
         "idempotency_key": outbox_idempotency_key(event),
         "event_type": event.event_type,
+        "note": str(event.payload.get("note", "")),
         # Keep the legacy outbox status while consumers migrate to the nested
         # delivery object.
         "status": event.status,

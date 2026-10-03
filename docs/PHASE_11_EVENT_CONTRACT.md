@@ -29,6 +29,7 @@ The owner-reporting event should contain the following shape:
   "event_id": "outbox-123",
   "idempotency_key": "outbox-123",
   "event_type": "appointment_scheduled",
+  "note": "Appointment scheduled in the local dispatcher board; no customer message sent.",
   "occurred_at": "2026-10-03T09:00:00+08:00",
   "booking_reference": "AC-20261003-EXAMPLE",
   "booking_status": "scheduled",
@@ -77,6 +78,7 @@ The owner-reporting event should contain the following shape:
 | `event_id` | Notification outbox ID | Stable identifier for the event. |
 | `idempotency_key` | Outbox ID | Must remain stable across retries. |
 | `event_type` | Outbox event type | Use the existing lifecycle event names. |
+| `note` | Outbox event payload | Human-readable operator context for append-only service history. |
 | `occurred_at` | Event creation/history timestamp | Use ISO 8601 with the project timezone. |
 | `booking_reference` | Booking request | Owner-facing reference code. |
 | `booking_status` | Booking request | Current request status. |
