@@ -1,5 +1,13 @@
 # Balik-Lamig: Aircon Service Automation
 
+## Current operational snapshot — 2026-10-03
+
+The live VPS deployment is operating as the owner/dispatcher workspace at `https://vinceaboy.com/balik-lamig/staff`. The dashboard label is `Boss EMER`. The application includes dashboard counts, request review, dispatcher scheduling, appointment and customer directories, workforce management, audit history, safe rescheduling/cancellation controls, owner-reporting automation, and PostgreSQL as the source of truth.
+
+The active technician roster contains the 16 owner-provided employees: Pedro Ecleo, Brian Elipides, John Harris, Jestony Rollon, Snowdon, Mavien, Richard, Jommel, Marlon, Aweng, Robert, Ken, Mark, Joeking, Dexter, and Clifford. Fictional technicians were retired after existing appointments were transferred to the real team leads.
+
+For a supervised demonstration only, staff authentication is temporarily disabled with `AIRCON_STAFF_AUTH_ENABLED=false`. Re-enable it immediately afterward with `true` and restart the service. The default remains secure/authenticated.
+
 A controlled aircon-service workflow with a safe local prototype mode and an explicitly enabled live owner-operations mode. It demonstrates how a service request can move from staff review through team scheduling, job progress, a durable outbox, and protected n8n reporting.
 
 > **Safety boundary:** Live mode is opt-in, staff routes require credentials, customer messaging and payments remain disabled, and PostgreSQL remains authoritative.
@@ -67,7 +75,7 @@ See [05_RUNBOOK.md](05_RUNBOOK.md) for the controlled local workflow and credent
 .\.venv\Scripts\pytest.exe -q
 ```
 
-Latest local verification: **37 passed, 5 skipped**. Skipped integration tests require a terminal-only database configuration.
+Latest local verification: **44 passed, 5 skipped**. Skipped integration tests require a terminal-only database configuration.
 
 ## Project documentation
 

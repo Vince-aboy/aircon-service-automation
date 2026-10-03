@@ -8,6 +8,11 @@
 - Avoid temporary notes or noisy task details here.
 
 ## Entries
+
+- `2026-10-03` - PostgreSQL remains authoritative. The active roster is the 16 owner-provided technicians, with Pedro Ecleo and Brian Elipides as current Team A and Team B leads.
+- `2026-10-03` - The technician seed is idempotent and safely retires legacy fictional technicians by transferring their appointments first, deactivating them, and removing memberships. It never deletes appointment history or customer data.
+- `2026-10-03` - `AIRCON_STAFF_DISPLAY_NAME` controls the dashboard label independently from the authentication username.
+- `2026-10-03` - `AIRCON_STAFF_AUTH_ENABLED` defaults to `true`; `false` is allowed only for a short supervised demonstration because it exposes staff records and controls publicly.
 - `2026-09-30` - Field-work progress uses the controlled local sequence confirmed -> en route -> in progress -> completed. Cancelled may be selected before completion. Completed and cancelled appointments are final. Each transition must create an `appointment_status_history` audit row and must not send a customer message.
 - `2026-09-30` - The first n8n workflow is a draft synthetic-event processor only. It must validate `synthetic_only` before marking an event processed; non-synthetic events are rejected. Keep it unpublished and disconnected until the application-to-n8n transport, VPS security, authentication, and real-notification approvals are separately reviewed.
 - `2026-09-30` - Start scheduling with two fictional deployable teams, Team A and Team B. Use three planned two-hour blocks per team (09:00-11:00, 11:30-13:30, 14:00-16:00), with 16:00-17:00 held out of normal advance booking. Customers request a date; staff later assigns an approved request to a team and exact block. See `docs/SCHEDULING_RESEARCH_AND_DEFAULTS.md`.

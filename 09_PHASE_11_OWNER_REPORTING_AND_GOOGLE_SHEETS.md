@@ -99,4 +99,4 @@ Balik-Lamig event -> validate synthetic event -> normalize data
 
 ## Status
 
-Application payload enrichment and workflow design are complete. No Google Sheets connection, credential, or n8n workflow change has been made yet.
+Application payload enrichment and workflow design are complete. The VPS worker and owner-reporting Google Sheets path are operational for the current deployment; PostgreSQL remains authoritative and no customer messaging or payment workflow is enabled. The operations dashboard now exposes automation health, pending/failed event counts, activity history, and safe requeue for failed events.

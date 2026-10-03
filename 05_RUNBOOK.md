@@ -18,6 +18,19 @@
 12. Update `00_HANDOFF.md` at the end of the session.
 
 ## Entries
+
+- VPS deploy and restart
+  - Pull reviewed code: `cd /home/aboy/apps/balik-lamig && git pull --ff-only origin main`
+  - Restart after code or environment changes: `sudo systemctl restart balik-lamig`
+  - Check health: `sudo systemctl status balik-lamig --no-pager -l`
+
+- VPS SQL roster synchronization
+  - Run the idempotent roster/legacy-cleanup seed through the protected systemd environment: `sudo bash -c 'set -a; . /etc/balik-lamig/balik-lamig.env; set +a; cd /home/aboy/apps/balik-lamig; .venv/bin/python -m app.database.seed'`
+  - Current result: `0 service type(s), 0 technician(s), 0 team(s), and 0 team membership(s) added.` Existing appointments remain preserved while legacy fictional assignments are transferred to real leads.
+
+- Temporary supervised demonstration access
+  - Set `AIRCON_STAFF_AUTH_ENABLED=false` only in `/etc/balik-lamig/balik-lamig.env`, restart, and supervise the session.
+  - Restore `AIRCON_STAFF_AUTH_ENABLED=true` and restart immediately afterward.
 - Local booking-page preview
   - PASTE THIS — WINDOWS POWERSHELL
   - Expected prompt: `PS D:\0.1_NEW_PROFILE\1. PROJECTS\0009_AIRCON_SERVICE_AUTOMATION>`

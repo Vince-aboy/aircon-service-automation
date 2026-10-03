@@ -1,5 +1,17 @@
 # Handoff
 
+## Current live snapshot — 2026-10-03
+
+- The owner operations command center is deployed at `https://vinceaboy.com/balik-lamig/staff`.
+- The dashboard display name is `Boss EMER`, separate from the staff login username.
+- The workspace includes dashboard, service requests, team schedule, appointments, customers, teams/technicians, automation, activity history, and settings.
+- Safeguards include date-aware assignment, occupied-block protection, past-date protection, team/date/time rescheduling, required cancellation reasons, internal notes, audit history, safe deactivation, membership removal, and failed outbox-event requeue.
+- The live SQL roster contains all 16 owner-provided employees. Fictional technicians were retired after existing appointments were transferred to the real Team A/Team B leads.
+- Current leads are Pedro Ecleo for Team A and Brian Elipides for Team B. The other roster members remain active and can be assigned later.
+- PostgreSQL remains authoritative; Google Sheets is an owner-reporting view. Customer messaging and payments remain disabled.
+- Staff authentication is temporarily disabled for a supervised demonstration via `AIRCON_STAFF_AUTH_ENABLED=false`; restore `true` immediately afterward.
+- Latest local verification: `44 passed, 5 skipped`.
+
 ## Current state
 - Status: Phase 6 synthetic n8n webhook bridge complete and manually verified; all external messaging remains disabled
 - Latest evidence: synthetic event `AC-20260930-564E26DF` moved from local SQL outbox `pending` to `recorded` after authenticated delivery to the n8n test webhook. The `synthetic_only = false` rejection path was also verified.

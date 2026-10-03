@@ -10,6 +10,11 @@
 
 ## Release planning
 
+- Resolved 2026-10-03: Added and synchronized the 16-person owner employee roster in PostgreSQL; retired fictional technicians without deleting appointment history.
+- Resolved 2026-10-03: Completed the owner operations workspace and dispatcher controls; local verification is `44 passed, 5 skipped`.
+- Open 2026-10-03: Assign the remaining active technicians to Team A or Team B as the owner decides. Only Pedro Ecleo and Brian Elipides are currently designated team leads.
+- Open 2026-10-03: Re-enable staff authentication after the supervised demonstration by restoring `AIRCON_STAFF_AUTH_ENABLED=true` and restarting the service.
+
 - [UNCONFIRMED] Confirm the current VPS security, n8n, and service state with a read-only audit immediately before any project connection or deployment; existing findings are historical.
 - Resolved 2026-10-01: Created and pushed the public portfolio repository `Vince-aboy/aircon-service-automation` at commit `9d02f79`.
 - Resolved 2026-10-01: Deployed and verified synthetic-only staging at `https://vinceaboy.com/balik-lamig/`; the n8n production webhook and one-minute VPS worker automatically processed a fictional outbox event.

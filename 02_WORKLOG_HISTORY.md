@@ -1,5 +1,13 @@
 # Worklog History
 
+- `2026-10-03`
+  - Completed the owner operations command center: dashboard, request review, daily schedule, appointment directory, customer records, team/technician management, activity history, automation monitor, and settings.
+  - Added dispatcher safeguards for future dates, occupied blocks, team/date/time rescheduling, cancellation reasons, internal notes, safe deactivation, membership removal, and failed-event requeue.
+  - Added and synchronized the 16-person owner roster: Pedro Ecleo, Brian Elipides, John Harris, Jestony Rollon, Snowdon, Mavien, Richard, Jommel, Marlon, Aweng, Robert, Ken, Mark, Joeking, Dexter, Clifford.
+  - Applied the VPS SQL seed successfully: 0 new service types, 0 new technicians, 0 new teams, and 0 new memberships; the seed also retired fictional technicians and transferred their appointments to the real team leads.
+  - Added the temporary supervised-demo auth switch and changed the dashboard label to `Boss EMER` without changing the login username.
+  - Verification: `44 passed, 5 skipped`.
+
 - 2026-10-01: Completed and verified VPS staging automation. Published the protected n8n production webhook, installed `balik-lamig-worker.service` with a one-minute systemd timer, enabled synthetic-only automatic delivery, and confirmed a fictional scheduled event moved from `pending` to `recorded` with one attempt. Updated the dashboard wording and synchronized the result into the project Markdown record. No customer message was sent.
 
 ## Purpose

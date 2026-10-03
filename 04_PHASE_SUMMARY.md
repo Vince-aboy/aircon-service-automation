@@ -4,6 +4,8 @@
 - Summarize completed milestones and major phase outcomes.
 
 ## Entries
+- `2026-10-03` - Owner operations admin workspace complete: dashboard, request review, schedule, appointments, customers, teams/technicians, automation, activity history, settings, rescheduling, cancellation reasons, internal notes, and recovery controls. Verification: `44 passed, 5 skipped`.
+- `2026-10-03` - Live SQL roster synchronization complete: all 16 owner employees exist, Team A/B leads are Pedro Ecleo/Brian Elipides, and fictional technician assignments were retired without deleting appointment history.
 - `2026-09-30` - Phase 5 complete: the local dispatcher job-detail view supports controlled field-work progress from confirmed through en route and in progress to completed, with cancellation before completion. Each change is saved to appointment audit history and was manually verified in the loopback board. No messages, external automation, or public access were introduced.
 - `2026-09-30` - Phase 6 n8n logic test complete: created a draft synthetic-event processor on the existing VPS n8n instance. It validates the synthetic-only flag and separates processed and rejected events. The workflow is unpublished and has no external service connections; application-to-n8n integration remains a later gated step.
 - `2026-09-30` - Phase 6 webhook transport test complete: a separate unpublished n8n draft received a synthetic POST through its test URL, validated it, and marked it processed with a Philippine-time timestamp. No application, customer, or external messaging connection was enabled.

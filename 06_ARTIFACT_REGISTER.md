@@ -62,3 +62,9 @@
 - `docs/BOOKING_UX_RESEARCH.md` - research-backed CTA, form-scope, and service-request-flow decision
 - `docs/SCHEDULING_RESEARCH_AND_DEFAULTS.md` - researched two-team scheduling model and deliberately deferred scope
 - `tests/test_booking_page.py` - isolated booking-form/receipt behavior tests
+- `app/database/seed.py` - idempotent 16-person owner roster seed and safe fictional-technician cleanup
+- `app/templates/staff_dashboard.html` - owner operations command center
+- `app/templates/appointment_directory.html` and `app/templates/customer_directory.html` - operational records directories
+- `app/templates/team_directory.html` - active workforce/team management
+- `app/templates/activity_history.html` and `app/templates/staff_settings.html` - audit and deployment views
+- `docs/SQL_LIVE_SYNC_RECORD.md` - applied VPS roster synchronization evidence

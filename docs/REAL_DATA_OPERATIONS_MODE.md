@@ -18,6 +18,29 @@ The staff username and password must never be committed to Git or sent through c
 
 For a short supervised demonstration only, `AIRCON_STAFF_AUTH_ENABLED=false` bypasses staff authentication. This exposes customer records and operational controls to anyone who knows the URL. Restore it to `true` and restart the service immediately afterward.
 
+## Current employee roster
+
+The active owner-provided roster synchronized to PostgreSQL contains exactly these 16 technicians:
+
+- Pedro Ecleo — Team A lead
+- Brian Elipides — Team B lead
+- John Harris
+- Jestony Rollon
+- Snowdon
+- Mavien
+- Richard
+- Jommel
+- Marlon
+- Aweng
+- Robert
+- Ken
+- Mark
+- Joeking
+- Dexter
+- Clifford
+
+The earlier fictional technicians were retired from the active directory. Their historical appointments were preserved and transferred to the real lead for their existing team.
+
 ## Data handling
 
 - PostgreSQL remains the source of truth.
