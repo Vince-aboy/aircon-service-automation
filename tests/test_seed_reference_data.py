@@ -9,13 +9,13 @@ def test_seed_service_types_are_fictional_reference_options() -> None:
     )
 
 
-def test_seed_technicians_are_explicitly_fictional() -> None:
-    assert len(TECHNICIAN_NAMES) == 2
-    assert all("(fictional)" in name for name in TECHNICIAN_NAMES)
+def test_seed_technicians_match_the_owner_employee_roster() -> None:
+    assert len(TECHNICIAN_NAMES) == 16
+    assert TECHNICIAN_NAMES[:3] == ("Pedro Ecleo", "Brian Elipides", "John Harris")
 
 
-def test_seed_teams_have_one_fictional_lead_each() -> None:
+def test_seed_teams_have_one_roster_lead_each() -> None:
     assert TEAM_ASSIGNMENTS == (
-        ("Team A", "Alex Reyes (fictional)"),
-        ("Team B", "Jamie Santos (fictional)"),
+        ("Team A", "Pedro Ecleo"),
+        ("Team B", "Brian Elipides"),
     )

@@ -1,4 +1,4 @@
-"""Idempotent seed command for fictional service-reference data."""
+"""Idempotent seed command for service-reference data."""
 
 from __future__ import annotations
 
@@ -16,18 +16,32 @@ SERVICE_TYPES: tuple[tuple[str, int], ...] = (
 )
 
 TECHNICIAN_NAMES: tuple[str, ...] = (
-    "Alex Reyes (fictional)",
-    "Jamie Santos (fictional)",
+    "Pedro Ecleo",
+    "Brian Elipides",
+    "John Harris",
+    "Jestony Rollon",
+    "Snowdon",
+    "Mavien",
+    "Richard",
+    "Jommel",
+    "Marlon",
+    "Aweng",
+    "Robert",
+    "Ken",
+    "Mark",
+    "Joeking",
+    "Dexter",
+    "Clifford",
 )
 
 TEAM_ASSIGNMENTS: tuple[tuple[str, str], ...] = (
-    ("Team A", "Alex Reyes (fictional)"),
-    ("Team B", "Jamie Santos (fictional)"),
+    ("Team A", "Pedro Ecleo"),
+    ("Team B", "Brian Elipides"),
 )
 
 
 def seed_reference_data(session: Session) -> tuple[int, int, int, int]:
-    """Add missing fictional service, technician, and team reference records."""
+    """Add missing service, technician, and team reference records."""
     added_services = 0
     added_technicians = 0
     added_teams = 0
