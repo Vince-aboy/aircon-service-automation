@@ -71,6 +71,22 @@ def valid_form_data() -> dict[str, str]:
     }
 
 
+def test_staff_dashboard_uses_shared_owner_operations_navigation() -> None:
+    client, session = create_test_client()
+    try:
+        response = client.get("/staff")
+
+        assert response.status_code == 200
+        assert "Operations command center" in response.text
+        assert "Service requests" in response.text
+        assert "Team schedule" in response.text
+        assert "Automation health" in response.text
+        assert "Available teams" in response.text
+    finally:
+        session.close()
+        app.dependency_overrides.clear()
+
+
 def test_booking_page_lists_active_services() -> None:
     client, session = create_test_client()
     try:

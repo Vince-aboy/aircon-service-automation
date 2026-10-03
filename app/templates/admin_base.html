@@ -1,0 +1,50 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{% block title %}Owner Operations{% endblock %} | Balik-Lamig</title>
+  <link rel="stylesheet" href="{{ app_path('/static/booking.css') }}">
+  {% block head %}{% endblock %}
+</head>
+<body class="admin-body">
+  <div class="admin-shell">
+    <aside class="admin-sidebar">
+      <a class="admin-brand" href="{{ app_path('/staff') }}">
+        <span class="admin-brand-mark">BL</span>
+        <span><strong>Balik-Lamig</strong><small>Owner Operations</small></span>
+      </a>
+      <nav class="admin-nav" aria-label="Owner operations">
+        <a{% if request.url.path.endswith('/staff') %} class="active"{% endif %} href="{{ app_path('/staff') }}"><span>⌂</span> Dashboard</a>
+        <a{% if '/staff/requests' in request.url.path %} class="active"{% endif %} href="{{ app_path('/staff/requests') }}"><span>▤</span> Service requests</a>
+        <a{% if '/staff/dispatch' in request.url.path or '/staff/appointments/' in request.url.path %} class="active"{% endif %} href="{{ app_path('/staff/dispatch') }}"><span>▦</span> Team schedule</a>
+        <a{% if '/staff/automation' in request.url.path %} class="active"{% endif %} href="{{ app_path('/staff/automation') }}"><span>↻</span> Automation</a>
+      </nav>
+      <div class="admin-nav-future">
+        <p>Coming next</p>
+        <span>Customers</span>
+        <span>Teams & technicians</span>
+        <span>Activity history</span>
+        <span>Settings</span>
+      </div>
+      <a class="admin-public-link" href="{{ app_path('/') }}" target="_blank" rel="noopener">Open public website ↗</a>
+    </aside>
+    <div class="admin-workspace">
+      <header class="admin-topbar">
+        <div>
+          <span class="live-dot" aria-hidden="true"></span>
+          <strong>{{ operation_mode_label() }}</strong>
+        </div>
+        <div class="admin-operator">
+          <span>{{ manila_now().strftime('%b %d, %Y · %I:%M %p') }} PHT</span>
+          <strong>{{ staff_operator_name() }}</strong>
+        </div>
+      </header>
+      <main class="admin-content">
+        {% block content %}{% endblock %}
+      </main>
+    </div>
+  </div>
+  {% block scripts %}{% endblock %}
+</body>
+</html>

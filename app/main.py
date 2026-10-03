@@ -14,7 +14,7 @@ from fastapi.responses import HTMLResponse, RedirectResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from pydantic import BaseModel, ValidationError
-from sqlalchemy import select
+from sqlalchemy import func, select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
@@ -46,6 +46,8 @@ templates.env.globals["app_path"] = app_path
 templates.env.globals["is_live_mode"] = is_live_mode
 templates.env.globals["address_display"] = display_address
 templates.env.globals["operation_mode_label"] = lambda: "Live owner operations" if is_live_mode() else "Local prototype · synthetic data only"
+templates.env.globals["staff_operator_name"] = lambda: os.getenv("AIRCON_STAFF_USERNAME", "Operator").strip() or "Operator"
+templates.env.globals["manila_now"] = lambda: datetime.now(MANILA_TIMEZONE)
 
 
 def _staff_credentials_valid(request: Request) -> bool:
@@ -203,6 +205,47 @@ def health_check() -> dict[str, str]:
 def booking_form(request: Request, session: Session = Depends(get_session)) -> HTMLResponse:
     """Render the local synthetic-data booking form."""
     return render_booking_form(request, session)
+
+
+@app.get("/staff", response_class=HTMLResponse)
+def staff_dashboard(request: Request, session: Session = Depends(get_session)) -> HTMLResponse:
+    """Render the owner/operator command center."""
+    today = datetime.now(MANILA_TIMEZONE).date()
+    start_of_day = datetime.combine(today, time.min, tzinfo=MANILA_TIMEZONE)
+    end_of_day = datetime.combine(today + timedelta(days=1), time.min, tzinfo=MANILA_TIMEZONE)
+    metrics = {
+        "pending_review": session.scalar(
+            select(func.count()).select_from(BookingRequest).where(BookingRequest.status == "pending_review")
+        ) or 0,
+        "awaiting_assignment": session.scalar(
+            select(func.count()).select_from(BookingRequest).where(BookingRequest.status == "approved_for_scheduling")
+        ) or 0,
+        "today_appointments": session.scalar(
+            select(func.count()).select_from(Appointment).where(
+                Appointment.scheduled_start >= start_of_day,
+                Appointment.scheduled_start < end_of_day,
+                Appointment.status != "cancelled",
+            )
+        ) or 0,
+        "active_teams": session.scalar(
+            select(func.count()).select_from(ServiceTeam).where(ServiceTeam.active.is_(True))
+        ) or 0,
+        "pending_automation": session.scalar(
+            select(func.count()).select_from(NotificationOutbox).where(NotificationOutbox.status == "pending")
+        ) or 0,
+        "failed_automation": session.scalar(
+            select(func.count()).select_from(NotificationOutbox).where(NotificationOutbox.status == "failed")
+        ) or 0,
+    }
+    return templates.TemplateResponse(
+        request,
+        "staff_dashboard.html",
+        {
+            "metrics": metrics,
+            "today": today,
+            "automatic_delivery_enabled": automatic_delivery_enabled(),
+        },
+    )
 
 
 @app.get("/staff/requests", response_class=HTMLResponse)

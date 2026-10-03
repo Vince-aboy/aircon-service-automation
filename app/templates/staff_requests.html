@@ -1,13 +1,7 @@
-<!doctype html>
-<html lang="en">
-<head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Staff Review Queue | Balik-Lamig</title>
-  <link rel="stylesheet" href="{{ app_path('/static/booking.css') }}">
-</head>
-<body>
-  <main class="page-shell staff-page">
+{% extends "admin_base.html" %}
+{% block title %}Service Requests{% endblock %}
+{% block content %}
+  <section class="staff-page">
     <header class="staff-header">
       <p class="eyebrow">{{ operation_mode_label() }}</p>
       <h1>Pending service requests</h1>
@@ -54,6 +48,5 @@
         <p>New service requests will appear here for staff review.</p>
       </section>
     {% endif %}
-  </main>
-</body>
-</html>
+  </section>
+{% endblock %}

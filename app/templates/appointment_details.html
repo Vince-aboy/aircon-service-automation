@@ -1,15 +1,9 @@
-<!doctype html>
-<html lang="en">
-<head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Scheduled Job Details | Balik-Lamig</title>
-  <link rel="stylesheet" href="{{ app_path('/static/booking.css') }}">
-</head>
-<body>
-  <main class="page-shell staff-page">
+{% extends "admin_base.html" %}
+{% block title %}Appointment Details{% endblock %}
+{% block content %}
+  <section class="staff-page">
+    <p class="eyebrow">Scheduled Job Details</p>
     <a class="back-link" href="{{ app_path('/staff/dispatch?selected_date=' ~ appointment.scheduled_start.date()) }}">← Back to team schedule</a>
     {% include "appointment_details_content.html" %}
-  </main>
-</body>
-</html>
+  </section>
+{% endblock %}
