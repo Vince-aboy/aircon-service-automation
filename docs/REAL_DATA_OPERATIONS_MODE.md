@@ -8,11 +8,14 @@ Live owner operations are enabled only when `AIRCON_OPERATION_MODE=live` is set 
 
 ```text
 AIRCON_OPERATION_MODE=live
+AIRCON_STAFF_AUTH_ENABLED=true
 AIRCON_STAFF_USERNAME=<owner username>
 AIRCON_STAFF_PASSWORD=<long random password>
 ```
 
 The staff username and password must never be committed to Git or sent through chat. When live mode is enabled, all `/staff/*` routes require HTTP Basic Auth. If credentials are missing, staff routes fail closed with HTTP 401 rather than becoming public.
+
+For a short supervised demonstration only, `AIRCON_STAFF_AUTH_ENABLED=false` bypasses staff authentication. This exposes customer records and operational controls to anyone who knows the URL. Restore it to `true` and restart the service immediately afterward.
 
 ## Data handling
 

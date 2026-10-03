@@ -20,7 +20,7 @@ from app.booking.service import (
     record_retryable_delivery_failure,
     run_due_delivery_worker_check,
 )
-from app.main import app, get_session
+from app.main import app, get_session, staff_auth_enabled
 
 
 def create_test_client() -> tuple[TestClient, Session]:
@@ -69,6 +69,13 @@ def valid_form_data() -> dict[str, str]:
         "preferred_date": str(date.today() + timedelta(days=1)),
         "aircon_type": "Window Type",
     }
+
+
+def test_staff_authentication_switch_defaults_secure(monkeypatch) -> None:
+    monkeypatch.delenv("AIRCON_STAFF_AUTH_ENABLED", raising=False)
+    assert staff_auth_enabled() is True
+    monkeypatch.setenv("AIRCON_STAFF_AUTH_ENABLED", "false")
+    assert staff_auth_enabled() is False
 
 
 def test_staff_dashboard_uses_shared_owner_operations_navigation() -> None:

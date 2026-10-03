@@ -51,6 +51,11 @@ templates.env.globals["manila_now"] = lambda: datetime.now(MANILA_TIMEZONE)
 templates.env.globals["to_manila"] = lambda value: value.astimezone(MANILA_TIMEZONE)
 
 
+def staff_auth_enabled() -> bool:
+    """Keep staff authentication enabled unless the VPS explicitly disables it."""
+    return os.getenv("AIRCON_STAFF_AUTH_ENABLED", "true").strip().lower() not in {"0", "false", "no", "off"}
+
+
 def _staff_credentials_valid(request: Request) -> bool:
     """Validate environment-backed staff Basic Auth without storing credentials in code."""
     import secrets
@@ -79,7 +84,7 @@ async def protect_staff_routes(request: Request, call_next: Any) -> Any:
     is_staff_path = request.url.path == "/staff" or request.url.path.startswith(staff_paths[1]) or (
         prefixed_staff_path and (request.url.path == prefixed_staff_path or request.url.path.startswith(f"{prefixed_staff_path}/"))
     )
-    if is_live_mode() and is_staff_path:
+    if is_live_mode() and staff_auth_enabled() and is_staff_path:
         if not _staff_credentials_valid(request):
             return JSONResponse(
                 {"detail": "Staff authentication is required."},
@@ -567,6 +572,7 @@ def staff_settings(request: Request) -> HTMLResponse:
         "automatic_delivery": automatic_delivery_enabled(),
         "webhook_configured": bool(os.getenv("AIRCON_N8N_WEBHOOK_URL") and os.getenv("AIRCON_N8N_WEBHOOK_KEY")),
         "staff_auth_configured": bool(os.getenv("AIRCON_STAFF_USERNAME") and os.getenv("AIRCON_STAFF_PASSWORD")),
+        "staff_auth_enabled": staff_auth_enabled(),
     }
     return templates.TemplateResponse(request, "staff_settings.html", {"settings": settings})
 
