@@ -15,6 +15,7 @@
     <p>Status: <strong>{{ status }}</strong>. Staff review is required before any appointment is confirmed.</p>
     <p>{% if is_live_mode() %}Staff review is required before an appointment is confirmed. No payment was collected.{% else %}No real message or appointment has been created.{% endif %}</p>
     <a class="button-link" href="{{ app_path('/book') }}">Submit another service request</a>
+    {% if is_live_mode() %}<a class="button-link button-secondary" href="{{ app_path('/staff/requests') }}" target="_blank" rel="noopener">Open staff review</a>{% endif %}
   </main>
 </body>
 </html>
