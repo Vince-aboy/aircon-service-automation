@@ -46,7 +46,11 @@ templates.env.globals["app_path"] = app_path
 templates.env.globals["is_live_mode"] = is_live_mode
 templates.env.globals["address_display"] = display_address
 templates.env.globals["operation_mode_label"] = lambda: "Live owner operations" if is_live_mode() else "Local prototype · synthetic data only"
-templates.env.globals["staff_operator_name"] = lambda: os.getenv("AIRCON_STAFF_USERNAME", "Operator").strip() or "Operator"
+templates.env.globals["staff_operator_name"] = lambda: (
+    os.getenv("AIRCON_STAFF_DISPLAY_NAME", "").strip()
+    or os.getenv("AIRCON_STAFF_USERNAME", "Operator").strip()
+    or "Operator"
+)
 templates.env.globals["manila_now"] = lambda: datetime.now(MANILA_TIMEZONE)
 templates.env.globals["to_manila"] = lambda value: value.astimezone(MANILA_TIMEZONE)
 

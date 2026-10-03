@@ -9,6 +9,7 @@ Live owner operations are enabled only when `AIRCON_OPERATION_MODE=live` is set 
 ```text
 AIRCON_OPERATION_MODE=live
 AIRCON_STAFF_AUTH_ENABLED=true
+AIRCON_STAFF_DISPLAY_NAME=Boss EMER
 AIRCON_STAFF_USERNAME=<owner username>
 AIRCON_STAFF_PASSWORD=<long random password>
 ```
