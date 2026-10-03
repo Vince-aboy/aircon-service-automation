@@ -9,6 +9,7 @@ import os
 from typing import Any
 
 from fastapi import Depends, FastAPI, Form, HTTPException, Request, status
+from fastapi.responses import JSONResponse
 from fastapi.responses import HTMLResponse, RedirectResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
@@ -21,12 +22,13 @@ from app.booking.service import APPOINTMENT_STATUS_TRANSITIONS, DISPATCH_SLOTS, 
 from app.booking.validation import BookingRequestInput
 from app.database.models import Address, Appointment, AppointmentStatusHistory, BookingRequest, BookingRequestStatusHistory, Customer, NotificationOutbox, ServiceTeam, ServiceType
 from app.database.session import create_database_engine
+from app.core.project_info import is_live_mode
 
 
 app = FastAPI(
     title="Aircon Service Automation",
     version="0.1.0",
-    description="Local portfolio prototype. It does not send real notifications or accept real customer data.",
+    description="Controlled air-conditioning service booking and owner operations application.",
 )
 APP_DIRECTORY = Path(__file__).resolve().parent
 templates = Jinja2Templates(directory=str(APP_DIRECTORY / "templates"))
@@ -41,6 +43,41 @@ def app_path(path: str) -> str:
 
 
 templates.env.globals["app_path"] = app_path
+templates.env.globals["is_live_mode"] = is_live_mode
+templates.env.globals["operation_mode_label"] = lambda: "Live owner operations" if is_live_mode() else "Local prototype · synthetic data only"
+
+
+def _staff_credentials_valid(request: Request) -> bool:
+    """Validate environment-backed staff Basic Auth without storing credentials in code."""
+    import secrets
+
+    expected_user = os.getenv("AIRCON_STAFF_USERNAME", "").strip()
+    expected_password = os.getenv("AIRCON_STAFF_PASSWORD", "")
+    if not expected_user or not expected_password:
+        return False
+    authorization = request.headers.get("authorization", "")
+    if not authorization.lower().startswith("basic "):
+        return False
+    import base64
+    try:
+        decoded = base64.b64decode(authorization[6:], validate=True).decode("utf-8")
+        username, password = decoded.split(":", 1)
+    except (ValueError, UnicodeDecodeError, base64.binascii.Error):
+        return False
+    return secrets.compare_digest(username, expected_user) and secrets.compare_digest(password, expected_password)
+
+
+@app.middleware("http")
+async def protect_staff_routes(request: Request, call_next: Any) -> Any:
+    """Require Basic Auth for owner/staff pages when live mode is enabled."""
+    if is_live_mode() and request.url.path.startswith(f"{PUBLIC_BASE_PATH}/staff"):
+        if not _staff_credentials_valid(request):
+            return JSONResponse(
+                {"detail": "Staff authentication is required."},
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                headers={"WWW-Authenticate": "Basic realm=Balik-Lamig staff"},
+            )
+    return await call_next(request)
 
 
 @app.get("/", response_class=HTMLResponse, include_in_schema=False)
@@ -153,7 +190,7 @@ def validation_error_messages(error: ValidationError) -> dict[str, str]:
 
 @app.get("/health")
 def health_check() -> dict[str, str]:
-    return {"status": "ok", "mode": "local_prototype"}
+    return {"status": "ok", "mode": "live" if is_live_mode() else "local_prototype"}
 
 
 @app.get("/book", response_class=HTMLResponse)
@@ -326,7 +363,9 @@ def phase_roadmap(request: Request) -> HTMLResponse:
 
 @app.post("/staff/automation/process")
 def process_automation_outbox(session: Session = Depends(get_session)) -> RedirectResponse:
-    """Run a local stand-in for a future n8n outbox workflow."""
+    """Run the local-only simulation action when prototype mode is enabled."""
+    if is_live_mode():
+        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="Local simulation is disabled in live owner-reporting mode.")
     processed = process_pending_simulated_events(session)
     session.commit()
     return RedirectResponse(url=app_path(f"/staff/automation?processed={processed}"), status_code=status.HTTP_303_SEE_OTHER)
@@ -341,7 +380,7 @@ def check_due_delivery_worker(session: Session = Depends(get_session)) -> Redire
 
 @app.post("/staff/automation/push")
 def push_automation_event_to_n8n(session: Session = Depends(get_session)) -> RedirectResponse:
-    """Send exactly one synthetic outbox event to the opt-in n8n test webhook."""
+    """Send exactly one owner-reporting outbox event to the protected n8n webhook."""
     try:
         event = push_one_pending_event_to_n8n(session)
         session.commit()

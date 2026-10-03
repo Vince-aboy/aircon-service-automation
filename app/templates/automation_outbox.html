@@ -9,9 +9,9 @@
 <body>
   <main class="page-shell staff-page">
     <header class="staff-header">
-      <p class="eyebrow">Local automation simulation · synthetic data only</p>
+      <p class="eyebrow">{{ operation_mode_label() }}</p>
       <h1>Automation outbox</h1>
-    <p class="intro">These are internal synthetic events for the n8n staging workflow. Nothing is sent to customers.</p>
+    <p class="intro">{% if is_live_mode() %}These are internal owner-reporting events. Customer messaging and payments remain disabled.{% else %}These are internal synthetic events for the n8n staging workflow. Nothing is sent to customers.{% endif %}</p>
     </header>
 
     {% if automatic_delivery_enabled %}
@@ -24,10 +24,10 @@
       <p class="staff-feedback">{{ processed }} simulated event(s) recorded locally. No message was delivered.</p>
     {% endif %}
     {% if pushed is not none %}
-      <p class="staff-feedback">One synthetic event was delivered to the n8n staging webhook and recorded locally. No customer message was delivered.</p>
+      <p class="staff-feedback">One owner-reporting event was delivered to the protected n8n webhook and recorded locally. No customer message was delivered.</p>
     {% endif %}
     {% if rejected is not none %}
-      <p class="staff-feedback">n8n rejected the synthetic event. It was marked failed locally. No customer message was delivered.</p>
+      <p class="staff-feedback">n8n rejected the owner-reporting event. It was marked failed locally. No customer message was delivered.</p>
     {% endif %}
     {% if push_error is not none %}
       <p class="staff-feedback">Delivery failed. The event remains pending and can be retried. No customer message was delivered.</p>
@@ -39,11 +39,11 @@
     {% endif %}
 
     <section class="dispatch-section">
-      <form method="post" action="{{ app_path('/staff/automation/process') }}">
+      {% if not is_live_mode() %}<form method="post" action="{{ app_path('/staff/automation/process') }}">
         <button type="submit">Run local automation simulation</button>
-      </form>
+      </form>{% endif %}
       <form method="post" action="{{ app_path('/staff/automation/push') }}">
-        <button class="button-secondary" type="submit">Send one synthetic event to n8n</button>
+        <button class="button-secondary" type="submit">Send one event to owner reporting</button>
       </form>
       <form method="post" action="{{ app_path('/staff/automation/worker-check') }}">
         <button class="button-secondary" type="submit">Check due delivery worker</button>
@@ -75,7 +75,7 @@
           {% endfor %}
         </div>
       {% else %}
-        <p class="muted">No automation events exist yet. Schedule or update a synthetic job to create one.</p>
+        <p class="muted">No automation events exist yet. Schedule or update a job to create one.</p>
       {% endif %}
     </section>
   </main>

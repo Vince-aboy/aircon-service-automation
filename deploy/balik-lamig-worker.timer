@@ -1,5 +1,5 @@
 [Unit]
-Description=Run Balik-Lamig synthetic outbox worker every minute
+Description=Run Balik-Lamig owner-reporting outbox worker every minute
 
 [Timer]
 OnBootSec=1min

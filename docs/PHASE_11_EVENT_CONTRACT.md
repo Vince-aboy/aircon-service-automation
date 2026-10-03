@@ -2,7 +2,7 @@
 
 ## Purpose
 
-Define the canonical synthetic event that the Balik-Lamig application will send to n8n for owner reporting. This contract is the reference for the future Google Sheets workflow.
+Define the canonical owner-reporting event that the Balik-Lamig application sends to n8n. The same contract supports local prototype mode and explicitly enabled live owner operations.
 
 ## Previous minimal payload
 
@@ -26,16 +26,19 @@ The owner-reporting event should contain the following shape:
 
 ```json
 {
-  "event_id": "synthetic-outbox-123",
-  "idempotency_key": "synthetic-outbox-123",
+  "event_id": "outbox-123",
+  "idempotency_key": "outbox-123",
   "event_type": "appointment_scheduled",
   "occurred_at": "2026-10-03T09:00:00+08:00",
   "booking_reference": "AC-20261003-EXAMPLE",
   "booking_status": "scheduled",
   "appointment_status": "confirmed",
-  "synthetic_only": true,
+  "occurred_at_display": "Oct 3, 2026, 5:00 PM",
+  "synthetic_only": false,
+  "operation_mode": "live_owner_reporting",
   "client": {
     "name": "Fictional Client",
+    "phone": "09501234567",
     "phone_masked": "0950****456",
     "email": null
   },
@@ -48,7 +51,8 @@ The owner-reporting event should contain the following shape:
     "address_line": "Fictional Building 11 Unit 0411",
     "barangay": "Urban Deca Homes",
     "city": "Manila",
-    "coverage_area": "Urban Deca Homes, Tondo"
+    "coverage_area": "Barangay 101, Tondo",
+    "display": "Unit 11, Building 4, Barangay 101, Manila, Tondo"
   },
   "schedule": {
     "preferred_date": "2026-10-03",
@@ -77,12 +81,12 @@ The owner-reporting event should contain the following shape:
 | `booking_reference` | Booking request | Owner-facing reference code. |
 | `booking_status` | Booking request | Current request status. |
 | `appointment_status` | Appointment | Include when an appointment exists; otherwise `null`. |
-| `synthetic_only` | Event safety marker | Must always be `true` in this project. |
+| `synthetic_only` | Event safety marker | `true` only in local prototype mode; `false` in live mode. |
 | `client.name` | Customer | Fictional data only. |
-| `client.phone_masked` | Customer mobile | Never send an unmasked phone to owner reporting. |
+| `client.phone` | Customer mobile | Full value is permitted only in authenticated live owner reporting and the restricted owner sheet. |
 | `client.email` | Customer email | Optional; `null` when absent. |
 | `service.*` | Booking request and service type | Use current database values. |
-| `location.*` | Address | Use the configured synthetic coverage area. |
+| `location.*` | Address | Use the submitted full address and `location.display` for the owner-readable value. |
 | `schedule.*` | Booking request and appointment | Scheduled fields are `null` before assignment. |
 | `delivery.*` | Notification outbox | Supports owner-visible delivery troubleshooting. |
 
@@ -99,17 +103,17 @@ The owner-reporting event should contain the following shape:
 
 ## n8n validation rules
 
-1. Reject the event unless `synthetic_only` is exactly `true`.
+1. Require `operation_mode`; accept `synthetic_only=true` for local prototype events and `operation_mode=live_owner_reporting` for live events.
 2. Reject the event if `event_id`, `idempotency_key`, `event_type`, or `booking_reference` is missing.
 3. Treat a repeated `idempotency_key` as an already-processed event.
-4. Keep dates and times in ISO format; display formatting belongs in Google Sheets.
+4. Keep `occurred_at` in ISO format and map `occurred_at_display` for readable sheets.
 5. Do not send messages, emails, or payments from this owner-reporting workflow.
 6. Return a clear response containing `automation_status` and the event identifier.
 
 ## Google Sheets mapping
 
-- `Daily Schedule`: booking reference, scheduled date, time window, client name, masked phone, service, team, appointment status, last update.
-- `Client Summary`: booking reference, client name, masked phone, email, address, service, preferred date, current status, last update.
+- `Daily Schedule`: booking reference, scheduled date, time window, client name, phone, full address, service, team, appointment status, last update.
+- `Client Summary`: booking reference, client name, phone, email, full address, service, preferred date, current status, last update.
 - `Service History`: event ID, booking reference, event type, previous status, new status, occurred time, note.
 - `Cancelled Requests`: booking reference, client name, cancellation status, reason, occurred time.
 - `Automation Log`: event ID, idempotency key, event type, n8n result, sheet result, attempts, error, processed time.

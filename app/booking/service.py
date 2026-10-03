@@ -14,6 +14,7 @@ from sqlalchemy import func, or_, select
 from sqlalchemy.orm import Session
 
 from app.booking.validation import BookingRequestInput
+from app.core.project_info import is_live_mode
 from app.database.models import (
     Address,
     Appointment,
@@ -109,6 +110,11 @@ def masked_mobile(mobile: str) -> str:
     return f"{mobile[:4]}****{mobile[-3:]}" if len(mobile) >= 7 else "masked"
 
 
+def owner_phone(mobile: str) -> str:
+    """Return the owner-reporting phone according to the explicit runtime mode."""
+    return mobile if is_live_mode() else masked_mobile(mobile)
+
+
 def record_simulated_event(
     session: Session,
     *,
@@ -121,11 +127,11 @@ def record_simulated_event(
     event = NotificationOutbox(
         booking_request_id=booking.id,
         event_type=event_type,
-        channel="simulated",
+        channel="owner_reporting" if is_live_mode() else "simulated",
         recipient_masked=masked_mobile(customer.mobile),
         status="pending",
         payload={
-            "mode": "synthetic_only",
+            "mode": "live_owner_reporting" if is_live_mode() else "synthetic_only",
             "booking_reference": booking.reference_code,
             "note": note,
         },
@@ -148,7 +154,8 @@ def outbox_idempotency_key(event: NotificationOutbox) -> str:
     """Return the stable future-delivery identity for one local outbox event."""
     if event.id is None:
         raise ValueError("the outbox event must be saved before it receives an idempotency key")
-    return f"synthetic-outbox-{event.id}"
+    prefix = "outbox" if is_live_mode() else "synthetic-outbox"
+    return f"{prefix}-{event.id}"
 
 
 def claim_next_eligible_outbox_event(
@@ -194,7 +201,7 @@ def claim_next_eligible_outbox_event(
 
 
 def record_delivery_success(event: NotificationOutbox, result: dict[str, object]) -> None:
-    """Record a successful synthetic delivery and release its claim."""
+    """Record a successful owner-reporting delivery and release its claim."""
     event.status = "recorded"
     event.claimed_at = None
     event.last_error = None
@@ -249,20 +256,29 @@ def n8n_event_payload(session: Session, event: NotificationOutbox) -> dict[str, 
 
     scheduled_start = appointment.scheduled_start.isoformat() if appointment else None
     scheduled_end = appointment.scheduled_end.isoformat() if appointment else None
+    live_mode = is_live_mode()
+    occurred_at = event.created_at or datetime.now(UTC)
+    local_occurred_at = occurred_at.astimezone(MANILA_TIMEZONE)
+    address_display = ", ".join(
+        value for value in (address.address_line, address.barangay, address.city, address.coverage_area) if value
+    )
     return {
-        "event_id": f"synthetic-outbox-{event.id}",
+        "event_id": f"outbox-{event.id}" if live_mode else f"synthetic-outbox-{event.id}",
         "idempotency_key": outbox_idempotency_key(event),
         "event_type": event.event_type,
         # Keep the legacy outbox status while consumers migrate to the nested
         # delivery object.
         "status": event.status,
-        "occurred_at": event.created_at.isoformat() if event.created_at else datetime.now(UTC).isoformat(),
+        "occurred_at": occurred_at.isoformat(),
+        "occurred_at_display": f"{local_occurred_at:%b} {local_occurred_at.day}, {local_occurred_at:%Y}, {local_occurred_at:%I:%M %p}".replace(" 0", " ", 1),
         "booking_reference": booking.reference_code,
         "booking_status": booking.status,
         "appointment_status": appointment.status if appointment else None,
-        "synthetic_only": True,
+        "synthetic_only": not live_mode,
+        "operation_mode": "live_owner_reporting" if live_mode else "synthetic_only",
         "client": {
             "name": customer.full_name,
+            "phone": owner_phone(customer.mobile),
             "phone_masked": masked_mobile(customer.mobile),
             "email": customer.email,
         },
@@ -273,6 +289,7 @@ def n8n_event_payload(session: Session, event: NotificationOutbox) -> dict[str, 
         },
         "location": {
             "address_line": address.address_line,
+            "display": address_display,
             "barangay": address.barangay,
             "city": address.city,
             "coverage_area": address.coverage_area,
@@ -301,7 +318,7 @@ def push_one_pending_event_to_n8n(
     *,
     ignore_retry_schedule: bool = True,
 ) -> NotificationOutbox:
-    """Send one claimed synthetic event to the configured n8n webhook."""
+    """Send one claimed owner-reporting event to the configured n8n webhook."""
     webhook_url = os.getenv("AIRCON_N8N_WEBHOOK_URL")
     webhook_key = os.getenv("AIRCON_N8N_WEBHOOK_KEY")
     if not webhook_url or not webhook_key:

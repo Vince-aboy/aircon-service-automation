@@ -1,5 +1,5 @@
 <header class="staff-header detail-header">
-  <p class="eyebrow">Local scheduled job · synthetic data only</p>
+  <p class="eyebrow">{{ operation_mode_label() }}</p>
   <h1>{{ customer.full_name }}</h1>
   <p class="intro">{{ booking.reference_code }} · {{ appointment.status }}</p>
 </header>
@@ -39,7 +39,7 @@
   <dl class="detail-grid">
     <div><dt>Phone</dt><dd>{{ customer.mobile }}</dd></div>
     <div><dt>Email</dt><dd>{{ customer.email or "Not supplied" }}</dd></div>
-    <div class="detail-wide"><dt>Full address / Decca address</dt><dd>{{ address.address_line }}</dd></div>
+    <div class="detail-wide"><dt>Full address / Decca address</dt><dd>{{ address.address_line }}, {{ address.barangay }}, {{ address.city }}, {{ address.coverage_area }}</dd></div>
   </dl>
 </section>
 

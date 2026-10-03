@@ -2,7 +2,7 @@
 
 ## Goal
 
-Create an owner-facing reporting workflow for synthetic Balik-Lamig events. PostgreSQL remains authoritative; Google Sheets is only a readable operations view. This workflow must not send customer messages, make payments, or change booking records.
+Create an owner-facing reporting workflow for Balik-Lamig events in either local prototype mode or live owner-reporting mode. PostgreSQL remains authoritative; Google Sheets is only a readable operations view. This workflow must not send customer messages, make payments, or change booking records.
 
 ## n8n node order
 
@@ -27,7 +27,7 @@ Webhook
 ## Node responsibilities
 
 1. **Webhook** — receive the protected HTTPS production webhook from the application.
-2. **Validate Synthetic Event** — continue only when `synthetic_only` is exactly `true`; require `event_id`, `idempotency_key`, `event_type`, and `booking_reference`.
+2. **Validate Event** — require `event_id`, `idempotency_key`, `event_type`, `booking_reference`, and `operation_mode`. Accept `synthetic_only=true` for local prototype events and `operation_mode=live_owner_reporting` for approved live owner reporting.
 3. **Normalize Event** — flatten nested client, service, location, schedule, and delivery fields into a consistent internal object. Keep ISO values for storage; use Sheets formatting for display.
 4. **Check Automation Log** — search `Automation Log` by `idempotency_key`.
 5. **Duplicate?** — if found, do not write business rows again. Record a duplicate result and return a successful idempotent response.
@@ -45,13 +45,13 @@ Webhook
 
 Stable key: `booking_reference + scheduled_date + time_window`
 
-`schedule_key`, `scheduled_date`, `time_window`, `booking_reference`, `client_name`, `phone_masked`, `service`, `aircon_type`, `unit_count`, `address`, `team`, `technician`, `appointment_status`, `booking_status`, `last_event_id`, `last_update`
+`schedule_key`, `scheduled_date`, `time_window`, `booking_reference`, `client_name`, `phone`, `service`, `aircon_type`, `unit_count`, `address`, `team`, `technician`, `appointment_status`, `booking_status`, `last_event_id`, `last_update`
 
 ### Client Summary
 
 Stable key: `booking_reference`
 
-`booking_reference`, `client_name`, `phone_masked`, `email`, `address`, `barangay`, `city`, `coverage_area`, `service`, `aircon_type`, `preferred_date`, `scheduled_date`, `time_window`, `current_status`, `team`, `technician`, `last_event_id`, `last_update`
+`booking_reference`, `client_name`, `phone`, `email`, `address`, `barangay`, `city`, `coverage_area`, `service`, `aircon_type`, `preferred_date`, `scheduled_date`, `time_window`, `current_status`, `team`, `technician`, `last_event_id`, `last_update`
 
 ### Service History
 
@@ -69,7 +69,7 @@ Stable key: `booking_reference`
 
 Stable key: `idempotency_key`
 
-`event_id`, `idempotency_key`, `event_type`, `booking_reference`, `received_at`, `n8n_result`, `sheet_result`, `delivery_attempts`, `error`, `processed_at`, `synthetic_only`
+`event_id`, `idempotency_key`, `event_type`, `booking_reference`, `received_at`, `n8n_result`, `sheet_result`, `delivery_attempts`, `error`, `processed_at`, `operation_mode`, `synthetic_only`
 
 ## Event routing
 
@@ -92,13 +92,14 @@ Stable key: `idempotency_key`
 - A partial Sheets update is recoverable because every business row has a stable key and the event log is idempotent.
 - Events arriving out of order must not replace a newer row. Compare `occurred_at` before updating current-state tabs.
 - Reschedules update the current schedule key and preserve the old state in `Service History`.
-- Missing email remains blank; phone values remain masked.
-- No real customer data or outbound customer communication is permitted in this staging workflow.
+- Missing email remains blank.
+- In live owner-reporting mode, `client.phone` is full and must only be written to the restricted owner sheet. In local prototype mode, use `client.phone_masked`.
+- No outbound customer communication or payment processing is permitted in this workflow.
 
 ## Credential and activation boundary
 
-The Google Sheets credential is created only inside n8n. It must not be placed in Git, the VPS environment file, application code, or this documentation. Before activation, confirm the spreadsheet ID, tab names, sharing scope, and a synthetic test spreadsheet. Start with manual execution, then activate the production webhook after the test passes.
+The Google Sheets credential is created only inside n8n. It must not be placed in Git, the VPS environment file, application code, or this documentation. Before live activation, confirm the spreadsheet ID, exact tab names, restricted sharing scope, and the live field mappings. Start with one controlled request, then allow normal delivery after the test passes.
 
 ## Implementation status
 
-Application payload enrichment is implemented locally. The n8n Google Sheets nodes and Google credential have not yet been created.
+Application payload enrichment and the controlled live-mode boundary are implemented locally. Update the existing n8n Google Sheets nodes to use the live mappings before enabling live operation.

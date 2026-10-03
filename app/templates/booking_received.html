@@ -9,12 +9,12 @@
 <body>
   <main class="page-shell receipt">
       <img class="brand-banner" src="{{ app_path('/static/images/balik-lamig.png') }}" alt="Balik-Lamig Air-Conditioning and Refrigeration Services">
-    <p class="eyebrow">Local prototype · synthetic data only</p>
+    <p class="eyebrow">{{ operation_mode_label() }}</p>
     <h1>Service request received</h1>
     <p>Your request reference is <strong>{{ reference_code }}</strong>.</p>
     <p>Status: <strong>{{ status }}</strong>. Staff review is required before any appointment is confirmed.</p>
-    <p>No real message or appointment has been created.</p>
-    <a class="button-link" href="{{ app_path('/book') }}">Submit another synthetic request</a>
+    <p>{% if is_live_mode() %}Staff review is required before an appointment is confirmed. No payment was collected.{% else %}No real message or appointment has been created.{% endif %}</p>
+    <a class="button-link" href="{{ app_path('/book') }}">Submit another service request</a>
   </main>
 </body>
 </html>

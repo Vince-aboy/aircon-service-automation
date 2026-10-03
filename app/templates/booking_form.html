@@ -10,7 +10,7 @@
   <main class="page-shell">
     <header class="page-header">
       <img class="brand-banner" src="{{ app_path('/static/images/balik-lamig.png') }}" alt="Balik-Lamig Air-Conditioning and Refrigeration Services">
-      <p class="eyebrow">Local prototype · synthetic data only</p>
+      <p class="eyebrow">{{ operation_mode_label() }}</p>
       <h1>Request a Balik-Lamig service</h1>
       <p class="intro">Choose a service and your preferred schedule.</p>
     </header>
@@ -41,9 +41,24 @@
             <input name="address_line" value="{{ values.get('address_line', '') }}" required>
             {% if errors.get('address_line') %}<span class="error">{{ errors['address_line'] }}</span>{% endif %}
           </label>
+          {% if is_live_mode() %}
+          <label>Barangay
+            <input name="barangay" value="{{ values.get('barangay', '') }}" required>
+            {% if errors.get('barangay') %}<span class="error">{{ errors['barangay'] }}</span>{% endif %}
+          </label>
+          <label>City
+            <input name="city" value="{{ values.get('city', '') }}" required>
+            {% if errors.get('city') %}<span class="error">{{ errors['city'] }}</span>{% endif %}
+          </label>
+          <label>Coverage area / service zone
+            <input name="coverage_area" value="{{ values.get('coverage_area', '') }}" required>
+            {% if errors.get('coverage_area') %}<span class="error">{{ errors['coverage_area'] }}</span>{% endif %}
+          </label>
+          {% else %}
           <input name="barangay" type="hidden" value="Urban Deca Homes">
           <input name="city" type="hidden" value="Manila">
           <input name="coverage_area" type="hidden" value="Urban Deca Homes, Tondo">
+          {% endif %}
         </div>
       </section>
 
@@ -74,7 +89,7 @@
       </section>
 
       <button type="submit">Send service request</button>
-      <p class="privacy-note">Use fictional data only. No real booking, payment, or notification is created by this prototype.</p>
+      <p class="privacy-note">{% if is_live_mode() %}Your request is reviewed by Balik-Lamig staff before scheduling. No payment is collected through this form.{% else %}Use fictional data only. No real booking, payment, or notification is created by this prototype.{% endif %}</p>
     </form>
   </main>
 </body>

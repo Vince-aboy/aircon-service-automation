@@ -1,8 +1,8 @@
 # Balik-Lamig: Aircon Service Automation
 
-A local, synthetic-data portfolio prototype for a controlled aircon-service workflow. It demonstrates how a service request can move from staff review through team scheduling, job progress, a durable outbox, and a protected n8n test workflow.
+A controlled aircon-service workflow with a safe local prototype mode and an explicitly enabled live owner-operations mode. It demonstrates how a service request can move from staff review through team scheduling, job progress, a durable outbox, and protected n8n reporting.
 
-> **Prototype boundary:** This project contains fictional data only. It does not send customer messages, accept payments, or claim production use.
+> **Safety boundary:** Live mode is opt-in, staff routes require credentials, customer messaging and payments remain disabled, and PostgreSQL remains authoritative.
 
 ## What it demonstrates
 
@@ -10,8 +10,8 @@ A local, synthetic-data portfolio prototype for a controlled aircon-service work
 - Team-based scheduling using fixed service blocks
 - Job lifecycle tracking: confirmed, en route, in progress, completed, or cancelled
 - Immutable status history for traceability
-- A transactional outbox for synthetic automation events
-- A protected n8n test-webhook bridge with retry and failure evidence
+- A transactional outbox for owner-reporting automation events
+- A protected n8n webhook bridge with retry and failure evidence
 - Responsive staff views, including a Phase 0-9 visual roadmap
 
 ## System flow
@@ -25,7 +25,7 @@ Service request
   -> Protected n8n test workflow
 ```
 
-Local SQL remains the source of truth. The VPS staging deployment uses a protected n8n webhook and a one-minute synthetic-only delivery worker. No customer messaging or production booking is enabled.
+Local SQL remains the source of truth. The VPS deployment uses a protected n8n webhook and an owner-reporting delivery worker. Set `AIRCON_OPERATION_MODE=live` only after restricting the Google Sheet and configuring staff credentials. No customer messaging or payment processing is enabled.
 
 ## Tech stack
 
@@ -79,14 +79,16 @@ Latest local verification: **37 passed, 5 skipped**. Skipped integration tests r
 - [Phase 11 owner reporting plan](09_PHASE_11_OWNER_REPORTING_AND_GOOGLE_SHEETS.md)
 - [Phase 11 event contract](docs/PHASE_11_EVENT_CONTRACT.md)
 - [Phase 11 n8n Google Sheets workflow](docs/PHASE_11_N8N_GOOGLE_SHEETS_WORKFLOW.md)
+- [Real-data operations mode](docs/REAL_DATA_OPERATIONS_MODE.md)
 
 ## Security and privacy
 
 - Never commit `.env` files, database credentials, webhook keys, n8n credential exports, or private keys.
 - Database and n8n values are supplied temporarily through environment variables.
-- Do not use customer information: every displayed record is fictional and masked where appropriate.
-- A public demo or always-on delivery worker requires a separate reviewed deployment decision.
+- Keep staff routes and the owner Google Sheet restricted to approved staff.
+- Full phone numbers are limited to authenticated owner reporting; public pages never display them.
+- Credentials and webhook keys stay outside Git and chat.
 
 ## Status
 
-Phases 0-9 are complete. Phase 10 has established delivery state, failure tracking, retry timing, and automatic synthetic-only VPS delivery. The public route is portfolio staging only; customer messaging, payments, and production claims remain out of scope.
+Phases 0-9 are complete. Phase 10 established delivery state, failure tracking, retry timing, and VPS delivery. Phase 11 adds the Google Sheets owner-reporting workflow and controlled live-data mode; customer messaging and payments remain out of scope.

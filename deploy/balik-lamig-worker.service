@@ -1,5 +1,5 @@
 [Unit]
-Description=Balik-Lamig synthetic outbox delivery worker
+Description=Balik-Lamig owner-reporting outbox delivery worker
 After=network-online.target balik-lamig.service
 
 [Service]
@@ -10,4 +10,3 @@ WorkingDirectory=/home/aboy/apps/balik-lamig
 EnvironmentFile=/etc/balik-lamig/balik-lamig.env
 ExecStart=/home/aboy/apps/balik-lamig/.venv/bin/python -m app.automation_worker
 NoNewPrivileges=true
-
