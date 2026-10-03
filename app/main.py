@@ -678,6 +678,7 @@ def assign_dispatch_slot(
 def update_scheduled_job_status(
     appointment_id: int,
     next_status: str = Form(),
+    staff_note: str = Form(default=""),
     session: Session = Depends(get_session),
 ) -> RedirectResponse:
     """Record a local team-progress update without sending any message."""
@@ -685,7 +686,7 @@ def update_scheduled_job_status(
         if next_status == "completed_now":
             appointment = complete_appointment_shortcut(session, appointment_id)
         else:
-            appointment = update_appointment_status(session, appointment_id, next_status)
+            appointment = update_appointment_status(session, appointment_id, next_status, staff_note=staff_note)
         session.commit()
     except ValueError as error:
         session.rollback()
@@ -698,11 +699,40 @@ def update_scheduled_job_status(
     )
 
 
+@app.post("/staff/appointments/{appointment_id}/notes")
+def add_appointment_note(
+    appointment_id: int,
+    note: str = Form(),
+    session: Session = Depends(get_session),
+) -> RedirectResponse:
+    appointment = session.get(Appointment, appointment_id)
+    cleaned_note = note.strip()
+    if appointment is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="The scheduled appointment does not exist.")
+    if not cleaned_note:
+        raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_CONTENT, detail="An internal note is required.")
+    session.add(
+        AppointmentStatusHistory(
+            appointment_id=appointment.id,
+            from_status=appointment.status,
+            to_status=appointment.status,
+            actor_type="local_staff",
+            note=f"Internal note: {cleaned_note}",
+        )
+    )
+    session.commit()
+    return RedirectResponse(
+        url=app_path(f"/staff/appointments/{appointment.id}"),
+        status_code=status.HTTP_303_SEE_OTHER,
+    )
+
+
 @app.post("/staff/appointments/{appointment_id}/reschedule")
 def reschedule_scheduled_job(
     appointment_id: int,
     appointment_date: date = Form(),
     slot_key: str = Form(),
+    service_team_id: int = Form(),
     session: Session = Depends(get_session),
 ) -> RedirectResponse:
     """Move a confirmed appointment to another open team time block."""
@@ -712,6 +742,7 @@ def reschedule_scheduled_job(
             appointment_id=appointment_id,
             appointment_date=appointment_date,
             slot_key=slot_key,
+            service_team_id=service_team_id,
         )
         session.commit()
     except ValueError as error:
@@ -733,10 +764,20 @@ def automation_outbox(
     push_error: int | None = None,
     worker: str | None = None,
     due: int | None = None,
+    event_status: str = "",
     session: Session = Depends(get_session),
 ) -> HTMLResponse:
     """Show local-only automation events; no external workflow is connected."""
-    events = list(session.scalars(select(NotificationOutbox).order_by(NotificationOutbox.id.desc())).all())
+    event_statement = select(NotificationOutbox).order_by(NotificationOutbox.id.desc())
+    if event_status:
+        event_statement = event_statement.where(NotificationOutbox.status == event_status)
+    events = list(session.scalars(event_statement.limit(200)).all())
+    event_counts = {
+        value: session.scalar(
+            select(func.count()).select_from(NotificationOutbox).where(NotificationOutbox.status == value)
+        ) or 0
+        for value in ("pending", "recorded", "failed")
+    }
     return templates.TemplateResponse(
         request,
         "automation_outbox.html",
@@ -748,6 +789,8 @@ def automation_outbox(
             "push_error": push_error,
             "worker": worker,
             "due": due,
+            "event_status_filter": event_status,
+            "event_counts": event_counts,
             "automatic_delivery_enabled": automatic_delivery_enabled(),
         },
     )
@@ -805,6 +848,22 @@ def push_automation_event_to_n8n(session: Session = Depends(get_session)) -> Red
     return RedirectResponse(url=app_path(f"/staff/automation?pushed={event.id}"), status_code=status.HTTP_303_SEE_OTHER)
 
 
+@app.post("/staff/automation/events/{event_id}/requeue")
+def requeue_automation_event(event_id: int, session: Session = Depends(get_session)) -> RedirectResponse:
+    """Return a failed owner-reporting event to the automatic-delivery queue."""
+    event = session.get(NotificationOutbox, event_id)
+    if event is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="The automation event does not exist.")
+    if event.status != "failed":
+        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="Only failed events can be requeued.")
+    event.status = "pending"
+    event.claimed_at = None
+    event.next_attempt_at = None
+    event.last_error = None
+    session.commit()
+    return RedirectResponse(url=app_path("/staff/automation?event_status=pending"), status_code=status.HTTP_303_SEE_OTHER)
+
+
 def appointment_detail_context(session: Session, appointment_id: int) -> dict[str, Any]:
     """Load read-only scheduled-job context for a full page or dispatcher modal."""
     row = session.execute(
@@ -836,6 +895,7 @@ def appointment_detail_context(session: Session, appointment_id: int) -> dict[st
     )
     local_start = appointment.scheduled_start.astimezone(MANILA_TIMEZONE)
     local_end = appointment.scheduled_end.astimezone(MANILA_TIMEZONE)
+    active_teams = list(session.scalars(select(ServiceTeam).where(ServiceTeam.active.is_(True)).order_by(ServiceTeam.name)).all())
     return {
         "appointment": appointment,
         "booking": booking,
@@ -843,6 +903,7 @@ def appointment_detail_context(session: Session, appointment_id: int) -> dict[st
         "address": address,
         "address_display": display_address(address),
         "team": team,
+        "active_teams": active_teams,
         "service_type": service_type,
         "booking_history": booking_history,
         "appointment_history": appointment_history,

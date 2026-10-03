@@ -23,6 +23,13 @@
     <label>Date
       <input name="appointment_date" type="date" value="{{ booking.preferred_date }}" required>
     </label>
+    <label>Team
+      <select name="service_team_id">
+        {% for available_team in active_teams %}
+          <option value="{{ available_team.id }}"{% if available_team.id == team.id %} selected{% endif %}>{{ available_team.name }}</option>
+        {% endfor %}
+      </select>
+    </label>
     <label>Time block
       <select name="slot_key">
         {% for slot_key, slot_label in [('09:00', '09:00-11:00'), ('11:30', '11:30-13:30'), ('14:00', '14:00-16:00')] %}
@@ -41,17 +48,34 @@
   {% if available_status_updates %}
     <form class="progress-actions" method="post" action="{{ app_path('/staff/appointments/' ~ appointment.id ~ '/status') }}" data-lock-submit>
       {% for next_status in available_status_updates %}
+        {% if next_status != 'cancelled' %}
         <button type="submit" name="next_status" value="{{ next_status }}"{% if next_status == 'cancelled' %} class="button-secondary" onclick="return confirm('Cancel this appointment? This action will be recorded in workflow history.')"{% endif %}>
           {% if next_status == 'en_route' %}Mark en route{% elif next_status == 'in_progress' %}Mark work in progress{% elif next_status == 'completed' %}Mark completed{% else %}Cancel appointment{% endif %}
         </button>
+        {% endif %}
       {% endfor %}
       {% if appointment.status == 'confirmed' %}
         <button type="submit" name="next_status" value="completed_now" class="button-secondary">Complete job now</button>
       {% endif %}
     </form>
+    {% if 'cancelled' in available_status_updates %}
+      <form class="cancel-job-form" method="post" action="{{ app_path('/staff/appointments/' ~ appointment.id ~ '/status') }}" data-confirm="Cancel this appointment? The reason will be recorded in workflow history.">
+        <input name="next_status" type="hidden" value="cancelled">
+        <label>Cancellation reason<textarea name="staff_note" required maxlength="500" placeholder="Why is this appointment being cancelled?"></textarea></label>
+        <button class="button-secondary" type="submit">Cancel appointment</button>
+      </form>
+    {% endif %}
   {% else %}
     <p class="muted">This job is closed. Its final status cannot be changed in this prototype.</p>
   {% endif %}
+</section>
+
+<section class="detail-section">
+  <h2>Internal note</h2>
+  <form class="internal-note-form" method="post" action="{{ app_path('/staff/appointments/' ~ appointment.id ~ '/notes') }}" data-lock-submit>
+    <label>Operator note<textarea name="note" required maxlength="1000" placeholder="Add dispatch instructions, customer context, or a follow-up note."></textarea></label>
+    <button type="submit">Add to workflow history</button>
+  </form>
 </section>
 
 <section class="detail-section">

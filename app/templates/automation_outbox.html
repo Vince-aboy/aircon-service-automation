@@ -47,6 +47,10 @@
 
     <section class="dispatch-section">
       <h2>Event log</h2>
+      <nav class="event-filter-nav" aria-label="Automation event filters">
+        <a href="{{ app_path('/staff/automation') }}"{% if not event_status_filter %} class="active"{% endif %}>All</a>
+        {% for value in ['pending', 'recorded', 'failed'] %}<a href="{{ app_path('/staff/automation?event_status=' ~ value) }}"{% if event_status_filter == value %} class="active"{% endif %}>{{ value|capitalize }} <b>{{ event_counts[value] }}</b></a>{% endfor %}
+      </nav>
       {% if events %}
         <div class="automation-event-list">
           {% for event in events %}
@@ -64,6 +68,11 @@
               {% endif %}
               {% if event.payload.get('dispatcher_message') %}
                 <p class="dispatcher-notice"><strong>Dispatcher notice prepared:</strong> {{ event.payload['dispatcher_message'] }}</p>
+              {% endif %}
+              {% if event.status == 'failed' %}
+                <form method="post" action="{{ app_path('/staff/automation/events/' ~ event.id ~ '/requeue') }}" data-confirm="Return this failed event to the automatic delivery queue?">
+                  <button class="button-secondary compact-button" type="submit">Requeue event</button>
+                </form>
               {% endif %}
             </article>
           {% endfor %}

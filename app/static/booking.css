@@ -254,6 +254,13 @@ a.directory-row:hover { background: #1b2933; }
 .member-list span { display: grid; gap: 0.15rem; }
 .text-action { background: transparent; border: 0; color: #ff9da4; font-size: 0.68rem; margin: 0; padding: 0.25rem; }
 .text-action:hover { background: transparent; color: #ffc1c6; }
+.cancel-job-form, .internal-note-form { display: grid; gap: 0.65rem; margin-top: 0.9rem; max-width: 680px; }
+.cancel-job-form textarea, .internal-note-form textarea { min-height: 88px; resize: vertical; }
+.cancel-job-form button, .internal-note-form button { justify-self: start; margin: 0; }
+.event-filter-nav { display: flex; flex-wrap: wrap; gap: 0.45rem; margin: 0.75rem 0 1rem; }
+.event-filter-nav a { border: 1px solid #385063; border-radius: 999px; color: #a9bdcc; font-size: 0.72rem; padding: 0.4rem 0.7rem; text-decoration: none; }
+.event-filter-nav a.active { background: #123c48; border-color: #1ca9c4; color: #7ce6f3; }
+.event-filter-nav b { margin-left: 0.25rem; }
 .member-form { display: grid; gap: 0.55rem; }
 .member-form button { margin: 0; }
 .checkbox-label { align-items: center; display: flex; font-size: 0.75rem; grid-template-columns: auto 1fr; }

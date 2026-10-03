@@ -442,6 +442,94 @@ def test_staff_can_progress_a_scheduled_job_with_an_audit_record() -> None:
         app.dependency_overrides.clear()
 
 
+def test_staff_can_move_confirmed_job_to_another_team_and_add_internal_note() -> None:
+    client, session = create_test_client()
+    try:
+        client.post("/book", data=valid_form_data())
+        booking = session.scalar(select(BookingRequest))
+        client.post(f"/staff/requests/{booking.id}/review", data={"decision": "approve"})
+        team_a = session.scalar(select(ServiceTeam).where(ServiceTeam.name == "Team A"))
+        team_b = session.scalar(select(ServiceTeam).where(ServiceTeam.name == "Team B"))
+        client.post(
+            "/staff/dispatch/assign",
+            data={
+                "booking_request_id": booking.id,
+                "service_team_id": team_a.id,
+                "appointment_date": str(date.today() + timedelta(days=1)),
+                "slot_key": "09:00",
+            },
+        )
+        appointment = session.scalar(select(Appointment))
+
+        response = client.post(
+            f"/staff/appointments/{appointment.id}/reschedule",
+            data={
+                "service_team_id": team_b.id,
+                "appointment_date": str(date.today() + timedelta(days=2)),
+                "slot_key": "11:30",
+            },
+            follow_redirects=False,
+        )
+        note_response = client.post(
+            f"/staff/appointments/{appointment.id}/notes",
+            data={"note": "Bring the long ladder."},
+            follow_redirects=False,
+        )
+        session.refresh(appointment)
+        history = list(session.scalars(select(AppointmentStatusHistory).order_by(AppointmentStatusHistory.id)).all())
+
+        assert response.status_code == 303
+        assert note_response.status_code == 303
+        assert appointment.service_team_id == team_b.id
+        assert appointment.scheduled_start.hour == 11
+        assert "Team A" in history[-2].note and "Team B" in history[-2].note
+        assert history[-1].note == "Internal note: Bring the long ladder."
+    finally:
+        session.close()
+        app.dependency_overrides.clear()
+
+
+def test_cancelling_an_appointment_requires_a_reason() -> None:
+    client, session = create_test_client()
+    try:
+        client.post("/book", data=valid_form_data())
+        booking = session.scalar(select(BookingRequest))
+        client.post(f"/staff/requests/{booking.id}/review", data={"decision": "approve"})
+        team = session.scalar(select(ServiceTeam).where(ServiceTeam.name == "Team A"))
+        client.post(
+            "/staff/dispatch/assign",
+            data={
+                "booking_request_id": booking.id,
+                "service_team_id": team.id,
+                "appointment_date": str(date.today() + timedelta(days=1)),
+                "slot_key": "09:00",
+            },
+        )
+        appointment = session.scalar(select(Appointment))
+
+        missing_reason = client.post(
+            f"/staff/appointments/{appointment.id}/status",
+            data={"next_status": "cancelled", "staff_note": ""},
+        )
+        cancelled = client.post(
+            f"/staff/appointments/{appointment.id}/status",
+            data={"next_status": "cancelled", "staff_note": "Customer requested another provider."},
+            follow_redirects=False,
+        )
+        session.refresh(appointment)
+        final_history = session.scalar(
+            select(AppointmentStatusHistory).order_by(AppointmentStatusHistory.id.desc())
+        )
+
+        assert missing_reason.status_code == 422
+        assert cancelled.status_code == 303
+        assert appointment.status == "cancelled"
+        assert "Customer requested another provider" in final_history.note
+    finally:
+        session.close()
+        app.dependency_overrides.clear()
+
+
 def test_staff_can_complete_confirmed_job_with_shortcut_and_full_history() -> None:
     client, session = create_test_client()
     try:
@@ -634,6 +722,39 @@ def test_delivery_result_handlers_preserve_retry_and_rejection_state() -> None:
         assert event.status == "failed"
         assert event.last_error == "synthetic-only validation failed"
         assert event.payload["n8n_rejection_reason"] == "synthetic-only validation failed"
+    finally:
+        session.close()
+        app.dependency_overrides.clear()
+
+
+def test_staff_can_requeue_a_failed_owner_reporting_event() -> None:
+    client, session = create_test_client()
+    try:
+        client.post("/book", data=valid_form_data())
+        booking = session.scalar(select(BookingRequest))
+        client.post(f"/staff/requests/{booking.id}/review", data={"decision": "approve"})
+        team = session.scalar(select(ServiceTeam).where(ServiceTeam.name == "Team A"))
+        client.post(
+            "/staff/dispatch/assign",
+            data={
+                "booking_request_id": booking.id,
+                "service_team_id": team.id,
+                "appointment_date": str(date.today() + timedelta(days=1)),
+                "slot_key": "09:00",
+            },
+        )
+        event = session.scalar(select(NotificationOutbox))
+        event.status = "failed"
+        event.last_error = "Synthetic delivery failure"
+        session.commit()
+
+        response = client.post(f"/staff/automation/events/{event.id}/requeue", follow_redirects=False)
+        session.refresh(event)
+
+        assert response.status_code == 303
+        assert event.status == "pending"
+        assert event.last_error is None
+        assert event.next_attempt_at is None
     finally:
         session.close()
         app.dependency_overrides.clear()

@@ -625,6 +625,7 @@ def reschedule_appointment(
     appointment_id: int,
     appointment_date: date,
     slot_key: str,
+    service_team_id: int | None = None,
 ) -> Appointment:
     """Move a confirmed appointment while preserving its audit trail."""
     appointment = session.get(Appointment, appointment_id)
@@ -637,12 +638,28 @@ def reschedule_appointment(
     if slot_key not in DISPATCH_SLOTS:
         raise ValueError("the selected time block is invalid")
 
+    target_team_id = service_team_id or appointment.service_team_id
+    target_team = session.get(ServiceTeam, target_team_id)
+    if target_team is None or not target_team.active:
+        raise ValueError("the selected service team is not active")
+    target_lead = session.scalar(
+        select(Technician)
+        .join(TeamMembership, TeamMembership.technician_id == Technician.id)
+        .where(
+            TeamMembership.service_team_id == target_team.id,
+            TeamMembership.is_lead.is_(True),
+            Technician.active.is_(True),
+        )
+    )
+    if target_lead is None:
+        raise ValueError("the selected service team does not have an active team lead")
+
     _, start_time, end_time = DISPATCH_SLOTS[slot_key]
     scheduled_start = datetime.combine(appointment_date, start_time, tzinfo=MANILA_TIMEZONE)
     scheduled_end = datetime.combine(appointment_date, end_time, tzinfo=MANILA_TIMEZONE)
     existing = session.scalar(
         select(Appointment).where(
-            Appointment.service_team_id == appointment.service_team_id,
+            Appointment.service_team_id == target_team.id,
             Appointment.scheduled_start == scheduled_start,
             Appointment.id != appointment.id,
         )
@@ -650,10 +667,14 @@ def reschedule_appointment(
     if existing is not None:
         raise ValueError("that team time block is already assigned")
 
+    previous_team = session.get(ServiceTeam, appointment.service_team_id)
+    previous_team_name = previous_team.name if previous_team else f"team {appointment.service_team_id}"
     previous_start = appointment.scheduled_start.astimezone(MANILA_TIMEZONE)
     previous_end = appointment.scheduled_end.astimezone(MANILA_TIMEZONE)
     appointment.scheduled_start = scheduled_start
     appointment.scheduled_end = scheduled_end
+    appointment.service_team_id = target_team.id
+    appointment.technician_id = target_lead.id
     session.add(
         AppointmentStatusHistory(
             appointment_id=appointment.id,
@@ -661,8 +682,9 @@ def reschedule_appointment(
             to_status="confirmed",
             actor_type="local_staff",
             note=(
-                f"Rescheduled from {previous_start:%Y-%m-%d %H:%M}-{previous_end:%H:%M} "
-                f"to {scheduled_start:%Y-%m-%d %H:%M}-{scheduled_end:%H:%M}; no customer message sent."
+                f"Rescheduled from {previous_team_name}, {previous_start:%Y-%m-%d %H:%M}-{previous_end:%H:%M} "
+                f"to {target_team.name}, {scheduled_start:%Y-%m-%d %H:%M}-{scheduled_end:%H:%M}; "
+                "no customer message sent."
             ),
         )
     )
@@ -681,7 +703,13 @@ def reschedule_appointment(
     return appointment
 
 
-def update_appointment_status(session: Session, appointment_id: int, next_status: str) -> Appointment:
+def update_appointment_status(
+    session: Session,
+    appointment_id: int,
+    next_status: str,
+    *,
+    staff_note: str | None = None,
+) -> Appointment:
     """Advance or cancel a scheduled job through the local staff workflow only."""
     appointment = session.get(Appointment, appointment_id)
     if appointment is None:
@@ -690,6 +718,9 @@ def update_appointment_status(session: Session, appointment_id: int, next_status
     allowed_transitions = APPOINTMENT_STATUS_TRANSITIONS.get(appointment.status, {})
     if next_status not in allowed_transitions:
         raise ValueError(f"the appointment cannot move from {appointment.status} to {next_status}")
+    cleaned_note = (staff_note or "").strip()
+    if next_status == "cancelled" and not cleaned_note:
+        raise ValueError("a cancellation reason is required")
 
     previous_status = appointment.status
     appointment.status = next_status
@@ -699,7 +730,11 @@ def update_appointment_status(session: Session, appointment_id: int, next_status
             from_status=previous_status,
             to_status=next_status,
             actor_type="local_staff",
-            note=allowed_transitions[next_status],
+            note=(
+                f"{allowed_transitions[next_status]} Staff note: {cleaned_note}"
+                if cleaned_note
+                else allowed_transitions[next_status]
+            ),
         )
     )
     booking = session.get(BookingRequest, appointment.booking_request_id)
