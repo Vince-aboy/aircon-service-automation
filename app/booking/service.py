@@ -115,6 +115,15 @@ def owner_phone(mobile: str) -> str:
     return mobile if is_live_mode() else masked_mobile(mobile)
 
 
+def display_address(address: Address) -> str:
+    """Build a readable address without repeating a barangay in the coverage label."""
+    coverage_area = address.coverage_area or ""
+    barangay_prefix = f"{address.barangay},"
+    if address.barangay and coverage_area.casefold().startswith(barangay_prefix.casefold()):
+        coverage_area = coverage_area[len(barangay_prefix):].strip()
+    return ", ".join(value for value in (address.address_line, address.barangay, address.city, coverage_area) if value)
+
+
 def record_simulated_event(
     session: Session,
     *,
@@ -259,9 +268,7 @@ def n8n_event_payload(session: Session, event: NotificationOutbox) -> dict[str, 
     live_mode = is_live_mode()
     occurred_at = event.created_at or datetime.now(UTC)
     local_occurred_at = occurred_at.astimezone(MANILA_TIMEZONE)
-    address_display = ", ".join(
-        value for value in (address.address_line, address.barangay, address.city, address.coverage_area) if value
-    )
+    address_display = display_address(address)
     return {
         "event_id": f"outbox-{event.id}" if live_mode else f"synthetic-outbox-{event.id}",
         "idempotency_key": outbox_idempotency_key(event),

@@ -18,7 +18,7 @@ from sqlalchemy import select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
-from app.booking.service import APPOINTMENT_STATUS_TRANSITIONS, DISPATCH_SLOTS, MANILA_TIMEZONE, automatic_delivery_enabled, complete_appointment_shortcut, create_pending_booking, process_pending_simulated_events, push_one_pending_event_to_n8n, review_booking_request, run_due_delivery_worker_check, schedule_approved_booking, update_appointment_status
+from app.booking.service import APPOINTMENT_STATUS_TRANSITIONS, DISPATCH_SLOTS, MANILA_TIMEZONE, automatic_delivery_enabled, complete_appointment_shortcut, create_pending_booking, display_address, process_pending_simulated_events, push_one_pending_event_to_n8n, review_booking_request, run_due_delivery_worker_check, schedule_approved_booking, update_appointment_status
 from app.booking.validation import BookingRequestInput
 from app.database.models import Address, Appointment, AppointmentStatusHistory, BookingRequest, BookingRequestStatusHistory, Customer, NotificationOutbox, ServiceTeam, ServiceType
 from app.database.session import create_database_engine
@@ -44,6 +44,7 @@ def app_path(path: str) -> str:
 
 templates.env.globals["app_path"] = app_path
 templates.env.globals["is_live_mode"] = is_live_mode
+templates.env.globals["address_display"] = display_address
 templates.env.globals["operation_mode_label"] = lambda: "Live owner operations" if is_live_mode() else "Local prototype · synthetic data only"
 
 
@@ -436,6 +437,7 @@ def appointment_detail_context(session: Session, appointment_id: int) -> dict[st
         "booking": booking,
         "customer": customer,
         "address": address,
+        "address_display": display_address(address),
         "team": team,
         "service_type": service_type,
         "booking_history": booking_history,

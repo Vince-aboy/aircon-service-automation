@@ -35,7 +35,7 @@
             <dl class="request-details">
               <div><dt>Phone</dt><dd>{{ customer.mobile }}</dd></div>
               <div><dt>Email</dt><dd>{{ customer.email or "Not supplied" }}</dd></div>
-              <div><dt>Address</dt><dd>{{ address.address_line }}, {{ address.barangay }}, {{ address.city }}, {{ address.coverage_area }}</dd></div>
+              <div><dt>Address</dt><dd>{{ address_display(address) }}</dd></div>
               <div><dt>Aircon type</dt><dd>{{ booking.aircon_type }}</dd></div>
               <div><dt>Service</dt><dd>{{ service_type.name }}</dd></div>
               <div><dt>Preferred date</dt><dd>{{ booking.preferred_date }}</dd></div>
