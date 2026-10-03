@@ -80,6 +80,7 @@ button:hover, .button-link:hover { background: #107f95; }
 .approved-request-card { align-items: center; background: #1d2730; border: 1px solid #3b4d5d; border-radius: 8px; display: flex; flex-wrap: wrap; gap: 0.5rem 1rem; padding: 0.8rem 1rem; }
 .approved-request-card strong, .scheduled-reference { color: #3cc4d9; }
 .approved-request-card span, .muted { color: #acbccd; }
+.approved-request-card .preferred-date-badge { background: rgba(255, 176, 64, 0.16); border: 1px solid #ffb040; border-radius: 999px; color: #ffd18a; font-size: 0.78rem; font-weight: 800; letter-spacing: 0.02em; padding: 0.35rem 0.65rem; }
 .automation-event-list { display: grid; gap: 0.75rem; }
 .automation-event { align-items: start; background: #1d2730; border: 1px solid #3b4d5d; border-radius: 8px; display: grid; gap: 0.4rem; grid-template-columns: 1fr auto; padding: 0.9rem 1rem; }
 .automation-event p { grid-column: 1 / -1; margin: 0; }

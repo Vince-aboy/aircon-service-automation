@@ -37,7 +37,8 @@
           {% for booking, customer, address, service_type in approved_requests %}
             <article class="approved-request-card">
               <strong>{{ booking.reference_code }}</strong>
-              <span>{{ customer.full_name }} · {{ service_type.name }} · prefers {{ booking.preferred_date }}</span>
+              <span>{{ customer.full_name }} · {{ service_type.name }}</span>
+              <span class="preferred-date-badge">Preferred date: {{ booking.preferred_date }}</span>
             </article>
           {% endfor %}
         </div>
