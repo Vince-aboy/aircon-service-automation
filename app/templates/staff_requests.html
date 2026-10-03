@@ -16,6 +16,7 @@
 
     {% if reviewed == "approved_for_scheduling" %}
       <p class="staff-feedback">Request approved for scheduling. No appointment or message was created.</p>
+      <a class="button-link" href="{{ app_path('/staff/dispatch') }}">Continue to scheduling</a>
     {% elif reviewed == "cancelled" %}
       <p class="staff-feedback">Request declined. No appointment or message was created.</p>
     {% endif %}
