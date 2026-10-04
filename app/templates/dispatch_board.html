@@ -59,7 +59,7 @@
               <div class="team-name" role="rowheader">{{ team.name }}</div>
               {% for slot_key, slot_label in slots %}
                 {% set entry = appointments.get((team.id, slot_key)) %}
-                <div class="dispatch-cell" role="cell">
+                <div class="dispatch-cell {% if entry and entry[0].status == 'completed' %}completed-dispatch-cell{% endif %}" role="cell">
                   {% if demo_preview and team.name == 'Team A' and slot_key == '09:00' %}
                     <div class="demo-grid-watermark" aria-hidden="true">COMPLETED</div>
                     <div class="demo-grid-card">
@@ -72,6 +72,7 @@
                     </div>
                   {% elif entry %}
                     {% set appointment, booking, customer, service_type, address = entry %}
+                    {% if appointment.status == 'completed' %}<div class="completed-watermark" aria-hidden="true">COMPLETED</div>{% endif %}
                     <a class="scheduled-card" href="{{ app_path('/staff/appointments/' ~ appointment.id) }}" data-detail-url="{{ app_path('/staff/appointments/' ~ appointment.id ~ '/fragment') }}">
                       <p class="scheduled-reference">{{ booking.reference_code }}</p>
                       <strong>{{ customer.full_name }}</strong>
