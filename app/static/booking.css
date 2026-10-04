@@ -550,3 +550,116 @@ a.directory-row.completed-directory-row:hover { background: rgba(67, 201, 126, 0
   .inline-create-form { grid-template-columns: 1fr; }
   .activity-timeline article { grid-template-columns: 1fr; gap: 0.35rem; }
 }
+
+/* Refined operations palette: calm charcoal, slate, and restrained status tones. */
+:root {
+  --ops-ink: #e8eef2;
+  --ops-muted: #9aaeba;
+  --ops-subtle: #71818b;
+  --ops-bg: #0f1419;
+  --ops-sidebar: #121a20;
+  --ops-panel: #171f27;
+  --ops-card: #202b35;
+  --ops-card-soft: #1b252e;
+  --ops-border: #344552;
+  --ops-border-soft: #293943;
+  --ops-teal: #159bb5;
+  --ops-teal-soft: #55c6d8;
+  --ops-green: #62d39b;
+  --ops-green-bg: #173b32;
+  --ops-amber: #e8ad57;
+  --ops-amber-bg: #3a2d1b;
+  --ops-violet: #a98bd4;
+  --ops-violet-bg: #2d2740;
+  --ops-red: #e67878;
+  --ops-red-bg: #3a2328;
+}
+
+body,
+.admin-body { background: var(--ops-bg); color: var(--ops-ink); }
+.staff-page,
+.job-modal { background: var(--ops-panel); border-color: var(--ops-border-soft); }
+h1, h2, h3, h4, label, .team-name, .directory-row, .customer-card,
+.scheduled-card, .workflow-list a { color: var(--ops-ink); }
+.intro, .privacy-note, .hint, .optional, .muted, .request-details dt,
+.directory-row small, .customer-card span, .history-card-list span,
+.settings-list span, .slot-note { color: var(--ops-muted); }
+section + section, .detail-section, .dispatch-section, .staff-header { border-color: var(--ops-border-soft); }
+
+input, select, textarea { background: var(--ops-card); border-color: var(--ops-border); color: var(--ops-ink); }
+input:focus, select:focus, textarea:focus { border-color: var(--ops-teal); outline-color: rgba(21, 155, 181, 0.2); }
+button, .button-link { background: var(--ops-teal); }
+button:hover, .button-link:hover { background: #117f94; }
+.button-secondary { border-color: #718592; color: var(--ops-ink); }
+.button-secondary:hover { background: #2a3740; }
+
+.admin-sidebar { background: var(--ops-sidebar); border-right-color: var(--ops-border-soft); }
+.admin-topbar { background: rgba(15, 20, 25, 0.96); border-bottom-color: var(--ops-border-soft); }
+.admin-nav a { color: var(--ops-muted); }
+.admin-nav a:hover { background: #1d2931; color: var(--ops-ink); }
+.admin-nav a.active { background: #173742; color: #a9dce4; box-shadow: inset 3px 0 var(--ops-teal); }
+.admin-brand-mark { background: linear-gradient(145deg, #2e9cac, #176777); box-shadow: 0 8px 20px rgba(21, 155, 181, 0.18); }
+.admin-nav a span, .eyebrow, .reference-code, .scheduled-reference, .panel-link { color: var(--ops-teal-soft); }
+.admin-operator strong { background: #202d36; border-color: var(--ops-border); }
+
+.compact-page-header,
+.dashboard-panel,
+.settings-group { background: var(--ops-panel); border-color: var(--ops-border); }
+.header-stat, .summary-chip { background: #1c2b34; border-color: #3b5963; }
+.header-stat strong, .metric-card strong { color: var(--ops-teal-soft); }
+.metric-card { background: linear-gradient(145deg, #202b35, #1b252e); border-color: var(--ops-border); }
+.metric-card:hover { border-color: var(--ops-teal-soft); }
+.metric-success, .status-row-completed { background: var(--ops-green-bg) !important; border-color: rgba(98, 211, 155, 0.78) !important; }
+.metric-success strong, .status-text-completed { color: var(--ops-green) !important; }
+.metric-success::before { background: var(--ops-green); }
+.metric-attention::before { background: var(--ops-amber); }
+.dashboard-panel-technical { background: #141c22; }
+
+.request-card, .empty-queue, .automation-event, .team-name, .dispatch-cell,
+.detail-grid div, .directory-row, .customer-card, .history-card-list article,
+.team-management-card, .technician-list article, .settings-list div,
+.workflow-list a, .upcoming-list a, .status-summary div { background: var(--ops-card); border-color: var(--ops-border); }
+.request-card-pending { border-left-color: var(--ops-amber); }
+.request-card-waitlist { border-left-color: var(--ops-teal-soft); }
+.workflow-list a:hover, .upcoming-list a:hover, .customer-card:hover { border-color: var(--ops-teal-soft); }
+.workflow-list a > span, .customer-avatar { background: #203b43; border-color: #3f7b85; color: var(--ops-teal-soft); }
+.open-slot, .appointment-status { color: var(--ops-teal-soft) !important; }
+
+.status-badge,
+.status-confirmed { background: #1c3941 !important; border-color: #4b9eaa !important; color: #a2dce3 !important; }
+.status-pending { background: var(--ops-amber-bg) !important; border-color: #a97935 !important; color: #f2c982 !important; }
+.status-waitlisted { background: #1d3740 !important; border-color: #3d8794 !important; color: #9bd9e1 !important; }
+.status-recorded, .status-completed, .status-active { background: var(--ops-green-bg) !important; border-color: #579f7c !important; color: var(--ops-green) !important; }
+.status-failed, .status-cancelled, .status-inactive { background: var(--ops-red-bg) !important; border-color: #a95e64 !important; color: #f0a1a1 !important; }
+.status-en_route { background: var(--ops-amber-bg) !important; border-color: #a97935 !important; color: #f2c982 !important; }
+.status-in_progress { background: var(--ops-violet-bg) !important; border-color: #806aa7 !important; color: #cfb9ec !important; }
+.preferred-date-detail { background: rgba(232, 173, 87, 0.1); border-color: rgba(232, 173, 87, 0.32); }
+.preferred-date-detail dd { color: #f2c982; }
+
+.completed-dispatch-cell { background: var(--ops-green-bg); border-color: rgba(98, 211, 155, 0.78); }
+.completed-watermark { color: rgba(98, 211, 155, 0.2); }
+.completed-status-badge { background: var(--ops-green-bg); border-color: #579f7c; color: var(--ops-green); }
+.history-status-completed { border-color: rgba(98, 211, 155, 0.55) !important; }
+.activity-status-completed { border-left-color: var(--ops-green) !important; }
+.activity-status-cancelled { border-left-color: var(--ops-red) !important; }
+.activity-status-en_route { border-left-color: var(--ops-amber) !important; }
+.activity-status-in_progress { border-left-color: var(--ops-violet) !important; }
+.state-good { background: var(--ops-green-bg); border-color: #579f7c; color: var(--ops-green) !important; }
+.state-warning { background: var(--ops-amber-bg); border-color: #a97935; color: #f2c982 !important; }
+.state-error { background: var(--ops-red-bg); border-color: #a95e64; color: #f0a1a1 !important; }
+
+.demo-grid-watermark { color: rgba(169, 139, 212, 0.16); }
+.demo-grid-card small { border-color: #806aa7; color: #cfb9ec; }
+.dispatch-cell:has(.demo-grid-card) { background: var(--ops-violet-bg); border-color: #665687; }
+.activity-timeline article { background: var(--ops-card); border-color: var(--ops-border); }
+.activity-kind { background: #2b3740; color: #b8c8d0; }
+.text-action { color: #e8a0a0; }
+
+.status-summary dt, .health-list dt, .settings-list span { color: var(--ops-muted); }
+.health-good { background: var(--ops-green-bg); border-color: #579f7c; color: var(--ops-green); }
+.health-error { background: var(--ops-red-bg); border-color: #a95e64; color: #f0a1a1; }
+.request-filter-form, .directory-filter-form, .automation-page > .dispatch-section:first-of-type { background: #141c22; border-color: var(--ops-border-soft); }
+
+@media (max-width: 640px) {
+  .directory-row { background: var(--ops-card); border-color: var(--ops-border); }
+}
