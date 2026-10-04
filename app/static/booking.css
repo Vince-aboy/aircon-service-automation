@@ -110,7 +110,7 @@ button:hover, .button-link:hover { background: #107f95; }
 .demo-grid-card span { color: #acbccd; margin-top: 0.25rem; }
 .demo-grid-card small { border: 1px solid #ff9be4; border-radius: 999px; color: #ffb7eb; display: inline-block; font-size: 0.65rem; font-weight: 800; margin-top: 0.6rem; padding: 0.2rem 0.4rem; }
 .demo-completed-status { color: #9af0bb !important; font-weight: 800; text-transform: capitalize; }
-.completed-dispatch-cell { overflow: hidden; position: relative; }
+.completed-dispatch-cell { background: rgba(67, 201, 126, 0.16); border-color: #43c97e; overflow: hidden; position: relative; }
 .completed-watermark { color: rgba(154, 240, 187, 0.18); font-size: clamp(1.4rem, 3vw, 2.7rem); font-weight: 900; left: 50%; letter-spacing: 0.08em; pointer-events: none; position: absolute; text-align: center; top: 50%; transform: translate(-50%, -50%) rotate(-18deg); white-space: nowrap; z-index: 0; }
 .completed-dispatch-cell .scheduled-card { position: relative; z-index: 1; }
 .visually-hidden { height: 1px; margin: -1px; overflow: hidden; padding: 0; position: absolute; width: 1px; clip: rect(0, 0, 0, 0); white-space: nowrap; }
