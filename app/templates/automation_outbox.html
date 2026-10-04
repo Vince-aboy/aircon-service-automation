@@ -1,12 +1,18 @@
 {% extends "admin_base.html" %}
 {% block title %}Automation Monitor{% endblock %}
 {% block content %}
-  <section class="staff-page">
-    <header class="staff-header">
-      <p class="eyebrow">{{ operation_mode_label() }}</p>
+  <section class="staff-page automation-page">
+    <header class="staff-header compact-staff-header">
+      <p class="eyebrow">Owner reporting</p>
       <h1>Automation outbox</h1>
     <p class="intro">{% if is_live_mode() %}These are internal owner-reporting events. Customer messaging and payments remain disabled.{% else %}These are internal synthetic events for the n8n staging workflow. Nothing is sent to customers.{% endif %}</p>
     </header>
+
+    <div class="automation-summary" aria-label="Automation event summary">
+      <div class="summary-chip status-pending"><span>Pending</span><strong>{{ event_counts['pending'] }}</strong></div>
+      <div class="summary-chip status-recorded"><span>Recorded</span><strong>{{ event_counts['recorded'] }}</strong></div>
+      <div class="summary-chip status-failed"><span>Failed</span><strong>{{ event_counts['failed'] }}</strong></div>
+    </div>
 
     {% if automatic_delivery_enabled %}
       <p class="staff-feedback">Automatic delivery is enabled. The VPS worker checks the outbox every minute. No customer message is sent.</p>
@@ -56,7 +62,7 @@
           {% for event in events %}
             <article class="automation-event">
               <strong>{{ event.event_type.replace('_', ' ') }}</strong>
-              <span class="status-badge">{{ event.status }}</span>
+              <span class="status-badge status-{{ event.status }}">{{ event.status }}</span>
               <p>{{ event.payload['booking_reference'] }} · {{ event.recipient_masked }}</p>
               <p class="muted">{{ event.payload['note'] }}</p>
               <p class="muted">Delivery attempts: {{ event.attempt_count }}.</p>

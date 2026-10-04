@@ -1,6 +1,33 @@
 {% extends "admin_base.html" %}
 {% block title %}Settings{% endblock %}
 {% block content %}
-  <header class="admin-page-header"><div><p class="eyebrow">Deployment</p><h1>Settings</h1><p class="intro">Read-only operational configuration. Secret values are never displayed.</p></div></header>
-  <section class="staff-page"><div class="settings-list"><div><span>Operation mode</span><strong>{{ settings.operation_mode }}</strong></div><div><span>Business timezone</span><strong>{{ settings.timezone }}</strong></div><div><span>Public base path</span><strong>{{ settings.public_base_path }}</strong></div><div><span>Automatic owner reporting</span><strong>{% if settings.automatic_delivery %}Enabled{% else %}Disabled{% endif %}</strong></div><div><span>n8n webhook credentials</span><strong>{% if settings.webhook_configured %}Configured{% else %}Missing{% endif %}</strong></div><div><span>Staff authentication</span><strong>{% if settings.staff_auth_enabled %}Enabled{% else %}Temporarily disabled{% endif %}</strong></div><div><span>Staff credentials</span><strong>{% if settings.staff_auth_configured %}Configured{% else %}Missing{% endif %}</strong></div></div>{% if not settings.staff_auth_enabled %}<p class="staff-feedback">Warning: the staff workspace is currently public. Re-enable authentication immediately after the temporary viewing session.</p>{% endif %}<p class="hint">Environment-backed settings are changed on the VPS and require an application restart.</p></section>
+  <header class="admin-page-header compact-page-header">
+    <div><p class="eyebrow">Deployment</p><h1>Settings</h1><p class="intro">Read-only operational configuration. Secret values are never displayed.</p></div>
+  </header>
+  <section class="settings-grid">
+    <article class="settings-group">
+      <header><p class="eyebrow">Operations</p><h2>Application</h2></header>
+      <div class="settings-list">
+        <div><span>Operation mode</span><strong class="setting-state state-good">{{ settings.operation_mode }}</strong></div>
+        <div><span>Business timezone</span><strong>{{ settings.timezone }}</strong></div>
+        <div><span>Public base path</span><strong>{{ settings.public_base_path }}</strong></div>
+      </div>
+    </article>
+    <article class="settings-group">
+      <header><p class="eyebrow">Automation</p><h2>Owner reporting</h2></header>
+      <div class="settings-list">
+        <div><span>Automatic owner reporting</span><strong class="setting-state {% if settings.automatic_delivery %}state-good{% else %}state-warning{% endif %}">{% if settings.automatic_delivery %}Enabled{% else %}Disabled{% endif %}</strong></div>
+        <div><span>n8n webhook credentials</span><strong class="setting-state {% if settings.webhook_configured %}state-good{% else %}state-error{% endif %}">{% if settings.webhook_configured %}Configured{% else %}Missing{% endif %}</strong></div>
+      </div>
+    </article>
+    <article class="settings-group settings-group-wide">
+      <header><p class="eyebrow">Security</p><h2>Staff access</h2></header>
+      <div class="settings-list">
+        <div><span>Staff authentication</span><strong class="setting-state {% if settings.staff_auth_enabled %}state-good{% else %}state-warning{% endif %}">{% if settings.staff_auth_enabled %}Enabled{% else %}Temporarily disabled{% endif %}</strong></div>
+        <div><span>Staff credentials</span><strong class="setting-state {% if settings.staff_auth_configured %}state-good{% else %}state-error{% endif %}">{% if settings.staff_auth_configured %}Configured{% else %}Missing{% endif %}</strong></div>
+      </div>
+      {% if not settings.staff_auth_enabled %}<p class="staff-feedback warning-feedback">Warning: the staff workspace is currently public. Re-enable authentication immediately after the temporary viewing session.</p>{% endif %}
+    </article>
+  </section>
+  <p class="hint settings-hint">Environment-backed settings are changed on the VPS and require an application restart.</p>
 {% endblock %}

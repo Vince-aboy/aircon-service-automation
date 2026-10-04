@@ -1,12 +1,17 @@
 {% extends "admin_base.html" %}
 {% block title %}Service Requests{% endblock %}
 {% block content %}
-  <section class="staff-page">
-    <header class="staff-header">
-      <p class="eyebrow">{{ operation_mode_label() }}</p>
+  <section class="staff-page requests-page">
+    <header class="staff-header compact-staff-header">
+      <p class="eyebrow">Request review</p>
       <h1>Pending service requests</h1>
       <p class="intro">Read-only queue. Review requests here before any appointment is created.</p>
     </header>
+
+    <div class="queue-summary" aria-label="Request queue summary">
+      <div class="summary-chip status-pending"><span>Pending review</span><strong>{{ requests|length }}</strong></div>
+      <div class="summary-chip status-waitlisted"><span>Waitlisted</span><strong>{{ waitlist_requests|length }}</strong></div>
+    </div>
 
     <form class="request-filter-form" method="get" action="{{ app_path('/staff/requests') }}">
       <label>Search requests
@@ -30,13 +35,13 @@
       <p class="queue-count">{{ requests|length }} request{% if requests|length != 1 %}s{% endif %} awaiting review</p>
       <div class="request-list">
         {% for booking, customer, address, service_type in requests %}
-          <article class="request-card">
+          <article class="request-card request-card-pending">
             <div class="request-card-header">
               <div>
                 <p class="reference-code">{{ booking.reference_code }}</p>
                 <h2>{{ customer.full_name }}</h2>
               </div>
-              <span class="status-badge">{{ booking.status }}</span>
+              <span class="status-badge status-pending" data-status="{{ booking.status }}">{{ booking.status.replace('_', ' ') }}</span>
             </div>
             <dl class="request-details">
               <div><dt>Phone</dt><dd>{{ customer.mobile }}</dd></div>
@@ -44,7 +49,7 @@
               <div><dt>Address</dt><dd>{{ address_display(address) }}</dd></div>
               <div><dt>Aircon type</dt><dd>{{ booking.aircon_type }}</dd></div>
               <div><dt>Service</dt><dd>{{ service_type.name }}</dd></div>
-              <div><dt>Preferred date</dt><dd>{{ booking.preferred_date }}</dd></div>
+              <div class="preferred-date-detail"><dt>Preferred date</dt><dd>{{ booking.preferred_date }}</dd></div>
             </dl>
             <form class="review-actions" method="post" action="{{ app_path('/staff/requests/' ~ booking.id ~ '/review') }}" data-lock-submit>
               <button type="submit" name="decision" value="approve">Approve for scheduling</button>
@@ -61,18 +66,18 @@
     {% endif %}
 
     {% if waitlist_requests %}
-      <section class="staff-page">
-        <header class="staff-header">
+      <section class="request-queue-section waitlist-section">
+        <header class="queue-section-header">
           <p class="eyebrow">Capacity queue</p>
           <h2>Waitlist requests</h2>
           <p class="intro">Review these requests when a suitable team slot becomes available.</p>
         </header>
         <div class="request-list">
           {% for booking, customer, address, service_type in waitlist_requests %}
-            <article class="request-card">
+            <article class="request-card request-card-waitlist">
               <div class="request-card-header">
                 <div><p class="reference-code">{{ booking.reference_code }}</p><h2>{{ customer.full_name }}</h2></div>
-                <span class="status-badge">waitlisted</span>
+                <span class="status-badge status-waitlisted">waitlisted</span>
               </div>
               <dl class="request-details">
                 <div><dt>Preferred date</dt><dd>{{ booking.preferred_date }}</dd></div>

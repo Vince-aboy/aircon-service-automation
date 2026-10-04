@@ -1,10 +1,10 @@
 {% extends "admin_base.html" %}
 {% block title %}Customers{% endblock %}
 {% block content %}
-  <header class="admin-page-header"><div><p class="eyebrow">Customer records</p><h1>Customers</h1><p class="intro">Contact information and service history from the booking database.</p></div></header>
-  <section class="staff-page">
+  <header class="admin-page-header compact-page-header"><div><p class="eyebrow">Customer records</p><h1>Customers</h1><p class="intro">Contact information and service history from the booking database.</p></div><div class="header-stat"><strong>{{ customers|length }}</strong><span>Customer records</span></div></header>
+  <section class="staff-page directory-page">
     <form class="directory-filter-form directory-filter-simple" method="get" action="{{ app_path('/staff/customers') }}"><label>Search customers<input name="q" type="search" value="{{ q }}" placeholder="Name, phone, or email"></label><button type="submit">Search</button>{% if q %}<a class="button-link button-secondary" href="{{ app_path('/staff/customers') }}">Clear</a>{% endif %}</form>
-    <p class="queue-count">{{ customers|length }} customer{% if customers|length != 1 %}s{% endif %}</p>
-    {% if customers %}<div class="customer-grid">{% for customer in customers %}<a class="customer-card" href="{{ app_path('/staff/customers/' ~ customer.id) }}"><div class="customer-avatar">{{ customer.full_name[:1].upper() }}</div><div><strong>{{ customer.full_name }}</strong><span>{{ customer.mobile }}</span><span>{{ customer.email or 'No email supplied' }}</span></div><b>{{ booking_counts[customer.id] }} request{% if booking_counts[customer.id] != 1 %}s{% endif %}</b></a>{% endfor %}</div>{% else %}<section class="empty-queue"><h2>No customers found</h2><p>Try another search.</p></section>{% endif %}
+    <p class="queue-count count-pill">{{ customers|length }} customer{% if customers|length != 1 %}s{% endif %}</p>
+    {% if customers %}<div class="customer-grid">{% for customer in customers %}<a class="customer-card" href="{{ app_path('/staff/customers/' ~ customer.id) }}"><div class="customer-avatar">{{ customer.full_name[:1].upper() }}</div><div><strong>{{ customer.full_name }}</strong><span class="customer-mobile">{{ customer.mobile }}</span><span>{{ customer.email or 'No email supplied' }}</span></div><b class="request-count-badge">{{ booking_counts[customer.id] }} request{% if booking_counts[customer.id] != 1 %}s{% endif %}</b></a>{% endfor %}</div>{% else %}<section class="empty-queue"><h2>No customers found</h2><p>Try another search.</p></section>{% endif %}
   </section>
 {% endblock %}

@@ -44,7 +44,7 @@
 
 <section class="detail-section">
   <h2>Job progress</h2>
-  <p class="job-status">Current status: <strong>{{ appointment.status.replace('_', ' ') }}</strong></p>
+  <p class="job-status">Current status: <strong class="status-badge status-{{ appointment.status }}">{{ appointment.status.replace('_', ' ') }}</strong></p>
   {% if available_status_updates %}
     <form class="progress-actions" method="post" action="{{ app_path('/staff/appointments/' ~ appointment.id ~ '/status') }}" data-lock-submit>
       {% for next_status in available_status_updates %}

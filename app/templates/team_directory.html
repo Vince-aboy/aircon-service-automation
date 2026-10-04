@@ -1,8 +1,8 @@
 {% extends "admin_base.html" %}
 {% block title %}Teams & Technicians{% endblock %}
 {% block content %}
-  <header class="admin-page-header"><div><p class="eyebrow">Workforce</p><h1>Teams & technicians</h1><p class="intro">Maintain the people and team leads available to the dispatcher.</p></div></header>
-  <section class="management-grid">
+  <header class="admin-page-header compact-page-header"><div><p class="eyebrow">Workforce</p><h1>Teams & technicians</h1><p class="intro">Maintain the people and team leads available to the dispatcher.</p></div></header>
+  <section class="management-grid management-tools">
     <article class="dashboard-panel"><h2>Add technician</h2><form class="inline-create-form" method="post" action="{{ app_path('/staff/technicians') }}" data-lock-submit><label>Display name<input name="display_name" required placeholder="Technician full name"></label><button type="submit">Add technician</button></form></article>
     <article class="dashboard-panel"><h2>Add service team</h2><form class="inline-create-form" method="post" action="{{ app_path('/staff/teams') }}" data-lock-submit><label>Team name<input name="name" required placeholder="Example: Team C"></label><button type="submit">Add team</button></form></article>
   </section>

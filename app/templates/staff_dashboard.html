@@ -1,70 +1,49 @@
 {% extends "admin_base.html" %}
 {% block title %}Dashboard{% endblock %}
 {% block content %}
-  <header class="admin-page-header">
-    <div>
-      <p class="eyebrow">Operations command center</p>
-      <h1>Good day, {{ staff_operator_name() }}</h1>
-      <p class="intro">Review demand, assign teams, and monitor owner reporting from one workspace.</p>
-    </div>
-    <div class="dashboard-actions">
-      <a class="button-link" href="{{ app_path('/staff/requests') }}">Review requests</a>
-      <a class="button-link button-secondary" href="{{ app_path('/staff/dispatch?selected_date=' ~ today) }}">Open today’s schedule</a>
-    </div>
+  <header class="admin-page-header compact-page-header">
+    <div><p class="eyebrow">Operations command center</p><h1>Good day, {{ staff_operator_name() }}</h1><p class="intro">Review demand, assign teams, and monitor today’s work from one workspace.</p></div>
+    <div class="dashboard-actions"><a class="button-link" href="{{ app_path('/staff/requests') }}">Review requests</a><a class="button-link button-secondary" href="{{ app_path('/staff/dispatch?selected_date=' ~ today) }}">Open today’s schedule</a></div>
   </header>
 
   <section class="metric-grid" aria-label="Operations summary">
     <a class="metric-card metric-attention" href="{{ app_path('/staff/requests') }}"><span>Awaiting review</span><strong>{{ metrics.pending_review }}</strong><small>Customer requests</small></a>
-    <a class="metric-card" href="{{ app_path('/staff/dispatch') }}"><span>Awaiting assignment</span><strong>{{ metrics.awaiting_assignment }}</strong><small>Approved requests</small></a>
-    <a class="metric-card" href="{{ app_path('/staff/dispatch?selected_date=' ~ today) }}"><span>Today’s schedule</span><strong>{{ metrics.today_appointments }}</strong><small>Active appointments</small></a>
-    <div class="metric-card"><span>Available teams</span><strong>{{ metrics.active_teams }}</strong><small>Active service teams</small></div>
+    <a class="metric-card metric-information" href="{{ app_path('/staff/dispatch') }}"><span>Awaiting assignment</span><strong>{{ metrics.awaiting_assignment }}</strong><small>Approved requests</small></a>
+    <a class="metric-card metric-information" href="{{ app_path('/staff/dispatch?selected_date=' ~ today) }}"><span>Today’s schedule</span><strong>{{ metrics.today_appointments }}</strong><small>Active appointments</small></a>
+    <div class="metric-card metric-success"><span>Available teams</span><strong>{{ metrics.active_teams }}</strong><small>Active service teams</small></div>
   </section>
 
-  <section class="dashboard-grid">
-    <article class="dashboard-panel">
+  <section class="dashboard-grid dashboard-core-grid">
+    <article class="dashboard-panel dashboard-panel-primary">
       <div class="panel-heading"><div><p class="eyebrow">Daily workflow</p><h2>Operator queue</h2></div></div>
       <div class="workflow-list">
-        <a href="{{ app_path('/staff/requests') }}"><span>01</span><div><strong>Review new requests</strong><small>{{ metrics.pending_review }} waiting for a decision</small></div><b>→</b></a>
-        <a href="{{ app_path('/staff/dispatch') }}"><span>02</span><div><strong>Assign approved work</strong><small>{{ metrics.awaiting_assignment }} waiting for a team</small></div><b>→</b></a>
-        <a href="{{ app_path('/staff/dispatch?selected_date=' ~ today) }}"><span>03</span><div><strong>Manage today’s jobs</strong><small>{{ metrics.today_appointments }} scheduled today</small></div><b>→</b></a>
+        <a href="{{ app_path('/staff/requests') }}"><span>01</span><div><strong>Review new requests</strong><small>{{ metrics.pending_review }} waiting for a decision</small></div><b>&rarr;</b></a>
+        <a href="{{ app_path('/staff/dispatch') }}"><span>02</span><div><strong>Assign approved work</strong><small>{{ metrics.awaiting_assignment }} waiting for a team</small></div><b>&rarr;</b></a>
+        <a href="{{ app_path('/staff/dispatch?selected_date=' ~ today) }}"><span>03</span><div><strong>Manage today’s jobs</strong><small>{{ metrics.today_appointments }} scheduled today</small></div><b>&rarr;</b></a>
       </div>
     </article>
     <article class="dashboard-panel">
-      <div class="panel-heading"><div><p class="eyebrow">Owner reporting</p><h2>Automation health</h2></div><span class="health-badge {% if metrics.failed_automation %}health-error{% else %}health-good{% endif %}">{% if metrics.failed_automation %}Needs attention{% else %}Operational{% endif %}</span></div>
-      <dl class="health-list">
-        <div><dt>Delivery worker</dt><dd>{% if automatic_delivery_enabled %}Enabled{% else %}Disabled{% endif %}</dd></div>
-        <div><dt>Pending events</dt><dd>{{ metrics.pending_automation }}</dd></div>
-        <div><dt>Failed events</dt><dd>{{ metrics.failed_automation }}</dd></div>
-      </dl>
-      <a class="panel-link" href="{{ app_path('/staff/automation') }}">Open automation monitor →</a>
-    </article>
-  </section>
-
-  <section class="dashboard-grid dashboard-grid-wide">
-    <article class="dashboard-panel">
-      <div class="panel-heading"><div><p class="eyebrow">Forward schedule</p><h2>Upcoming appointments</h2></div><a class="panel-link" href="{{ app_path('/staff/dispatch') }}">Open schedule →</a></div>
+      <div class="panel-heading"><div><p class="eyebrow">Forward schedule</p><h2>Upcoming appointments</h2></div><a class="panel-link" href="{{ app_path('/staff/dispatch') }}">Open schedule &rarr;</a></div>
       {% if upcoming_appointments %}
         <div class="upcoming-list">
           {% for appointment, booking, customer, team, service_type in upcoming_appointments %}
             {% set local_start = to_manila(appointment.scheduled_start) %}
-            <a href="{{ app_path('/staff/appointments/' ~ appointment.id) }}">
-              <time datetime="{{ local_start.isoformat() }}"><strong>{{ local_start.strftime('%b %d') }}</strong><span>{{ local_start.strftime('%I:%M %p') }}</span></time>
-              <div><strong>{{ customer.full_name }}</strong><span>{{ service_type.name }} · {{ team.name }}</span></div>
-              <span class="appointment-status">{{ appointment.status.replace('_', ' ') }}</span>
-            </a>
+            <a href="{{ app_path('/staff/appointments/' ~ appointment.id) }}"><time datetime="{{ local_start.isoformat() }}"><strong>{{ local_start.strftime('%b %d') }}</strong><span>{{ local_start.strftime('%I:%M %p') }}</span></time><div><strong>{{ customer.full_name }}</strong><span>{{ service_type.name }} · {{ team.name }}</span></div><span class="status-badge status-{{ appointment.status }}">{{ appointment.status.replace('_', ' ') }}</span></a>
           {% endfor %}
         </div>
-      {% else %}
-        <p class="muted">No upcoming appointments are scheduled.</p>
-      {% endif %}
+      {% else %}<p class="muted">No upcoming appointments are scheduled.</p>{% endif %}
     </article>
+  </section>
+
+  <section class="dashboard-grid dashboard-secondary-grid">
     <article class="dashboard-panel">
-      <div class="panel-heading"><div><p class="eyebrow">Job lifecycle</p><h2>All appointment statuses</h2></div></div>
-      <dl class="status-summary">
-        {% for label, key in [('Confirmed', 'confirmed'), ('En route', 'en_route'), ('In progress', 'in_progress'), ('Completed', 'completed'), ('Cancelled', 'cancelled')] %}
-          <div><dt>{{ label }}</dt><dd>{{ appointment_status_counts[key] }}</dd></div>
-        {% endfor %}
-      </dl>
+      <div class="panel-heading"><div><p class="eyebrow">Job lifecycle</p><h2>Appointment statuses</h2></div></div>
+      <dl class="status-summary">{% for label, key in [('Confirmed', 'confirmed'), ('En route', 'en_route'), ('In progress', 'in_progress'), ('Completed', 'completed'), ('Cancelled', 'cancelled')] %}<div><dt>{{ label }}</dt><dd class="status-text status-text-{{ key }}">{{ appointment_status_counts[key] }}</dd></div>{% endfor %}</dl>
+    </article>
+    <article class="dashboard-panel dashboard-panel-technical">
+      <div class="panel-heading"><div><p class="eyebrow">Owner reporting</p><h2>Automation health</h2></div><span class="health-badge {% if metrics.failed_automation %}health-error{% else %}health-good{% endif %}">{% if metrics.failed_automation %}Needs attention{% else %}Operational{% endif %}</span></div>
+      <dl class="health-list"><div><dt>Delivery worker</dt><dd>{% if automatic_delivery_enabled %}Enabled{% else %}Disabled{% endif %}</dd></div><div><dt>Pending events</dt><dd>{{ metrics.pending_automation }}</dd></div><div><dt>Failed events</dt><dd>{{ metrics.failed_automation }}</dd></div></dl>
+      <a class="panel-link" href="{{ app_path('/staff/automation') }}">Open automation monitor &rarr;</a>
     </article>
   </section>
 {% endblock %}
