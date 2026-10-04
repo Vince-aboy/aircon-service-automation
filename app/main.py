@@ -697,6 +697,7 @@ def dispatch_board(
     selected_date: date | None = None,
     scheduled: str | None = None,
     job_updated: str | None = None,
+    demo: bool = False,
     session: Session = Depends(get_session),
 ) -> HTMLResponse:
     """Render a small local two-team dispatcher board for one selected day."""
@@ -721,6 +722,7 @@ def dispatch_board(
             "slots": [(key, label) for key, (label, _, _) in DISPATCH_SLOTS.items()],
             "scheduled": scheduled,
             "job_updated": job_updated,
+            "demo_preview": demo,
         },
     )
 

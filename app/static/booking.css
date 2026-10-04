@@ -102,17 +102,13 @@ button:hover, .button-link:hover { background: #107f95; }
 .scheduled-card:hover { color: #fff; text-decoration: underline; text-decoration-color: #3cc4d9; text-underline-offset: 0.25rem; }
 .appointment-status { color: #76deef !important; font-size: 0.8rem; font-weight: 700; text-transform: capitalize; }
 .open-slot { color: #76deef !important; font-weight: 700; }
-.demo-dispatch-row { opacity: 0.98; }
-.demo-team-name { background: #252b3b; border-color: #56617a; color: #ffb7eb; }
-.demo-dispatch-cell { background: #252b3b; border-color: #56617a; overflow: hidden; position: relative; }
+.dispatch-cell:has(.demo-grid-card) { background: #252b3b; border-color: #56617a; overflow: hidden; position: relative; }
 .demo-grid-watermark { color: rgba(244, 126, 211, 0.3); font-size: clamp(1rem, 2.4vw, 2rem); font-weight: 900; left: 50%; letter-spacing: 0.08em; pointer-events: none; position: absolute; text-align: center; top: 50%; transform: translate(-50%, -50%) rotate(-18deg); white-space: nowrap; }
 .demo-grid-card { position: relative; z-index: 1; }
 .demo-grid-card strong, .demo-grid-card span { display: block; }
 .demo-grid-card strong { color: #edf4fc; margin-top: 0.25rem; }
 .demo-grid-card span { color: #acbccd; margin-top: 0.25rem; }
 .demo-grid-card small { border: 1px solid #ff9be4; border-radius: 999px; color: #ffb7eb; display: inline-block; font-size: 0.65rem; font-weight: 800; margin-top: 0.6rem; padding: 0.2rem 0.4rem; }
-.demo-empty-cell { background: #252b3b; border-color: #56617a; }
-.demo-empty-cell span { color: #ffb7eb !important; font-size: 0.75rem; font-weight: 700; }
 .demo-completed-status { color: #9af0bb !important; font-weight: 800; text-transform: capitalize; }
 .visually-hidden { height: 1px; margin: -1px; overflow: hidden; padding: 0; position: absolute; width: 1px; clip: rect(0, 0, 0, 0); white-space: nowrap; }
 .back-link { color: #76deef; display: inline-block; margin-bottom: 1.5rem; text-decoration: none; }

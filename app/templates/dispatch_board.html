@@ -7,6 +7,7 @@
       <h1>Team schedule</h1>
       <p class="intro">Assign approved requests to an open team block on the selected date. The customer’s preferred date is shown for reference. No message is sent automatically.</p>
       <a class="button-link" href="{{ app_path('/staff/requests') }}">Back to request review</a>
+      {% if demo_preview %}<a class="button-link button-secondary" href="{{ app_path('/staff/dispatch?selected_date=' ~ selected_date) }}">Show live data</a>{% else %}<a class="button-link button-secondary" href="{{ app_path('/staff/dispatch?selected_date=' ~ selected_date ~ '&demo=1') }}">Show visual demo</a>{% endif %}
     </header>
 
     <form class="dispatch-date-form" method="get" action="{{ app_path('/staff/dispatch') }}">
@@ -59,7 +60,17 @@
               {% for slot_key, slot_label in slots %}
                 {% set entry = appointments.get((team.id, slot_key)) %}
                 <div class="dispatch-cell" role="cell">
-                  {% if entry %}
+                  {% if demo_preview and team.name == 'Team A' and slot_key == '09:00' %}
+                    <div class="demo-grid-watermark" aria-hidden="true">NOT LIVE DATA</div>
+                    <div class="demo-grid-card">
+                      <p class="scheduled-reference">DEMO-0000-COMPLETED</p>
+                      <strong>Sample Customer</strong>
+                      <span>Aircon Cleaning</span>
+                      <span>1 unit · Urban Deca Homes</span>
+                      <span class="demo-completed-status">Completed</span>
+                      <small>DEMO ONLY</small>
+                    </div>
+                  {% elif entry %}
                     {% set appointment, booking, customer, service_type, address = entry %}
                     <a class="scheduled-card" href="{{ app_path('/staff/appointments/' ~ appointment.id) }}" data-detail-url="{{ app_path('/staff/appointments/' ~ appointment.id ~ '/fragment') }}">
                       <p class="scheduled-reference">{{ booking.reference_code }}</p>
@@ -90,22 +101,6 @@
               {% endfor %}
             </div>
           {% endfor %}
-          <div class="dispatch-row demo-dispatch-row" role="row" aria-label="Demo only completed booking">
-            <div class="team-name demo-team-name" role="rowheader">Demo only</div>
-            <div class="dispatch-cell demo-dispatch-cell" role="cell">
-              <div class="demo-grid-watermark" aria-hidden="true">NOT LIVE DATA</div>
-              <div class="demo-grid-card">
-                <p class="scheduled-reference">DEMO-0000-COMPLETED</p>
-                <strong>Sample Customer</strong>
-                <span>Aircon Cleaning</span>
-                <span>1 unit · Urban Deca Homes</span>
-                <span class="demo-completed-status">Completed</span>
-                <small>DEMO ONLY</small>
-              </div>
-            </div>
-            <div class="dispatch-cell demo-empty-cell" role="cell"><span>Demo preview</span></div>
-            <div class="dispatch-cell demo-empty-cell" role="cell"><span>Demo preview</span></div>
-          </div>
         </div>
       {% else %}
         <p class="muted">Teams have not been seeded yet. Run the local reference-data seed after the migration.</p>
