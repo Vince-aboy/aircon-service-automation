@@ -102,6 +102,18 @@ button:hover, .button-link:hover { background: #107f95; }
 .scheduled-card:hover { color: #fff; text-decoration: underline; text-decoration-color: #3cc4d9; text-underline-offset: 0.25rem; }
 .appointment-status { color: #76deef !important; font-size: 0.8rem; font-weight: 700; text-transform: capitalize; }
 .open-slot { color: #76deef !important; font-weight: 700; }
+.demo-preview { background: #252b3b; border: 1px solid #56617a; border-radius: 10px; overflow: hidden; padding: 1.25rem; position: relative; }
+.demo-preview-watermark { color: rgba(244, 126, 211, 0.42); font-size: clamp(2rem, 7vw, 4.5rem); font-weight: 900; left: 50%; letter-spacing: 0.08em; pointer-events: none; position: absolute; text-align: center; top: 50%; transform: translate(-50%, -50%) rotate(-18deg); white-space: nowrap; z-index: 0; }
+.demo-preview-header, .demo-preview-card, .demo-preview-note { position: relative; z-index: 1; }
+.demo-preview-header { align-items: start; display: flex; gap: 1rem; justify-content: space-between; }
+.demo-preview-header h2 { margin-bottom: 0; }
+.demo-preview-badge { border: 1px solid #ff9be4; border-radius: 999px; color: #ffb7eb; font-size: 0.75rem; font-weight: 800; padding: 0.35rem 0.6rem; white-space: nowrap; }
+.demo-preview-note { color: #d2c8d9; margin: 0.8rem 0 1rem; }
+.demo-preview-card { align-items: center; background: rgba(29, 39, 48, 0.9); border: 1px solid #71809c; border-radius: 8px; display: flex; gap: 1rem; justify-content: space-between; padding: 1rem; }
+.demo-preview-card strong, .demo-preview-card span { display: block; }
+.demo-preview-card strong { color: #edf4fc; font-size: 1.05rem; margin-top: 0.25rem; }
+.demo-preview-card span { color: #acbccd; margin-top: 0.25rem; }
+.demo-completed-status { color: #9af0bb !important; font-weight: 800; text-transform: capitalize; }
 .visually-hidden { height: 1px; margin: -1px; overflow: hidden; padding: 0; position: absolute; width: 1px; clip: rect(0, 0, 0, 0); white-space: nowrap; }
 .back-link { color: #76deef; display: inline-block; margin-bottom: 1.5rem; text-decoration: none; }
 .back-link:hover { text-decoration: underline; }
