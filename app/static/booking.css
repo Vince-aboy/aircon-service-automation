@@ -71,17 +71,26 @@ button:hover, .button-link:hover { background: #107f95; }
 .review-actions button { margin-top: 0; }
 .button-secondary { background: transparent; border: 1px solid #7890a5; color: #eaf1fa; }
 .button-secondary:hover { background: #293746; }
-.dispatch-header-controls { align-items: end; display: flex; flex-wrap: wrap; gap: 1rem; margin-top: 1.25rem; }
-.dispatch-date-controls { display: grid; gap: 0.55rem; }
+.dispatch-layout { display: flex; flex-direction: column; padding: 1.25rem; }
+.dispatch-layout .staff-header { align-items: center; display: grid; gap: 0.35rem 1.5rem; grid-template-columns: minmax(0, 1fr) auto; padding-bottom: 1rem; }
+.dispatch-layout .staff-header > .eyebrow,
+.dispatch-layout .staff-header > h1,
+.dispatch-layout .staff-header > .intro { grid-column: 1; }
+.dispatch-layout .staff-header > .eyebrow { margin: 0; }
+.dispatch-layout .staff-header > h1 { font-size: clamp(1.85rem, 3vw, 2.45rem); margin: 0.2rem 0 0.35rem; }
+.dispatch-layout .staff-header > .intro { font-size: 0.88rem; line-height: 1.45; margin: 0; max-width: 50rem; }
+.dispatch-header-controls { align-items: end; background: #111a23; border: 1px solid #2f4352; border-radius: 12px; display: flex; gap: 0.8rem; grid-column: 2; grid-row: 1 / 4; margin: 0; padding: 0.75rem; }
+.dispatch-header-controls > .button-link { margin: 0; padding: 0.68rem 0.85rem; white-space: nowrap; }
+.dispatch-date-controls { display: grid; gap: 0.45rem; }
 .dispatch-header-controls .dispatch-date-form { margin: 0; }
 .dispatch-date-controls .day-navigation { margin: 0; }
-.dispatch-date-form { align-items: end; display: flex; gap: 1rem; margin: 1.5rem 0; }
+.dispatch-date-form { align-items: end; display: flex; gap: 0.6rem; margin: 1.5rem 0; }
 .dispatch-date-form label { max-width: 16rem; }
-.dispatch-date-form button { margin-top: 0; }
-.dispatch-layout { display: flex; flex-direction: column; }
+.dispatch-date-form button { margin-top: 0; padding: 0.68rem 0.9rem; white-space: nowrap; }
 .dispatch-layout > nav.day-navigation { display: none; }
 .dispatch-layout .team-section { order: 4; }
 .dispatch-layout .approved-section { order: 5; }
+.dispatch-layout .team-section { margin-top: 1rem; padding-top: 1rem; }
 .dispatch-section { border-top: 1px solid #2a3945; margin-top: 1.5rem; padding-top: 1.5rem; }
 .dispatch-section h2 { font-size: 1.1rem; }
 .approved-request-list { display: grid; gap: 0.6rem; }
@@ -375,6 +384,11 @@ a.directory-row.completed-directory-row:hover { background: rgba(67, 201, 126, 0
   .phase-card { transition: none; }
 }
 
+@media (max-width: 1180px) {
+  .dispatch-layout .staff-header { align-items: stretch; grid-template-columns: 1fr; }
+  .dispatch-header-controls { grid-column: 1; grid-row: auto; justify-content: space-between; margin-top: 0.75rem; }
+}
+
 @media (max-width: 640px) {
   .page-shell { width: min(100% - 1rem, 920px); margin: 0.5rem auto; }
   .page-header, .booking-form, .receipt { border-radius: 0; }
@@ -387,6 +401,7 @@ a.directory-row.completed-directory-row:hover { background: rgba(67, 201, 126, 0
   .job-modal { max-height: 90vh; padding: 1.25rem; }
   .dispatch-date-form { align-items: stretch; flex-direction: column; }
   .dispatch-date-form label { max-width: none; }
+  .dispatch-header-controls { align-items: stretch; flex-direction: column; }
   .roadmap-shell { margin: 0.5rem auto; }
   .phase-hero h1 { font-size: clamp(2.55rem, 14vw, 4rem); }
   .phase-hero-stats { grid-template-columns: 1fr; }
