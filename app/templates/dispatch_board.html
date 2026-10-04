@@ -8,12 +8,19 @@
       <p class="intro">Assign approved requests to an open team block on the selected date. The customer’s preferred date is shown for reference. No message is sent automatically.</p>
       <div class="dispatch-header-controls">
         <a class="button-link" href="{{ app_path('/staff/requests') }}">Back to request review</a>
+        <div class="dispatch-date-controls">
         <form class="dispatch-date-form" method="get" action="{{ app_path('/staff/dispatch') }}">
           <label>Schedule date
             <input name="selected_date" type="date" value="{{ selected_date }}">
           </label>
           <button type="submit">View day</button>
         </form>
+        <nav class="day-navigation" aria-label="Schedule day navigation">
+          <a href="{{ app_path('/staff/dispatch?selected_date=' ~ previous_date) }}">Previous day</a>
+          <a href="{{ app_path('/staff/dispatch?selected_date=' ~ today) }}">Today</a>
+          <a href="{{ app_path('/staff/dispatch?selected_date=' ~ next_date) }}">Next day</a>
+        </nav>
+        </div>
       </div>
     </header>
 
