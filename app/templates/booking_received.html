@@ -10,9 +10,13 @@
   <main class="page-shell receipt">
       <img class="brand-banner" src="{{ app_path('/static/images/balik-lamig.png') }}" alt="Balik-Lamig Air-Conditioning and Refrigeration Services">
     <p class="eyebrow">{{ operation_mode_label() }}</p>
-    <h1>Service request received</h1>
+    <h1>{% if waitlisted %}Waitlist request received{% else %}Service request received{% endif %}</h1>
     <p>Your request reference is <strong>{{ reference_code }}</strong>.</p>
-    <p>Status: <strong>{{ status }}</strong>. Staff review is required before any appointment is confirmed.</p>
+    {% if waitlisted %}
+      <p>{{ preferred_date }} is currently full. Your request was added to the waitlist. Staff will review it if a team slot becomes available.</p>
+    {% else %}
+      <p>Status: <strong>{{ status }}</strong>. Staff review is required before any appointment is confirmed.</p>
+    {% endif %}
     <p>{% if is_live_mode() %}Staff review is required before an appointment is confirmed. No payment was collected.{% else %}No real message or appointment has been created.{% endif %}</p>
     <a class="button-link" href="{{ app_path('/book') }}">Submit another service request</a>
     {% if is_live_mode() %}<a class="button-link button-secondary" href="{{ app_path('/staff/requests') }}" target="_blank" rel="noopener">Open staff review</a>{% endif %}

@@ -30,6 +30,7 @@
           <label>Preferred date
             <input name="preferred_date" type="date" value="{{ values.get('preferred_date', '') }}" required>
             {% if errors.get('preferred_date') %}<span class="error">{{ errors['preferred_date'] }}</span>{% endif %}
+            <span id="availability-message" class="hint" hidden></span>
           </label>
         </div>
       </section>
@@ -73,9 +74,54 @@
         </div>
       </section>
 
-      <button type="submit">Send service request</button>
+      <button id="normal-submit" type="submit" name="submission_mode" value="normal">Send service request</button>
+      <button id="waitlist-submit" class="button-secondary" type="submit" name="submission_mode" value="waitlist" hidden>Request waitlist</button>
       <p class="privacy-note">{% if is_live_mode() %}Your request is reviewed by Balik-Lamig staff before scheduling. No payment is collected through this form.{% else %}Use fictional data only. No real booking, payment, or notification is created by this prototype.{% endif %}</p>
     </form>
   </main>
+  <script>
+    (() => {
+      const form = document.querySelector('.booking-form');
+      const dateInput = form.querySelector('input[name="preferred_date"]');
+      const normalButton = document.getElementById('normal-submit');
+      const waitlistButton = document.getElementById('waitlist-submit');
+      const message = document.getElementById('availability-message');
+      const availabilityEndpoint = {{ availability_endpoint|tojson }};
+
+      async function refreshAvailability() {
+        if (!dateInput.value) {
+          message.hidden = true;
+          normalButton.disabled = false;
+          waitlistButton.hidden = true;
+          return;
+        }
+        try {
+          const response = await fetch(`${availabilityEndpoint}?preferred_date=${encodeURIComponent(dateInput.value)}`);
+          const availability = await response.json();
+          message.hidden = false;
+          if (availability.fully_booked) {
+            message.textContent = 'Fully booked — you can request the waitlist or choose another date.';
+            message.className = 'error';
+            normalButton.disabled = true;
+            waitlistButton.hidden = false;
+          } else {
+            message.textContent = `${availability.remaining} team slot${availability.remaining === 1 ? '' : 's'} currently available.`;
+            message.className = 'hint';
+            normalButton.disabled = false;
+            waitlistButton.hidden = true;
+          }
+        } catch (error) {
+          message.hidden = false;
+          message.textContent = 'Availability could not be checked. Staff will review the request.';
+          message.className = 'hint';
+          normalButton.disabled = false;
+          waitlistButton.hidden = true;
+        }
+      }
+
+      dateInput.addEventListener('change', refreshAvailability);
+      refreshAvailability();
+    })();
+  </script>
 </body>
 </html>

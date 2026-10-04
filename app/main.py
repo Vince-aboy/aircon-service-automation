@@ -175,8 +175,66 @@ def pending_staff_requests(
     return list(session.execute(statement).all())
 
 
+def waitlisted_staff_requests(
+    session: Session,
+    *,
+    search: str = "",
+    preferred_date: date | None = None,
+) -> list[tuple[BookingRequest, Customer, Address, ServiceType]]:
+    """Return waitlisted requests for staff capacity management."""
+    statement = (
+        select(BookingRequest, Customer, Address, ServiceType)
+        .join(Customer, BookingRequest.customer_id == Customer.id)
+        .join(Address, BookingRequest.address_id == Address.id)
+        .join(ServiceType, BookingRequest.service_type_id == ServiceType.id)
+        .where(BookingRequest.status == "waitlisted")
+        .order_by(BookingRequest.created_at.asc(), BookingRequest.id.asc())
+    )
+    normalized_search = search.strip()
+    if normalized_search:
+        pattern = f"%{normalized_search}%"
+        statement = statement.where(
+            or_(
+                BookingRequest.reference_code.ilike(pattern),
+                Customer.full_name.ilike(pattern),
+                Customer.mobile.ilike(pattern),
+                Customer.email.ilike(pattern),
+                Address.address_line.ilike(pattern),
+            )
+        )
+    if preferred_date is not None:
+        statement = statement.where(BookingRequest.preferred_date == preferred_date)
+    return list(session.execute(statement).all())
+
+
 def active_service_teams(session: Session) -> list[ServiceTeam]:
     return list(session.scalars(select(ServiceTeam).where(ServiceTeam.active.is_(True)).order_by(ServiceTeam.name)).all())
+
+
+def booking_date_availability(session: Session, selected_date: date) -> dict[str, int | bool]:
+    """Return the remaining active team slots for a preferred service date."""
+    start_of_day = datetime.combine(selected_date, time.min, tzinfo=MANILA_TIMEZONE)
+    end_of_day = datetime.combine(selected_date + timedelta(days=1), time.min, tzinfo=MANILA_TIMEZONE)
+    team_count = session.scalar(
+        select(func.count()).select_from(ServiceTeam).where(ServiceTeam.active.is_(True))
+    ) or 0
+    booked_count = session.scalar(
+        select(func.count())
+        .select_from(Appointment)
+        .where(
+            Appointment.scheduled_start >= start_of_day,
+            Appointment.scheduled_start < end_of_day,
+            Appointment.status != "cancelled",
+        )
+    ) or 0
+    capacity = team_count * len(DISPATCH_SLOTS)
+    remaining = max(capacity - booked_count, 0)
+    return {
+        "capacity": capacity,
+        "booked": booked_count,
+        "remaining": remaining,
+        "fully_booked": capacity == 0 or remaining == 0,
+    }
 
 
 def approved_unscheduled_requests(session: Session) -> list[tuple[BookingRequest, Customer, Address, ServiceType]]:
@@ -230,6 +288,7 @@ def render_booking_form(
             "services": active_service_types(session),
             "values": values or {},
             "errors": errors or {},
+            "availability_endpoint": app_path("/book/availability"),
         },
         status_code=status_code,
     )
@@ -252,6 +311,11 @@ def health_check() -> dict[str, str]:
 def booking_form(request: Request, session: Session = Depends(get_session)) -> HTMLResponse:
     """Render the local synthetic-data booking form."""
     return render_booking_form(request, session)
+
+
+@app.get("/book/availability")
+def booking_availability(preferred_date: date, session: Session = Depends(get_session)) -> JSONResponse:
+    return JSONResponse(booking_date_availability(session, preferred_date))
 
 
 @app.get("/staff", response_class=HTMLResponse)
@@ -599,6 +663,7 @@ def staff_request_queue(
         "staff_requests.html",
         {
             "requests": pending_staff_requests(session, search=q, preferred_date=preferred_date),
+            "waitlist_requests": waitlisted_staff_requests(session, search=q, preferred_date=preferred_date),
             "reviewed": reviewed,
             "q": q,
             "preferred_date_filter": preferred_date,
@@ -952,6 +1017,7 @@ def submit_booking_form(
     aircon_type: str = Form(default="Window Type"),
     service_type_id: str = Form(),
     preferred_date: str = Form(),
+    submission_mode: str = Form(default="normal"),
     session: Session = Depends(get_session),
 ) -> HTMLResponse:
     """Validate and save a local form submission as pending staff review."""
@@ -981,8 +1047,24 @@ def submit_booking_form(
             status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
         )
 
+    availability = booking_date_availability(session, booking_input.preferred_date)
+    if submission_mode not in {"normal", "waitlist"}:
+        submission_mode = "normal"
+    if availability["fully_booked"] and submission_mode == "normal":
+        return render_booking_form(
+            request,
+            session,
+            values=values,
+            errors={"preferred_date": "This date is fully booked. Choose another date or request the waitlist."},
+            status_code=status.HTTP_409_CONFLICT,
+        )
+
     try:
-        booking = create_pending_booking(session, booking_input)
+        booking = create_pending_booking(
+            session,
+            booking_input,
+            initial_status="waitlisted" if submission_mode == "waitlist" else "pending_review",
+        )
         session.commit()
     except ValueError as error:
         session.rollback()
@@ -1003,7 +1085,12 @@ def submit_booking_form(
     return templates.TemplateResponse(
         request,
         "booking_received.html",
-        {"reference_code": booking.reference_code, "status": booking.status},
+        {
+            "reference_code": booking.reference_code,
+            "status": booking.status,
+            "waitlisted": booking.status == "waitlisted",
+            "preferred_date": booking.preferred_date,
+        },
         status_code=status.HTTP_201_CREATED,
     )
 

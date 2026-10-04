@@ -63,7 +63,7 @@ class BookingRequest(Base):
     __table_args__ = (
         CheckConstraint("unit_count > 0", name="ck_booking_requests_positive_unit_count"),
         CheckConstraint(
-            "status IN ('pending_review', 'approved_for_scheduling', 'scheduled', 'cancelled')",
+            "status IN ('pending_review', 'waitlisted', 'approved_for_scheduling', 'scheduled', 'cancelled')",
             name="ck_booking_requests_status",
         ),
     )

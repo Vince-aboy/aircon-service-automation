@@ -59,5 +59,35 @@
         <p>New service requests will appear here for staff review.</p>
       </section>
     {% endif %}
+
+    {% if waitlist_requests %}
+      <section class="staff-page">
+        <header class="staff-header">
+          <p class="eyebrow">Capacity queue</p>
+          <h2>Waitlist requests</h2>
+          <p class="intro">Review these requests when a suitable team slot becomes available.</p>
+        </header>
+        <div class="request-list">
+          {% for booking, customer, address, service_type in waitlist_requests %}
+            <article class="request-card">
+              <div class="request-card-header">
+                <div><p class="reference-code">{{ booking.reference_code }}</p><h2>{{ customer.full_name }}</h2></div>
+                <span class="status-badge">waitlisted</span>
+              </div>
+              <dl class="request-details">
+                <div><dt>Preferred date</dt><dd>{{ booking.preferred_date }}</dd></div>
+                <div><dt>Service</dt><dd>{{ service_type.name }}</dd></div>
+                <div><dt>Phone</dt><dd>{{ customer.mobile }}</dd></div>
+                <div><dt>Address</dt><dd>{{ address_display(address) }}</dd></div>
+              </dl>
+              <form class="review-actions" method="post" action="{{ app_path('/staff/requests/' ~ booking.id ~ '/review') }}" data-lock-submit>
+                <button type="submit" name="decision" value="approve">Move to scheduling</button>
+                <button class="button-secondary" type="submit" name="decision" value="decline" onclick="return confirm('Remove {{ booking.reference_code }} from the waitlist?')">Remove from waitlist</button>
+              </form>
+            </article>
+          {% endfor %}
+        </div>
+      </section>
+    {% endif %}
   </section>
 {% endblock %}

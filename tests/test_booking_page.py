@@ -217,6 +217,54 @@ def test_valid_form_submission_shows_pending_review_receipt() -> None:
         app.dependency_overrides.clear()
 
 
+def test_full_date_offers_waitlist_and_blocks_normal_request() -> None:
+    client, session = create_test_client()
+    try:
+        full_date = date.today() + timedelta(days=10)
+        slots = [("Team A", "09:00"), ("Team A", "11:30"), ("Team A", "14:00"), ("Team B", "09:00"), ("Team B", "11:30"), ("Team B", "14:00")]
+        for index, (team_name, slot_key) in enumerate(slots):
+            form = valid_form_data()
+            form.update(
+                {
+                    "full_name": f"Capacity Test {index}",
+                    "mobile": f"091800000{index:02d}",
+                    "preferred_date": str(full_date),
+                }
+            )
+            client.post("/book", data=form)
+            booking = session.scalar(select(BookingRequest).join(Customer).where(Customer.mobile == form["mobile"]))
+            client.post(f"/staff/requests/{booking.id}/review", data={"decision": "approve"})
+            team = session.scalar(select(ServiceTeam).where(ServiceTeam.name == team_name))
+            response = client.post(
+                "/staff/dispatch/assign",
+                data={
+                    "booking_request_id": booking.id,
+                    "service_team_id": team.id,
+                    "appointment_date": str(full_date),
+                    "slot_key": slot_key,
+                },
+                follow_redirects=False,
+            )
+            assert response.status_code == 303
+
+        seventh_form = valid_form_data()
+        seventh_form.update({"full_name": "Waitlist Capacity Test", "mobile": "09181112233", "preferred_date": str(full_date)})
+        blocked = client.post("/book", data=seventh_form)
+        assert blocked.status_code == 409
+        assert "fully booked" in blocked.text
+
+        waitlisted_form = valid_form_data()
+        waitlisted_form.update({"full_name": "Waitlist Customer", "mobile": "09184445566", "preferred_date": str(full_date), "submission_mode": "waitlist"})
+        waitlisted = client.post("/book", data=waitlisted_form)
+        waitlisted_booking = session.scalar(select(BookingRequest).join(Customer).where(Customer.mobile == waitlisted_form["mobile"]))
+        assert waitlisted.status_code == 201
+        assert waitlisted_booking.status == "waitlisted"
+        assert "waitlist" in waitlisted.text.lower()
+    finally:
+        session.close()
+        app.dependency_overrides.clear()
+
+
 def test_invalid_form_submission_re_renders_with_an_error() -> None:
     client, session = create_test_client()
     try:

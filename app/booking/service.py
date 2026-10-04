@@ -430,6 +430,7 @@ def create_pending_booking(
     booking_input: BookingRequestInput,
     *,
     reference_code: str | None = None,
+    initial_status: str = "pending_review",
 ) -> BookingRequest:
     """Create the records for a validated request without committing the session.
 
@@ -496,7 +497,7 @@ def create_pending_booking(
         preferred_window=booking_input.preferred_window,
         unit_count=booking_input.unit_count,
         notes=booking_input.notes,
-        status="pending_review",
+        status=initial_status,
     )
     session.add(booking)
     session.flush()
@@ -508,8 +509,8 @@ def review_booking_request(session: Session, booking_request_id: int, decision: 
     booking = session.get(BookingRequest, booking_request_id)
     if booking is None:
         raise ValueError("the booking request does not exist")
-    if booking.status != "pending_review":
-        raise ValueError("only pending requests can be reviewed")
+    if booking.status not in {"pending_review", "waitlisted"}:
+        raise ValueError("only pending or waitlisted requests can be reviewed")
 
     transitions = {
         "approve": ("approved_for_scheduling", "Approved in local staff queue; no appointment created."),
