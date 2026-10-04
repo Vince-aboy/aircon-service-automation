@@ -273,6 +273,7 @@ def n8n_event_payload(session: Session, event: NotificationOutbox) -> dict[str, 
     live_mode = is_live_mode()
     occurred_at = event.created_at or datetime.now(UTC)
     local_occurred_at = occurred_at.astimezone(MANILA_TIMEZONE)
+    local_customer_created_at = customer.created_at.astimezone(MANILA_TIMEZONE)
     address_display = display_address(address)
     return {
         "event_id": f"outbox-{event.id}" if live_mode else f"synthetic-outbox-{event.id}",
@@ -285,6 +286,8 @@ def n8n_event_payload(session: Session, event: NotificationOutbox) -> dict[str, 
         "occurred_at": occurred_at.isoformat(),
         "occurred_at_display": f"{local_occurred_at:%b} {local_occurred_at.day}, {local_occurred_at:%Y}, {local_occurred_at:%I:%M %p}".replace(" 0", " ", 1),
         "customer_id": customer.id,
+        "customer_created_at": customer.created_at.isoformat(),
+        "customer_created_at_display": f"{local_customer_created_at:%b} {local_customer_created_at.day}, {local_customer_created_at:%Y}, {local_customer_created_at:%I:%M %p}".replace(" 0", " ", 1),
         "booking_reference": booking.reference_code,
         "booking_status": booking.status,
         "appointment_status": appointment.status if appointment else None,
