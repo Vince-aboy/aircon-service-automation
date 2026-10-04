@@ -71,9 +71,14 @@ button:hover, .button-link:hover { background: #107f95; }
 .review-actions button { margin-top: 0; }
 .button-secondary { background: transparent; border: 1px solid #7890a5; color: #eaf1fa; }
 .button-secondary:hover { background: #293746; }
+.dispatch-header-controls { align-items: end; display: flex; flex-wrap: wrap; gap: 1rem; margin-top: 1.25rem; }
+.dispatch-header-controls .dispatch-date-form { margin: 0; }
 .dispatch-date-form { align-items: end; display: flex; gap: 1rem; margin: 1.5rem 0; }
 .dispatch-date-form label { max-width: 16rem; }
 .dispatch-date-form button { margin-top: 0; }
+.dispatch-layout { display: flex; flex-direction: column; }
+.dispatch-layout .team-section { order: 4; }
+.dispatch-layout .approved-section { order: 5; }
 .dispatch-section { border-top: 1px solid #2a3945; margin-top: 1.5rem; padding-top: 1.5rem; }
 .dispatch-section h2 { font-size: 1.1rem; }
 .approved-request-list { display: grid; gap: 0.6rem; }
