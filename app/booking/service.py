@@ -551,9 +551,6 @@ def schedule_approved_booking(
         raise ValueError("only approved requests can be scheduled")
     if appointment_date < datetime.now(MANILA_TIMEZONE).date():
         raise ValueError("appointments cannot be scheduled in the past")
-    if appointment_date != booking.preferred_date:
-        raise ValueError(f"choose the customer's preferred date: {booking.preferred_date}")
-
     team = session.get(ServiceTeam, service_team_id)
     if team is None or not team.active:
         raise ValueError("the selected service team is unavailable")

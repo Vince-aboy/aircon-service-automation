@@ -702,7 +702,10 @@ def dispatch_board(
     """Render a small local two-team dispatcher board for one selected day."""
     approved_requests = approved_unscheduled_requests(session)
     board_date = selected_date or (approved_requests[0][0].preferred_date if approved_requests else date.today())
-    assignable_requests = [row for row in approved_requests if row[0].preferred_date == board_date]
+    # Once staff approves a request for scheduling, they may place it on any
+    # selected date. The original preferred date remains visible on the card
+    # as customer context, while the appointment date is chosen here.
+    assignable_requests = approved_requests
     return templates.TemplateResponse(
         request,
         "dispatch_board.html",

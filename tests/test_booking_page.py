@@ -383,6 +383,41 @@ def test_dispatch_board_schedules_an_approved_request_once() -> None:
         app.dependency_overrides.clear()
 
 
+def test_dispatch_board_can_schedule_approved_request_on_a_different_date() -> None:
+    client, session = create_test_client()
+    try:
+        preferred_date = date.today() + timedelta(days=1)
+        scheduled_date = date.today() + timedelta(days=2)
+        form = valid_form_data()
+        form["preferred_date"] = str(preferred_date)
+        client.post("/book", data=form)
+        booking = session.scalar(select(BookingRequest))
+        client.post(f"/staff/requests/{booking.id}/review", data={"decision": "approve"})
+        team = session.scalar(select(ServiceTeam).where(ServiceTeam.name == "Team A"))
+
+        board = client.get(f"/staff/dispatch?selected_date={scheduled_date}")
+        response = client.post(
+            "/staff/dispatch/assign",
+            data={
+                "booking_request_id": booking.id,
+                "service_team_id": team.id,
+                "appointment_date": str(scheduled_date),
+                "slot_key": "09:00",
+            },
+            follow_redirects=False,
+        )
+
+        session.refresh(booking)
+        appointment = session.scalar(select(Appointment))
+        assert response.status_code == 303
+        assert str(preferred_date) in board.text
+        assert booking.status == "scheduled"
+        assert appointment.scheduled_start.date() == scheduled_date
+    finally:
+        session.close()
+        app.dependency_overrides.clear()
+
+
 def test_dispatch_board_rejects_a_team_block_that_is_already_assigned() -> None:
     client, session = create_test_client()
     try:
