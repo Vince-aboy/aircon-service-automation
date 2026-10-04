@@ -527,11 +527,13 @@ def test_cancelling_an_appointment_requires_a_reason() -> None:
         final_history = session.scalar(
             select(AppointmentStatusHistory).order_by(AppointmentStatusHistory.id.desc())
         )
+        dispatch_board = client.get(f"/staff/dispatch?selected_date={appointment.scheduled_start.date()}")
 
         assert missing_reason.status_code == 422
         assert cancelled.status_code == 303
         assert appointment.status == "cancelled"
         assert "Customer requested another provider" in final_history.note
+        assert booking.reference_code not in dispatch_board.text
     finally:
         session.close()
         app.dependency_overrides.clear()

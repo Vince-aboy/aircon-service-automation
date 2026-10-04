@@ -202,7 +202,11 @@ def dispatch_appointments(session: Session, selected_date: date) -> dict[tuple[i
         .join(Customer, BookingRequest.customer_id == Customer.id)
         .join(ServiceType, BookingRequest.service_type_id == ServiceType.id)
         .join(Address, BookingRequest.address_id == Address.id)
-        .where(Appointment.scheduled_start >= start_of_day, Appointment.scheduled_start < end_of_day)
+        .where(
+            Appointment.scheduled_start >= start_of_day,
+            Appointment.scheduled_start < end_of_day,
+            Appointment.status != "cancelled",
+        )
     ).all()
     return {
         (appointment.service_team_id, appointment.scheduled_start.astimezone(MANILA_TIMEZONE).strftime("%H:%M")): row
