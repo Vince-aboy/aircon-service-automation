@@ -534,6 +534,25 @@ def test_cancelling_an_appointment_requires_a_reason() -> None:
         assert appointment.status == "cancelled"
         assert "Customer requested another provider" in final_history.note
         assert booking.reference_code not in dispatch_board.text
+
+        replacement_form = valid_form_data()
+        replacement_form.update({"full_name": "Replacement Synthetic Customer", "mobile": "09189998888"})
+        client.post("/book", data=replacement_form)
+        replacement = session.scalar(
+            select(BookingRequest).order_by(BookingRequest.id.desc())
+        )
+        client.post(f"/staff/requests/{replacement.id}/review", data={"decision": "approve"})
+        replacement_response = client.post(
+            "/staff/dispatch/assign",
+            data={
+                "booking_request_id": replacement.id,
+                "service_team_id": appointment.service_team_id,
+                "appointment_date": str(appointment.scheduled_start.date()),
+                "slot_key": "09:00",
+            },
+            follow_redirects=False,
+        )
+        assert replacement_response.status_code == 303
     finally:
         session.close()
         app.dependency_overrides.clear()

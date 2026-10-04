@@ -575,6 +575,7 @@ def schedule_approved_booking(
         select(Appointment).where(
             Appointment.service_team_id == team.id,
             Appointment.scheduled_start == scheduled_start,
+            Appointment.status != "cancelled",
         )
     )
     if existing is not None:

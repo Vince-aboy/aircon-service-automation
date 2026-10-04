@@ -5,7 +5,7 @@ from __future__ import annotations
 from datetime import date, datetime
 from typing import Optional
 
-from sqlalchemy import Boolean, CheckConstraint, Date, DateTime, ForeignKey, Integer, JSON, String, Text, UniqueConstraint, func
+from sqlalchemy import Boolean, CheckConstraint, Date, DateTime, ForeignKey, Index, Integer, JSON, String, Text, UniqueConstraint, func, text
 from sqlalchemy.orm import Mapped, mapped_column
 
 from app.database.base import Base
@@ -129,7 +129,14 @@ class Appointment(Base):
             "status IN ('confirmed', 'en_route', 'in_progress', 'completed', 'cancelled')",
             name="ck_appointments_status",
         ),
-        UniqueConstraint("service_team_id", "scheduled_start", name="uq_appointments_team_scheduled_start"),
+        Index(
+            "uq_appointments_active_team_scheduled_start",
+            "service_team_id",
+            "scheduled_start",
+            unique=True,
+            postgresql_where=text("status <> 'cancelled'"),
+            sqlite_where=text("status <> 'cancelled'"),
+        ),
     )
 
 
