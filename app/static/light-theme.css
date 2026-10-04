@@ -1,0 +1,141 @@
+/* Balik-Lamig: warm paper, charcoal type, and the service brand's gold. */
+:root {
+  color-scheme: light;
+  color: #222620;
+  background: #f6f5f1;
+  --paper: #f6f5f1;
+  --ink: #222620;
+  --muted: #61665f;
+  --line: #dddfd7;
+  --gold: #f2b544;
+  --ops-ink: #222620;
+  --ops-muted: #61665f;
+  --ops-bg: #f6f5f1;
+  --ops-sidebar: #eeeee7;
+  --ops-panel: #fff;
+  --ops-card: #fff;
+  --ops-border: #dddfd7;
+  --ops-border-soft: #dddfd7;
+  --ops-teal: #f2b544;
+  --ops-teal-soft: #515b4e;
+  --ops-green: #326044;
+  --ops-green-bg: #e5efe7;
+}
+body, .admin-body { background: var(--paper); color: var(--ink); }
+h1, h2, h3, h4, label, .request-details dd, .detail-grid dd,
+.scheduled-card, .scheduled-card:hover, .admin-brand, .admin-topbar strong,
+.settings-list strong, .health-list dd, .activity-timeline p,
+.customer-contact-summary strong, .customer-mobile { color: var(--ink) !important; }
+.intro, .hint, .optional, .privacy-note, .muted, .queue-count,
+.dispatch-heading, .dispatch-cell span, .job-status, .history-list span,
+.admin-brand small, .admin-operator, .admin-public-link,
+.metric-card span, .metric-card small, .workflow-list small,
+.upcoming-list div span, .upcoming-list time span, .status-summary dt,
+.customer-card span, .history-card-list span, .technician-list span,
+.activity-timeline time, .activity-timeline small, .settings-list span,
+.header-stat span, .summary-chip span, .customer-contact-summary span,
+.request-details dt, .detail-grid dt, .directory-row small, .slot-note { color: var(--muted); }
+.page-header, .booking-form, .receipt, .staff-page, .job-modal,
+.compact-page-header, .dashboard-panel, .settings-group,
+.request-card, .empty-queue, .automation-event, .dispatch-cell,
+.detail-grid div, .directory-row, .customer-card, .history-card-list article,
+.team-management-card, .technician-list article, .settings-list div,
+.workflow-list a, .upcoming-list a, .activity-timeline article,
+.admin-error-card { background: #fff; border-color: var(--line); color: var(--ink); box-shadow: none; }
+.staff-page, .page-header, .booking-form, .receipt { box-shadow: 0 4px 18px rgba(34,38,32,.035); }
+.team-name, .dispatch-header-controls, .request-filter-form, .directory-filter-form,
+.automation-page > .dispatch-section:first-of-type, .member-list li,
+.customer-contact-summary, .status-summary div, .header-stat, .summary-chip,
+.count-pill, .directory-heading, .activity-kind { background: #f0f1eb; border-color: var(--line); color: var(--ink); }
+section + section, .staff-header, .dispatch-section, .detail-section,
+.request-queue-section, .directory-table, .health-list div,
+.upcoming-list time, .team-management-section { border-color: var(--line); }
+.admin-sidebar { background: #eeeee7; border-color: var(--line); }
+.admin-topbar { background: rgba(246,245,241,.97); border-color: var(--line); backdrop-filter: none; }
+.admin-brand-mark { background: var(--gold); color: var(--ink); box-shadow: none; }
+.admin-nav a, .admin-nav a span { color: #53594f; }
+.admin-nav a:hover { background: #e4e6dc; color: var(--ink); }
+.admin-nav a.active { background: #f7e7c4; border-color: #e7c986; color: #493918; box-shadow: inset 3px 0 #ad791d; }
+.admin-operator strong { background: #fff; border-color: var(--line); }
+.live-dot { background: #4e795a; box-shadow: none; }
+input, select, textarea { background: #fff; border-color: #a7ada0; color: var(--ink); accent-color: #89601b; }
+input::placeholder, textarea::placeholder { color: #72776d; }
+input:focus, select:focus, textarea:focus { border-color: #89601b; outline-color: rgba(137,96,27,.22); }
+a:focus-visible, button:focus-visible { outline: 3px solid #89601b; outline-offset: 3px; }
+button, .button-link { background: var(--gold); color: var(--ink); }
+button:hover, .button-link:hover { background: #e4a430; color: var(--ink); }
+button:disabled, button:disabled:hover { background: #e5e6df; color: #6d7367; cursor: not-allowed; }
+.button-secondary, .modal-close { background: transparent; color: var(--ink); border-color: #a7ada0; }
+.button-secondary:hover, .modal-close:hover { background: #eeeee7; color: var(--ink); }
+.text-action, .text-action:hover { background: transparent; color: #9c3737; }
+.day-navigation a, .event-filter-nav a { background: #fff; border-color: var(--line); color: #4c5548; }
+.day-navigation a:hover, .event-filter-nav a.active { background: #f7e7c4; border-color: #c6a76a; color: #493918; }
+.eyebrow, .reference-code, .scheduled-reference, .approved-request-card strong,
+.back-link, .panel-link, .workflow-list b, .upcoming-list time strong,
+.status-summary dd, .customer-card b, .history-card-list a,
+.activity-timeline strong { color: #596147; }
+.scheduled-card:hover { text-decoration-color: #89601b; }
+.metric-card { background: #fff; border-color: var(--line); color: var(--ink); }
+.metric-card::before { background: #b7bbae; }
+.metric-card strong, .metric-information strong, .metric-grid .metric-card:nth-child(3) strong,
+.header-stat strong { color: var(--ink); }
+.metric-attention::before { background: #c18b29; }
+.metric-attention strong { color: #805616; }
+.workflow-list a > span, .customer-avatar, .request-count-badge { background: #eeeee7; border-color: #c8cebf; color: #4c5548; }
+.workflow-list a:hover, .upcoming-list a:hover, .customer-card:hover,
+a.directory-row:hover { background: #f7f7f2; border-color: #adb5a4; }
+.approved-request-card { background: #fff; border-color: var(--line); }
+.approved-request-card span { color: var(--muted); }
+.open-slot, .appointment-status { color: #596147 !important; }
+.status-badge, .status-confirmed { background: #edf0e8 !important; border-color: #b3bea8 !important; color: #42533a !important; }
+.status-pending, .status-pending_review, .status-en_route, .state-warning,
+.approved-request-card .preferred-date-badge, .warning-feedback { background: #fff2d9 !important; border-color: #d1b079 !important; color: #795216 !important; }
+.status-waitlisted, .status-in_progress { background: #eeeaf2 !important; border-color: #bfb3cc !important; color: #655174 !important; }
+.status-recorded, .status-completed, .status-active, .completed-status-badge,
+.state-good, .health-good, .approved-request-card .preferred-date-match { background: #e5efe7 !important; border-color: #97b79e !important; color: #326044 !important; }
+.status-failed, .status-cancelled, .status-inactive, .state-error, .health-error,
+.approved-request-card .preferred-date-past { background: #f7e8e5 !important; border-color: #d0a39e !important; color: #973e36 !important; }
+.completed-dispatch-cell, .status-row-completed, .directory-row.completed-directory-row,
+.metric-success, a.directory-row.completed-directory-row:hover { background: #e5efe7 !important; border-color: #97b79e !important; }
+.completed-dispatch-cell .appointment-status, .metric-success strong,
+.status-text-completed, .member-list b { color: #326044 !important; }
+.completed-watermark { color: rgba(50,96,68,.14); }
+.metric-success::before, .live-dot { background: #53765b; }
+.history-status-completed, .automation-event:has(.status-badge.status-recorded) { border-color: #97b79e !important; }
+.status-text-en_route, .preferred-date-detail dd { color: #795216; }
+.status-text-cancelled, .admin-error-card h1 { color: #973e36; }
+.status-text-in_progress { color: #655174; }
+.preferred-date-detail { background: #fff8e9; border-color: #e2d3b4; }
+.request-card-pending, .activity-status-en_route { border-left-color: #c19a56 !important; }
+.request-card-waitlist, .activity-status-in_progress { border-left-color: #9b89ab !important; }
+.member-list li:has(b), .activity-status-completed { border-left-color: #83a48b !important; }
+.activity-status-cancelled { border-left-color: #c49189 !important; }
+.history-list li { background: #f0f1eb; border-left-color: #a6af98; }
+.staff-feedback { background: #edf0e8; border-color: #b3bea8; color: #42533a; }
+.job-modal::backdrop { background: rgba(34,38,32,.42); }
+
+/* Public service website. Preserve the real service artwork. */
+.bl-landing { --bg: #f6f5f1; --panel: #fff; --ink: #222620; --muted: #61665f; --cyan: #596147; --orange: #f2b544; color-scheme: light; }
+.bl-landing h1 > span, .bl-landing em { color: var(--ink); }
+.bl-landing .wordmark > span:not(.brand-symbol) { color: #805616; }
+.bl-landing .button, .bl-landing .skip { background: var(--orange); color: var(--ink); }
+.bl-landing .button:hover { background: #e4a430; }
+.bl-landing .hero-visual { background: #fff; border-color: var(--line); box-shadow: 0 8px 28px rgba(34,38,32,.06); }
+.bl-landing .image-frame { transform: none; border-color: var(--line); }
+.bl-landing .site-header, .bl-landing .visual-footer, .bl-landing .principles,
+.bl-landing .services-grid, .bl-landing .service-card, .bl-landing .process-section,
+.bl-landing .highlights article, .bl-landing .coverage-section,
+.bl-landing .automation-panel, .bl-landing .automation-flow li,
+.bl-landing .site-footer { border-color: var(--line); }
+.bl-landing .service-card { background: #fff; }
+.bl-landing .service-card:hover { background: #fff8e9; }
+.bl-landing .process-section { background: #eeeee7; }
+.bl-landing .step-number { background: #fff; border-color: #b5bca9; }
+.bl-landing .journey li:not(:last-child):after { background: #c8cebf; }
+.bl-landing .coverage-art { background: #eeeee7; }
+.bl-landing .map-ring { border-color: #b5bca9; }
+.bl-landing .map-pin { box-shadow: none; }
+.bl-landing .map-pin:after { border-color: var(--ink); }
+.bl-landing .label, .bl-landing .text-link { border-color: #a6af98; }
+.bl-landing .highlights article > span { color: #805616; }
+.bl-landing .automation-panel { background: #fff; }
