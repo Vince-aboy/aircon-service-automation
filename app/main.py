@@ -395,7 +395,7 @@ def appointment_directory(
         .join(Address, BookingRequest.address_id == Address.id)
         .join(ServiceTeam, Appointment.service_team_id == ServiceTeam.id)
         .join(ServiceType, BookingRequest.service_type_id == ServiceType.id)
-        .order_by(Appointment.scheduled_start.desc())
+        .order_by(ServiceTeam.name.asc(), Appointment.scheduled_start.asc())
     )
     if q.strip():
         pattern = f"%{q.strip()}%"

@@ -232,6 +232,9 @@ form.is-submitting { opacity: 0.65; pointer-events: none; }
 .directory-row { align-items: center; border-bottom: 1px solid #2d404d; color: #eaf1fa; display: grid; gap: 0.8rem; grid-template-columns: 1.05fr 1.2fr 1fr 0.9fr 0.7fr; padding: 0.8rem; text-decoration: none; }
 .directory-row:last-child { border-bottom: 0; }
 a.directory-row:hover { background: #1b2933; }
+.directory-row.completed-directory-row { background: rgba(67, 201, 126, 0.16); border-color: #43c97e; }
+a.directory-row.completed-directory-row:hover { background: rgba(67, 201, 126, 0.24); }
+.completed-status-badge { background: rgba(67, 201, 126, 0.18); border-color: #43c97e; color: #9af0bb; }
 .directory-row span, .directory-row strong, .directory-row small { min-width: 0; overflow-wrap: anywhere; }
 .directory-row strong, .directory-row small { display: block; }
 .directory-row small { color: #8fa5b7; font-size: 0.7rem; margin-top: 0.18rem; }
