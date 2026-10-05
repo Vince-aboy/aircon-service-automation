@@ -38,19 +38,19 @@ Map values from the webhook body:
 | Sheet column | n8n expression |
 |---|---|
 | `customer_id` | `$json.body.customer_id` |
-| `client_name` | `$json.body.client.name` |
-| `phone` | `$json.body.client.phone` |
+| `full_name` | `$json.body.client.name` |
+| `mobile` | `$json.body.client.phone` |
 | `email` | `$json.body.client.email` |
-| `address` | `$json.body.location.display` |
+| `address_line` | `$json.body.location.address_line` |
 | `barangay` | `$json.body.location.barangay` |
 | `city` | `$json.body.location.city` |
 | `coverage_area` | `$json.body.location.coverage_area` |
 | `booking_count` | `$json.body.customer_booking_count` |
-| `latest_booking_reference` | `$json.body.booking_reference` |
-| `latest_booking_status` | `$json.body.booking_status` |
-| `latest_service` | `$json.body.service.name` |
-| `last_event_id` | `$json.body.event_id` |
-| `last_update` | `$json.body.occurred_at` |
+| `last_booking_reference` | `$json.body.booking_reference` |
+| `current_status` | `$json.body.appointment_status || $json.body.booking_status` |
+| `last_booking_date` | `$json.body.schedule.scheduled_date` |
+| `customer_created_at` | `$json.body.customer_created_at_display` |
+| `last_updated` | `$json.body.occurred_at_display` |
 
 The application now sends `customer_booking_count`, calculated from PostgreSQL booking records for the customer. Do not use `booking_reference` as the customer key.
 

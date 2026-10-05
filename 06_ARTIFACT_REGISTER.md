@@ -15,6 +15,10 @@
 - Assets and media
 
 ## Entries
+- `docs/PHASE_11_CUSTOMER_DIRECTORY_UPSERT_HANDOFF.md` - final n8n Customer Directory upsert mapping, four-branch Merge topology, and Version 1 verification checklist
+- `app/static/light-theme.css` - shared warm brand palette for public booking and Owner Operations pages
+- `app/templates/staff_dashboard.html` and `app/templates/automation_outbox.html` - reporting health display with last sync, pending, retrying, and failed event visibility
+- `app/booking/service.py` - authoritative `customer_booking_count` field in the n8n owner-reporting payload
 - `00_HANDOFF.md`
 - `01_PROJECT_MAP.md`
 - `02_WORKLOG_HISTORY.md`
@@ -72,3 +76,4 @@
 - `app/templates/team_directory.html` - active workforce/team management
 - `app/templates/activity_history.html` and `app/templates/staff_settings.html` - audit and deployment views
 - `docs/SQL_LIVE_SYNC_RECORD.md` - applied VPS roster synchronization evidence
+- `0009_AIRCON_SERVICE_AUTOMATION.md` - full historical chat export, including prior planning, implementation, Phase 11 work, handoff, and embedded screenshots; use as reference/archive, while the project memory files remain authoritative

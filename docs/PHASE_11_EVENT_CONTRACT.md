@@ -31,6 +31,8 @@ The owner-reporting event should contain the following shape:
   "event_type": "appointment_scheduled",
   "note": "Appointment scheduled in the local dispatcher board; no customer message sent.",
   "occurred_at": "2026-10-03T09:00:00+08:00",
+  "customer_id": 123,
+  "customer_booking_count": 1,
   "booking_reference": "AC-20261003-EXAMPLE",
   "booking_status": "scheduled",
   "appointment_status": "confirmed",
@@ -81,6 +83,8 @@ The owner-reporting event should contain the following shape:
 | `note` | Outbox event payload | Human-readable operator context for append-only service history. |
 | `occurred_at` | Event creation/history timestamp | Use ISO 8601 with the project timezone. |
 | `booking_reference` | Booking request | Owner-facing reference code. |
+| `customer_id` | PostgreSQL customer primary key | Stable customer identity for the Customer Directory; never use `booking_reference` for this purpose. |
+| `customer_booking_count` | PostgreSQL booking request count | Total booking requests linked to `customer_id`; used by the Customer Directory `booking_count` column. |
 | `booking_status` | Booking request | Current request status. |
 | `appointment_status` | Appointment | Include when an appointment exists; otherwise `null`. |
 | `synthetic_only` | Event safety marker | `true` only in local prototype mode; `false` in live mode. |
@@ -117,9 +121,8 @@ The owner-reporting event should contain the following shape:
 - `Daily Schedule`: booking reference, scheduled date, time window, client name, phone, full address, service, team, appointment status, last update.
 - `Client Summary`: booking reference, client name, phone, email, full address, service, preferred date, current status, last update.
 - `Service History`: event ID, booking reference, event type, previous status, new status, occurred time, note.
-- `Cancelled Requests`: booking reference, client name, cancellation status, reason, occurred time.
-- `Automation Log`: event ID, idempotency key, event type, n8n result, sheet result, attempts, error, processed time.
+- `Customer Directory`: one current row per customer keyed by `customer_id`; customer contact, primary/latest address, booking count, latest booking/status, and last update.
 
 ## Status
 
-Documented and implemented in the application payload. No Google Sheets node or Google credential has been added yet.
+Documented and implemented in the application payload. The `Customer Directory` tab has been created and backfilled with 11 synthetic PostgreSQL customer rows; the n8n upsert node remains to be implemented and verified.

@@ -172,3 +172,20 @@
   - Corrected an acknowledgement defect: returning raw Google Sheets output made the local worker retain successful deliveries as pending. With the final response node in place, the four affected events changed to recorded.
   - Added the application event `note` to the outbound contract and mapped it to Service History. Controlled Jannet Aboy schedule/reschedule testing confirmed the current reporting views and appended `outbox-8` (`appointment_rescheduled`) with its operator note. No customer message was sent.
   - Documented the live workflow, recovery checks, deferred Customer Directory design, and safe tab-cleanup boundary. Customer Directory is not yet created or backfilled; no Sheets tab was deleted.
+- `2026-10-04`
+  - Read `0009_AIRCON_SERVICE_AUTOMATION.md`, the full historical chat export. Registered it as a reference/archive artifact; canonical project memory remains in the standard Markdown memory files. No runtime, Google Sheets, or external service changes were made.
+  - Read-only Google Sheets review confirmed `Cancelled Requests` and `Automation Log` contain headers only, while `Lists` contains controlled status, event-type, and team values. No tabs were deleted or renamed.
+  - After explicit approval, deleted the empty `Cancelled Requests` and `Automation Log` tabs from `Balik-Lamig Owner Operations`. Verified the remaining tabs are `Dashboard`, `Daily Schedule`, `Client Summary`, `Service History`, and `Lists`.
+  - Created and verified the `Customer Directory` tab with a frozen header row and 14-column one-row-per-customer layout. Added top-level PostgreSQL `customer_id` to the application n8n payload and updated the Phase 11 event contract. Local verification passed: `44 passed, 5 skipped`.
+  - Initial backfill attempt was paused because the workspace process could not inherit the user's terminal-only `AIRCON_DATABASE_URL` or `PGPASSWORD`; no credentials were printed or saved.
+  - Read-only PostgreSQL export returned 11 synthetic customers. Backfilled and verified all 11 rows in `Customer Directory`; duplicate names were preserved as distinct `customer_id` records. No PostgreSQL data was changed.
+## 2026-10-05
+
+- Completed the Version 1 Owner Operations visual review and replaced the neon/cyan-heavy palette with warm off-white surfaces, white cards, charcoal text, Balik-Lamig gold actions, and restrained status colors.
+- Added Owner Operations reporting health display: reporting state, last recorded sync, pending events, retrying events, and failed events.
+- Added recorded timestamps to successful local and n8n outbox events without adding a database migration.
+- Added the Customer Directory n8n branch handoff: `customer_id` matching, current Google Sheet header mapping, four-input Merge, and fixed processed response requirement.
+- Added `customer_booking_count` to the application owner-reporting payload, calculated from all PostgreSQL booking requests linked to the customer.
+- Verified PostgreSQL: Jannet Aboy (`customer_id = 2`) has four booking requests; the Customer Directory count of `4` matches the authoritative database.
+- Verification passed: `46 passed, 5 skipped`.
+- Deployed application commits through `6f42fc3`. Remaining external action is to publish/verify the n8n workflow once, then close Version 1 and begin Web Profile.

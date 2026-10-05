@@ -1,8 +1,23 @@
 # Handoff
 
+## Version 1 closeout — 2026-10-05
+
+- Balik-Lamig Version 1 is functionally complete and ready to hand off before moving to the Web Profile project.
+- The live website includes customer requests, waitlist handling, staff review, team scheduling, rescheduling, appointment lifecycle statuses, completed-job highlighting, customer history, team management, automation monitoring, activity history, and settings.
+- The public and Owner Operations visual system now uses warm off-white surfaces, white cards, charcoal text, Balik-Lamig gold actions, and restrained green completion states.
+- The protected n8n workflow now has four reporting branches: Daily Schedule, Client Summary, Service History, and Customer Directory. All four feed a four-input Merge and the final fixed `automation_status: processed` response.
+- Customer Directory uses `customer_id` as its stable key. Jannet Aboy is `customer_id = 2` with four PostgreSQL booking requests; the Google Sheet count was verified as `4`.
+- The application payload now includes `customer_booking_count`, calculated from PostgreSQL booking requests for the customer. n8n maps it to the Customer Directory `booking_count` column.
+- Owner Operations now displays reporting status, last recorded sync, pending events, retrying events, and failed events on the Dashboard and Automation Monitor.
+- Latest verification: `46 passed, 5 skipped`.
+- Latest application commits: `6493618`, `3f282f2`, and `6f42fc3`.
+- Final handoff action: publish the n8n workflow and run one controlled event confirming the existing Customer Directory row updates without duplication and the app outbox becomes `recorded`.
+- Next project after this controlled verification: Web Profile.
+
 ## Current live snapshot — 2026-10-03
 
 - The owner operations command center is deployed at `https://vinceaboy.com/balik-lamig/staff`.
+- Current handoff date: 2026-10-04.
 - The dashboard display name is `Boss EMER`, separate from the staff login username.
 - The workspace includes dashboard, service requests, team schedule, appointments, customers, teams/technicians, automation, activity history, and settings.
 - Safeguards include date-aware assignment, occupied-block protection, past-date protection, team/date/time rescheduling, required cancellation reasons, internal notes, audit history, safe deactivation, membership removal, and failed outbox-event requeue.
@@ -45,12 +60,12 @@
 - The live success path is `Webhook -> safety If nodes -> Mark Processed -> parallel Google Sheets nodes -> Merge (3 inputs, Append) -> Return Processed Response`.
 - `Return Processed Response` must return exactly `automation_status: processed`. Google Sheets node output must not be returned directly, because it does not contain the application acknowledgement and would leave local events pending for retry.
 - Controlled evidence: Jannet Aboy booking `AC-20261003-CC71C4CB` was scheduled, rescheduled, and rescheduled back. The sheet views updated correctly and Service History recorded `outbox-8` with the event note.
-- A future `Customer Directory` tab is approved conceptually, but has not been created or backfilled. It must use a stable customer key and a safe SQL-backed one-time backfill; it must not use `booking_reference` as the customer identity.
-- Do not delete any existing Google Sheets tabs until the exact live tab list has been reviewed and explicitly approved. `Cancelled Requests` and an owner-facing `Automation Log` are deferred; the app outbox and n8n executions remain the technical trace.
+- `Customer Directory` was created and backfilled with 11 synthetic PostgreSQL customer rows. It is keyed by stable `customer_id`; duplicate names remain separate customers and `booking_reference` is not used as identity.
+- The exact live tab list was reviewed and Vince explicitly approved removal of `Cancelled Requests` and `Automation Log`; both tabs were deleted. The app outbox and n8n executions remain the technical trace.
 
 ## Next step
 
-- In a Google-Drive-connected session, list the exact tabs in `Balik-Lamig Owner Operations`, create `Customer Directory`, then implement and verify the safe SQL-backed backfill and its n8n upsert path. Keep PostgreSQL authoritative and do not delete tabs without a reviewed list and explicit approval.
+- `Customer Directory` was backfilled and verified with 11 rows from PostgreSQL, and the application payload includes `customer_id`. Next: add and test the fourth n8n Google Sheets upsert branch, expand the Merge to four inputs, and preserve the fixed processed response. Keep PostgreSQL authoritative, use `customer_id` rather than `booking_reference`, and keep customer messaging and payments disabled.
 
 ## Notes
 - Phase 6 implementation started: local scheduling and job-progress changes now create simulated pending outbox events. `GET /staff/automation` displays them, and its local simulation control marks them `recorded` without delivering any message. Verification passed: `30 passed, 5 skipped`.
@@ -61,6 +76,8 @@
 - VPS n8n clarification: Vince states that n8n is already installed on the personal VPS. Its present security and configuration state remain unverified for this project; do not connect the app, publish a webhook, or add external credentials until a fresh read-only audit and explicit confirmation.
 - Phase 5 evidence: the user applied migration `20260930_0006` and manually moved a scheduled job from confirmed to en route, in progress, and completed. Each board update confirmed that no customer message was created.
 - Next phase: Phase 6 will simulate n8n automation with local synthetic events only. Do not connect Facebook/Meta, customer messaging, calendars, or production services.
+
+- 2026-10-04: Verified the published n8n four-branch workflow with synthetic bookings `AC-20261004-2935E916` and `AC-20261004-60BF5C0A`. `Daily Schedule`, `Client Summary`, `Service History`, and `Customer Directory` received the events; `customer_id` is now populated for new directory rows. Normalized phone columns to text with Philippine leading zeros and converted Customer Directory booking/date-time fields to native readable date formats.
 - Phase 5 next action: apply migration `20260930_0006`, then open a scheduled card on `/staff/dispatch`. Confirm the modal can move a job through confirmed, en route, work in progress, and completed; each update must appear in local workflow history.
 - Phase 5 scope: scheduled jobs may move only from `confirmed` to `en_route`, then `in_progress`, then `completed`; cancellation is allowed until completion. Every valid transition is written to `appointment_status_history`. No messages are created.
 - This file is the main live snapshot for the project
