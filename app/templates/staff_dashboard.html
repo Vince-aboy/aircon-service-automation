@@ -41,8 +41,8 @@
       <dl class="status-summary">{% for label, key in [('Confirmed', 'confirmed'), ('En route', 'en_route'), ('In progress', 'in_progress'), ('Completed', 'completed'), ('Cancelled', 'cancelled')] %}<div><dt>{{ label }}</dt><dd class="status-text status-text-{{ key }}">{{ appointment_status_counts[key] }}</dd></div>{% endfor %}</dl>
     </article>
     <article class="dashboard-panel dashboard-panel-technical">
-      <div class="panel-heading"><div><p class="eyebrow">Owner reporting</p><h2>Automation health</h2></div><span class="health-badge {% if metrics.failed_automation %}health-error{% else %}health-good{% endif %}">{% if metrics.failed_automation %}Needs attention{% else %}Operational{% endif %}</span></div>
-      <dl class="health-list"><div><dt>Delivery worker</dt><dd>{% if automatic_delivery_enabled %}Enabled{% else %}Disabled{% endif %}</dd></div><div><dt>Pending events</dt><dd>{{ metrics.pending_automation }}</dd></div><div><dt>Failed events</dt><dd>{{ metrics.failed_automation }}</dd></div></dl>
+      <div class="panel-heading"><div><p class="eyebrow">Owner reporting</p><h2>Automation health</h2></div><span class="health-badge {% if reporting_health.failed or reporting_health.retrying %}health-error{% else %}health-good{% endif %}">{{ reporting_health.state }}</span></div>
+      <dl class="health-list"><div><dt>Reporting status</dt><dd>{{ reporting_health.state }}</dd></div><div><dt>Last recorded sync</dt><dd>{{ reporting_health.last_sync_display }}</dd></div><div><dt>Pending events</dt><dd>{{ reporting_health.pending }}</dd></div><div><dt>Retrying events</dt><dd>{{ reporting_health.retrying }}</dd></div><div><dt>Failed events</dt><dd>{{ reporting_health.failed }}</dd></div></dl>
       <a class="panel-link" href="{{ app_path('/staff/automation') }}">Open automation monitor &rarr;</a>
     </article>
   </section>

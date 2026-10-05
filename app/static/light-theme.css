@@ -113,6 +113,13 @@ a.directory-row:hover { background: #f7f7f2; border-color: #adb5a4; }
 .history-list li { background: #f0f1eb; border-left-color: #a6af98; }
 .staff-feedback { background: #edf0e8; border-color: #b3bea8; color: #42533a; }
 .job-modal::backdrop { background: rgba(34,38,32,.42); }
+.reporting-health-strip { display: grid; grid-template-columns: 1.1fr 1.7fr .7fr; gap: .7rem; margin: 1rem 0; }
+.reporting-health-strip > div { display: flex; align-items: center; justify-content: space-between; gap: .75rem; padding: .7rem .8rem; background: #f0f1eb; border: 1px solid var(--line); border-radius: 8px; }
+.reporting-health-strip span { color: var(--muted); font-size: .72rem; }
+.reporting-health-strip strong:not(.setting-state) { color: var(--ink); font-size: .78rem; text-align: right; }
+@media (max-width: 700px) {
+  .reporting-health-strip { grid-template-columns: 1fr; }
+}
 
 /* Public service website. Preserve the real service artwork. */
 .bl-landing { --bg: #f6f5f1; --panel: #fff; --ink: #222620; --muted: #61665f; --cyan: #596147; --orange: #f2b544; color-scheme: light; }

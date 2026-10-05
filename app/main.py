@@ -55,6 +55,45 @@ templates.env.globals["manila_now"] = lambda: datetime.now(MANILA_TIMEZONE)
 templates.env.globals["to_manila"] = lambda value: value.astimezone(MANILA_TIMEZONE)
 
 
+def automation_health(session: Session) -> dict[str, object]:
+    """Return owner-facing delivery health from the local outbox evidence."""
+    pending = session.scalar(
+        select(func.count()).select_from(NotificationOutbox).where(NotificationOutbox.status == "pending")
+    ) or 0
+    retrying = session.scalar(
+        select(func.count()).select_from(NotificationOutbox).where(
+            NotificationOutbox.status == "pending",
+            or_(NotificationOutbox.last_error.is_not(None), NotificationOutbox.next_attempt_at.is_not(None)),
+        )
+    ) or 0
+    failed = session.scalar(
+        select(func.count()).select_from(NotificationOutbox).where(NotificationOutbox.status == "failed")
+    ) or 0
+    last_recorded = session.scalar(
+        select(NotificationOutbox)
+        .where(NotificationOutbox.status == "recorded")
+        .order_by(NotificationOutbox.id.desc())
+        .limit(1)
+    )
+    last_sync_display = "No recorded sync yet"
+    if last_recorded is not None:
+        recorded_at = last_recorded.payload.get("recorded_at")
+        if recorded_at:
+            recorded_datetime = datetime.fromisoformat(str(recorded_at))
+        else:
+            recorded_datetime = last_recorded.created_at
+        if recorded_datetime.tzinfo is None:
+            recorded_datetime = recorded_datetime.replace(tzinfo=MANILA_TIMEZONE)
+        last_sync_display = recorded_datetime.astimezone(MANILA_TIMEZONE).strftime("%b %d, %Y · %I:%M %p PHT")
+    return {
+        "pending": pending,
+        "retrying": retrying,
+        "failed": failed,
+        "last_sync_display": last_sync_display,
+        "state": "Needs attention" if failed or retrying else "Operational",
+    }
+
+
 def staff_auth_enabled() -> bool:
     """Keep staff authentication enabled unless the VPS explicitly disables it."""
     return os.getenv("AIRCON_STAFF_AUTH_ENABLED", "true").strip().lower() not in {"0", "false", "no", "off"}
@@ -366,6 +405,7 @@ def staff_dashboard(request: Request, session: Session = Depends(get_session)) -
         ) or 0
         for appointment_status in ("confirmed", "en_route", "in_progress", "completed", "cancelled")
     }
+    reporting_health = automation_health(session)
     return templates.TemplateResponse(
         request,
         "staff_dashboard.html",
@@ -375,6 +415,7 @@ def staff_dashboard(request: Request, session: Session = Depends(get_session)) -
             "upcoming_appointments": upcoming_appointments,
             "appointment_status_counts": appointment_status_counts,
             "automatic_delivery_enabled": automatic_delivery_enabled(),
+            "reporting_health": reporting_health,
         },
     )
 
@@ -862,6 +903,7 @@ def automation_outbox(
         ) or 0
         for value in ("pending", "recorded", "failed")
     }
+    reporting_health = automation_health(session)
     return templates.TemplateResponse(
         request,
         "automation_outbox.html",
@@ -876,6 +918,7 @@ def automation_outbox(
             "event_status_filter": event_status,
             "event_counts": event_counts,
             "automatic_delivery_enabled": automatic_delivery_enabled(),
+            "reporting_health": reporting_health,
         },
     )
 

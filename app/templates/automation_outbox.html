@@ -14,6 +14,12 @@
       <div class="summary-chip status-failed"><span>Failed</span><strong>{{ event_counts['failed'] }}</strong></div>
     </div>
 
+    <section class="reporting-health-strip" aria-label="Owner reporting connection health">
+      <div><span>Reporting status</span><strong class="setting-state {% if reporting_health.failed or reporting_health.retrying %}state-warning{% else %}state-good{% endif %}">{{ reporting_health.state }}</strong></div>
+      <div><span>Last recorded sync</span><strong>{{ reporting_health.last_sync_display }}</strong></div>
+      <div><span>Retrying</span><strong>{{ reporting_health.retrying }}</strong></div>
+    </section>
+
     {% if automatic_delivery_enabled %}
       <p class="staff-feedback">Automatic delivery is enabled. The VPS worker checks the outbox every minute. No customer message is sent.</p>
     {% else %}

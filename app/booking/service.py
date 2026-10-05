@@ -156,8 +156,10 @@ def record_simulated_event(
 def process_pending_simulated_events(session: Session) -> int:
     """Record pending outbox events as locally processed; never deliver a message."""
     events = list(session.scalars(select(NotificationOutbox).where(NotificationOutbox.status == "pending")).all())
+    recorded_at = datetime.now(UTC).isoformat()
     for event in events:
         event.status = "recorded"
+        event.payload = {**event.payload, "recorded_at": recorded_at}
     session.flush()
     return len(events)
 
@@ -218,11 +220,11 @@ def record_delivery_success(event: NotificationOutbox, result: dict[str, object]
     event.claimed_at = None
     event.last_error = None
     event.next_attempt_at = None
-    if result.get("dispatcher_message"):
-        event.payload = {
-            **event.payload,
-            "dispatcher_message": result["dispatcher_message"],
-        }
+    event.payload = {
+        **event.payload,
+        "recorded_at": datetime.now(UTC).isoformat(),
+        **({"dispatcher_message": result["dispatcher_message"]} if result.get("dispatcher_message") else {}),
+    }
 
 
 def record_retryable_delivery_failure(
