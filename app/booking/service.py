@@ -277,6 +277,9 @@ def n8n_event_payload(session: Session, event: NotificationOutbox) -> dict[str, 
     local_occurred_at = occurred_at.astimezone(MANILA_TIMEZONE)
     local_customer_created_at = customer.created_at.astimezone(MANILA_TIMEZONE)
     address_display = display_address(address)
+    customer_booking_count = session.scalar(
+        select(func.count()).select_from(BookingRequest).where(BookingRequest.customer_id == customer.id)
+    ) or 1
     return {
         "event_id": f"outbox-{event.id}" if live_mode else f"synthetic-outbox-{event.id}",
         "idempotency_key": outbox_idempotency_key(event),
@@ -288,6 +291,7 @@ def n8n_event_payload(session: Session, event: NotificationOutbox) -> dict[str, 
         "occurred_at": occurred_at.isoformat(),
         "occurred_at_display": f"{local_occurred_at:%b} {local_occurred_at.day}, {local_occurred_at:%Y}, {local_occurred_at:%I:%M %p}".replace(" 0", " ", 1),
         "customer_id": customer.id,
+        "customer_booking_count": customer_booking_count,
         "customer_created_at": customer.created_at.isoformat(),
         "customer_created_at_display": f"{local_customer_created_at:%b} {local_customer_created_at.day}, {local_customer_created_at:%Y}, {local_customer_created_at:%I:%M %p}".replace(" 0", " ", 1),
         "booking_reference": booking.reference_code,

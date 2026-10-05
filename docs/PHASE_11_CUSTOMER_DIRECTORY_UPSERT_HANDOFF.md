@@ -52,7 +52,7 @@ Map values from the webhook body:
 | `last_event_id` | `$json.body.event_id` |
 | `last_update` | `$json.body.occurred_at` |
 
-If `booking_count` or another customer aggregate is not present in the live event payload, leave that column unchanged or calculate it in n8n from the existing row. Do not use `booking_reference` as the customer key.
+The application now sends `customer_booking_count`, calculated from PostgreSQL booking records for the customer. Do not use `booking_reference` as the customer key.
 
 ## Controlled verification
 
