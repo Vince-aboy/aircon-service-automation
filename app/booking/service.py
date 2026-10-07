@@ -23,6 +23,7 @@ from app.database.models import (
     BookingRequestStatusHistory,
     Customer,
     NotificationOutbox,
+    OperationalJob,
     ServiceTeam,
     ServiceType,
     TeamMembership,
@@ -122,6 +123,36 @@ def display_address(address: Address) -> str:
     if address.barangay and coverage_area.casefold().startswith(barangay_prefix.casefold()):
         coverage_area = coverage_area[len(barangay_prefix):].strip()
     return ", ".join(value for value in (address.address_line, address.barangay, address.city, coverage_area) if value)
+
+
+def ensure_customer_operational_job(
+    session: Session,
+    *,
+    booking: BookingRequest,
+    customer: Customer,
+    address: Address,
+    service_type: ServiceType,
+) -> OperationalJob:
+    """Create the shared job record for a customer booking when missing."""
+    job = session.scalar(
+        select(OperationalJob).where(OperationalJob.booking_request_id == booking.id)
+    )
+    if job is not None:
+        return job
+    job = OperationalJob(
+        source="customer_booking",
+        booking_request_id=booking.id,
+        customer_id=customer.id,
+        customer_label=customer.full_name,
+        customer_is_provisional=False,
+        address_label=display_address(address),
+        service_type_id=service_type.id,
+        service_label=service_type.name,
+        status=booking.status,
+    )
+    session.add(job)
+    session.flush()
+    return job
 
 
 def record_simulated_event(
@@ -480,6 +511,15 @@ def create_pending_booking(
         .order_by(BookingRequest.id.desc())
     )
     if existing_booking is not None:
+        existing_address = session.get(Address, existing_booking.address_id)
+        if existing_address is not None:
+            ensure_customer_operational_job(
+                session,
+                booking=existing_booking,
+                customer=customer,
+                address=existing_address,
+                service_type=service_type,
+            )
         return existing_booking
 
     address = Address(
@@ -507,6 +547,13 @@ def create_pending_booking(
     )
     session.add(booking)
     session.flush()
+    ensure_customer_operational_job(
+        session,
+        booking=booking,
+        customer=customer,
+        address=address,
+        service_type=service_type,
+    )
     return booking
 
 
@@ -528,6 +575,9 @@ def review_booking_request(session: Session, booking_request_id: int, decision: 
     next_status, note = transitions[decision]
     previous_status = booking.status
     booking.status = next_status
+    job = session.scalar(select(OperationalJob).where(OperationalJob.booking_request_id == booking.id))
+    if job is not None:
+        job.status = next_status
     session.add(
         BookingRequestStatusHistory(
             booking_request_id=booking.id,
@@ -597,6 +647,13 @@ def schedule_approved_booking(
     booking.status = "scheduled"
     session.add(appointment)
     session.flush()
+    job = session.scalar(select(OperationalJob).where(OperationalJob.booking_request_id == booking.id))
+    if job is not None:
+        job.appointment_id = appointment.id
+        job.service_team_id = team.id
+        job.scheduled_date = appointment_date
+        job.scheduled_time = start_time
+        job.status = "scheduled"
     session.add(
         AppointmentStatusHistory(
             appointment_id=appointment.id,
@@ -685,6 +742,11 @@ def reschedule_appointment(
     appointment.scheduled_end = scheduled_end
     appointment.service_team_id = target_team.id
     appointment.technician_id = target_lead.id
+    job = session.scalar(select(OperationalJob).where(OperationalJob.appointment_id == appointment.id))
+    if job is not None:
+        job.service_team_id = target_team.id
+        job.scheduled_date = appointment_date
+        job.scheduled_time = start_time
     session.add(
         AppointmentStatusHistory(
             appointment_id=appointment.id,
@@ -734,6 +796,9 @@ def update_appointment_status(
 
     previous_status = appointment.status
     appointment.status = next_status
+    job = session.scalar(select(OperationalJob).where(OperationalJob.appointment_id == appointment.id))
+    if job is not None:
+        job.status = next_status
     session.add(
         AppointmentStatusHistory(
             appointment_id=appointment.id,

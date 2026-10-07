@@ -65,9 +65,9 @@
                 {% if repeat_warning in (item.review_note or '') %}<span class="draft-note-alert">{{ repeat_warning }}</span>{% endif %}
                 {% if not item.review_note %}—{% endif %}
               </td>
-              <td><button class="draft-edit-button" type="button" data-edit-target="edit-row-{{ item.id }}">Edit</button></td>
+              <td>{% if latest_intake.status == 'confirmed' %}<span class="muted">Published</span>{% else %}<button class="draft-edit-button" type="button" data-edit-target="edit-row-{{ item.id }}">Edit</button>{% endif %}</td>
             </tr>
-            <tr class="draft-edit-row" id="edit-row-{{ item.id }}" hidden>
+            <tr class="draft-edit-row" id="edit-row-{{ item.id }}" hidden{% if latest_intake.status == 'confirmed' %} aria-hidden="true"{% endif %}>
               <td colspan="9">
                 <form class="draft-edit-form" method="post" action="{{ app_path('/staff/schedule-intake/items/' ~ item.id) }}">
                   <input type="hidden" name="intake_id" value="{{ latest_intake.id }}">

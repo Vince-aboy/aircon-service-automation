@@ -248,3 +248,58 @@ class ScheduleIntakeItem(Base):
         Index("ix_schedule_intake_items_intake_id", "schedule_intake_id"),
         Index("ix_schedule_intake_items_review_status", "review_status"),
     )
+
+
+class OperationalJob(Base):
+    """One shared operational record, regardless of how work entered the system."""
+
+    __tablename__ = "operational_jobs"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    source: Mapped[str] = mapped_column(String(32), nullable=False)
+    booking_request_id: Mapped[Optional[int]] = mapped_column(
+        ForeignKey("booking_requests.id", ondelete="RESTRICT"), nullable=True, unique=True
+    )
+    schedule_intake_item_id: Mapped[Optional[int]] = mapped_column(
+        ForeignKey("schedule_intake_items.id", ondelete="RESTRICT"), nullable=True, unique=True
+    )
+    appointment_id: Mapped[Optional[int]] = mapped_column(
+        ForeignKey("appointments.id", ondelete="RESTRICT"), nullable=True, unique=True
+    )
+    customer_id: Mapped[Optional[int]] = mapped_column(
+        ForeignKey("customers.id", ondelete="RESTRICT"), nullable=True
+    )
+    customer_label: Mapped[str] = mapped_column(String(120), nullable=False)
+    customer_is_provisional: Mapped[bool] = mapped_column(Boolean, nullable=False, server_default="false")
+    address_label: Mapped[str] = mapped_column(String(255), nullable=False)
+    service_type_id: Mapped[Optional[int]] = mapped_column(
+        ForeignKey("service_types.id", ondelete="RESTRICT"), nullable=True
+    )
+    service_label: Mapped[str] = mapped_column(String(255), nullable=False)
+    service_team_id: Mapped[Optional[int]] = mapped_column(
+        ForeignKey("service_teams.id", ondelete="RESTRICT"), nullable=True
+    )
+    scheduled_date: Mapped[Optional[date]] = mapped_column(Date, nullable=True)
+    scheduled_time: Mapped[Optional[time]] = mapped_column(Time, nullable=True)
+    price: Mapped[Optional[Decimal]] = mapped_column(Numeric(10, 2), nullable=True)
+    status: Mapped[str] = mapped_column(String(32), nullable=False, server_default="pending_review")
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now(), nullable=False)
+    updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now(), nullable=False)
+
+    __table_args__ = (
+        CheckConstraint(
+            "source IN ('customer_booking', 'team_intake')",
+            name="ck_operational_jobs_source",
+        ),
+        CheckConstraint(
+            "status IN ('pending_review', 'waitlisted', 'approved_for_scheduling', 'scheduled', 'confirmed', 'en_route', 'in_progress', 'completed', 'cancelled')",
+            name="ck_operational_jobs_status",
+        ),
+        CheckConstraint("price IS NULL OR price >= 0", name="ck_operational_jobs_nonnegative_price"),
+        CheckConstraint(
+            "(booking_request_id IS NOT NULL) <> (schedule_intake_item_id IS NOT NULL)",
+            name="ck_operational_jobs_one_source",
+        ),
+        Index("ix_operational_jobs_scheduled_date", "scheduled_date"),
+        Index("ix_operational_jobs_status", "status"),
+    )

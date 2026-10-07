@@ -42,14 +42,14 @@
 
     <section class="dispatch-section published-intake-section">
       <h2>Published intake jobs</h2>
-      {% if published_intake_items %}
+      {% if published_intake_jobs %}
         <div class="published-intake-list">
-          {% for item, team in published_intake_items %}
+          {% for job, team in published_intake_jobs %}
             <article class="published-intake-card">
-              <strong>{{ item.scheduled_time.strftime('%I:%M %p') if item.scheduled_time else 'Time missing' }}</strong>
-              <span>{{ team.name if team else 'Unassigned team' }} · {{ item.raw_service_text or 'Service missing' }}</span>
-              <span>Building {{ item.building_number }}, Unit {{ item.unit_number }} · {{ item.customer_name or 'Client missing' }}</span>
-              <small>Provisional job · replace client label with real customer</small>
+              <strong>{{ job.scheduled_time.strftime('%I:%M %p') if job.scheduled_time else 'Time missing' }}</strong>
+              <span>{{ team.name if team else 'Unassigned team' }} · {{ job.service_label }}</span>
+              <span>{{ job.address_label }} · {{ job.customer_label }}</span>
+              <small>{% if job.customer_is_provisional %}Provisional job · replace client label with real customer{% else %}Approved shared job{% endif %}</small>
             </article>
           {% endfor %}
         </div>

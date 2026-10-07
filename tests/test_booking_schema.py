@@ -17,6 +17,7 @@ def test_initial_schema_contains_all_booking_workflow_tables() -> None:
         "notification_outbox",
         "schedule_intakes",
         "schedule_intake_items",
+        "operational_jobs",
     }
 
 
@@ -33,3 +34,14 @@ def test_notification_outbox_is_simulation_only() -> None:
     constraints = {constraint.name: str(constraint.sqltext) for constraint in Base.metadata.tables["notification_outbox"].constraints if constraint.name}
 
     assert constraints["ck_notification_outbox_simulated_channel"] == "channel = 'simulated'"
+
+
+def test_operational_jobs_accept_both_work_sources() -> None:
+    constraints = {
+        constraint.name: str(constraint.sqltext)
+        for constraint in Base.metadata.tables["operational_jobs"].constraints
+        if constraint.name
+    }
+
+    assert "customer_booking" in constraints["ck_operational_jobs_source"]
+    assert "team_intake" in constraints["ck_operational_jobs_source"]

@@ -21,7 +21,7 @@ from sqlalchemy.orm import Session
 from app.booking.schedule_intake import parse_raw_schedule
 from app.booking.service import APPOINTMENT_STATUS_TRANSITIONS, DISPATCH_SLOTS, MANILA_TIMEZONE, automatic_delivery_enabled, complete_appointment_shortcut, create_pending_booking, display_address, process_pending_simulated_events, push_one_pending_event_to_n8n, reschedule_appointment, review_booking_request, run_due_delivery_worker_check, schedule_approved_booking, update_appointment_status
 from app.booking.validation import BookingRequestInput
-from app.database.models import Address, Appointment, AppointmentStatusHistory, BookingRequest, BookingRequestStatusHistory, Customer, NotificationOutbox, ScheduleIntake, ScheduleIntakeItem, ServiceTeam, ServiceType, TeamMembership, Technician
+from app.database.models import Address, Appointment, AppointmentStatusHistory, BookingRequest, BookingRequestStatusHistory, Customer, NotificationOutbox, OperationalJob, ScheduleIntake, ScheduleIntakeItem, ServiceTeam, ServiceType, TeamMembership, Technician
 from app.database.session import create_database_engine
 from app.core.project_info import is_live_mode
 
@@ -750,17 +750,16 @@ def dispatch_board(
     # selected date. The original preferred date remains visible on the card
     # as customer context, while the appointment date is chosen here.
     assignable_requests = approved_requests
-    published_intake_items = list(
+    published_intake_jobs = list(
         session.execute(
-            select(ScheduleIntakeItem, ServiceTeam)
-            .join(ScheduleIntake, ScheduleIntakeItem.schedule_intake_id == ScheduleIntake.id)
-            .outerjoin(ServiceTeam, ScheduleIntakeItem.service_team_id == ServiceTeam.id)
+            select(OperationalJob, ServiceTeam)
+            .outerjoin(ServiceTeam, OperationalJob.service_team_id == ServiceTeam.id)
             .where(
-                ScheduleIntake.schedule_date == board_date,
-                ScheduleIntake.status == "confirmed",
-                ScheduleIntakeItem.review_status == "confirmed",
+                OperationalJob.source == "team_intake",
+                OperationalJob.scheduled_date == board_date,
+                OperationalJob.status == "scheduled",
             )
-            .order_by(ScheduleIntakeItem.service_team_id, ScheduleIntakeItem.scheduled_time, ScheduleIntakeItem.id)
+            .order_by(OperationalJob.service_team_id, OperationalJob.scheduled_time, OperationalJob.id)
         ).all()
     )
     return templates.TemplateResponse(
@@ -770,7 +769,7 @@ def dispatch_board(
             "teams": active_service_teams(session),
             "approved_requests": approved_requests,
             "assignable_requests": assignable_requests,
-            "published_intake_items": published_intake_items,
+            "published_intake_jobs": published_intake_jobs,
             "appointments": dispatch_appointments(session, board_date),
             "selected_date": board_date,
             "previous_date": board_date - timedelta(days=1),
@@ -911,8 +910,8 @@ def create_schedule_intake(
 
 @app.post("/staff/schedule-intake/clear", response_class=RedirectResponse)
 def clear_schedule_intakes(session: Session = Depends(get_session)) -> RedirectResponse:
-    """Delete all raw schedule intake test data, including its draft rows."""
-    session.execute(delete(ScheduleIntake))
+    """Delete unapproved raw schedule drafts, including their draft rows."""
+    session.execute(delete(ScheduleIntake).where(ScheduleIntake.status != "confirmed"))
     session.commit()
     return RedirectResponse(url=app_path("/staff/schedule-intake"), status_code=status.HTTP_303_SEE_OTHER)
 
@@ -936,6 +935,26 @@ def approve_schedule_intake(intake_id: int, session: Session = Depends(get_sessi
     intake.status = "confirmed"
     for item in active_items:
         item.review_status = "confirmed"
+        job = session.scalar(
+            select(OperationalJob).where(OperationalJob.schedule_intake_item_id == item.id)
+        )
+        if job is None:
+            job = OperationalJob(
+                source="team_intake",
+                schedule_intake_item_id=item.id,
+                customer_id=item.customer_id,
+                customer_label=item.customer_name or "Client missing",
+                customer_is_provisional=item.customer_is_provisional,
+                address_label=f"Building {item.building_number}, Unit {item.unit_number}",
+                service_type_id=item.service_type_id,
+                service_label=item.raw_service_text or "Service missing",
+                service_team_id=item.service_team_id,
+                scheduled_date=intake.schedule_date,
+                scheduled_time=item.scheduled_time,
+                price=item.price,
+                status="scheduled",
+            )
+            session.add(job)
     session.commit()
     return RedirectResponse(
         url=app_path(f"/staff/dispatch?selected_date={intake.schedule_date}&intake_published=1"),
@@ -961,6 +980,9 @@ def update_schedule_intake_item(
     item = session.get(ScheduleIntakeItem, item_id)
     if item is None or item.schedule_intake_id != intake_id:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Schedule draft row not found.")
+    intake = session.get(ScheduleIntake, intake_id)
+    if intake is not None and intake.status == "confirmed":
+        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="Published intake rows cannot be edited here.")
     if building_number is not None and building_number <= 0:
         raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_CONTENT, detail="Building number must be positive.")
 
@@ -1009,6 +1031,9 @@ def skip_schedule_intake_item(
     item = session.get(ScheduleIntakeItem, item_id)
     if item is None or item.schedule_intake_id != intake_id:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Schedule draft row not found.")
+    intake = session.get(ScheduleIntake, intake_id)
+    if intake is not None and intake.status == "confirmed":
+        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="Published intake rows cannot be skipped here.")
     item.review_status = "skipped"
     item.review_note = "Skipped by staff" if not item.review_note else f"Skipped by staff · {item.review_note}"
     session.commit()

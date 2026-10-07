@@ -11,7 +11,7 @@ from sqlalchemy.orm import Session
 
 from app.booking.service import create_pending_booking
 from app.booking.validation import BookingRequestInput
-from app.database.models import Address, BookingRequest, Customer
+from app.database.models import Address, BookingRequest, Customer, OperationalJob
 from app.database.session import create_database_engine
 
 
@@ -52,12 +52,12 @@ def valid_booking_input(service_type_id: int = 1) -> BookingRequestInput:
     )
 
 
-def table_count(session: Session, model: type[Customer] | type[Address] | type[BookingRequest]) -> int:
+def table_count(session: Session, model: type[Customer] | type[Address] | type[BookingRequest] | type[OperationalJob]) -> int:
     return session.scalar(select(func.count()).select_from(model)) or 0
 
 
 def test_valid_booking_creates_pending_review_records(database_session: Session) -> None:
-    before_counts = tuple(table_count(database_session, model) for model in (Customer, Address, BookingRequest))
+    before_counts = tuple(table_count(database_session, model) for model in (Customer, Address, BookingRequest, OperationalJob))
 
     booking = create_pending_booking(
         database_session,
@@ -65,7 +65,7 @@ def test_valid_booking_creates_pending_review_records(database_session: Session)
         reference_code="AC-TEST-VALID-001",
     )
 
-    after_counts = tuple(table_count(database_session, model) for model in (Customer, Address, BookingRequest))
+    after_counts = tuple(table_count(database_session, model) for model in (Customer, Address, BookingRequest, OperationalJob))
     assert booking.status == "pending_review"
     assert booking.reference_code == "AC-TEST-VALID-001"
     assert after_counts == tuple(count + 1 for count in before_counts)

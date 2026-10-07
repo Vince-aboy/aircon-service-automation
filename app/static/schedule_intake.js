@@ -9,6 +9,7 @@
   const openEditor = (control, focusField = null) => {
     const target = document.getElementById(control.dataset.editTarget);
     if (!target) return;
+    if (target.getAttribute("aria-hidden") === "true") return;
     target.hidden = false;
     target.classList.add("is-active-editor");
     if (focusField) {
