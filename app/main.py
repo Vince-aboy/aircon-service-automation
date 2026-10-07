@@ -787,6 +787,13 @@ def schedule_intake(request: Request, intake_id: int | None = None, session: Ses
                 .order_by(ScheduleIntakeItem.id)
             )
         )
+        intake_items.sort(
+            key=lambda item: (
+                item.building_number if item.building_number is not None else 10**9,
+                int(item.unit_number) if item.unit_number and item.unit_number.isdigit() else 10**9,
+                item.id,
+            )
+        )
     return templates.TemplateResponse(
         request,
         "schedule_intake.html",
