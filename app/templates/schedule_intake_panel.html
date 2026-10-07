@@ -45,9 +45,9 @@
         <tbody id="draft-schedule-rows">
           {% for item in intake_items %}
             <tr>
-              <td><span class="draft-missing">Missing</span></td>
+              <td>{% if item.service_team_id %}{{ intake_team_names.get(item.service_team_id, 'Team') }}{% else %}<span class="draft-missing">Missing</span>{% endif %}</td>
               <td>Building {{ item.building_number }}, Unit {{ item.unit_number }}</td>
-              <td><span class="draft-missing">Missing</span></td>
+              <td>{% if item.customer_name %}{{ item.customer_name }}{% else %}<span class="draft-missing">Missing</span>{% endif %}</td>
               <td>{{ item.raw_service_text or 'Missing' }}</td>
               <td>{{ item.scheduled_time.strftime('%I:%M %p') if item.scheduled_time else 'Missing' }}</td>
               <td>{{ item.price if item.price is not none else 'Missing' }}</td>

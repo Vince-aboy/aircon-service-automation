@@ -796,6 +796,10 @@ def schedule_intake(request: Request, intake_id: int | None = None, session: Ses
             "intake_items": intake_items,
             "recent_intakes": recent_intakes,
             "intake_teams": list(session.scalars(select(ServiceTeam).where(ServiceTeam.active.is_(True)).order_by(ServiceTeam.name))),
+            "intake_team_names": {
+                team.id: team.name
+                for team in session.scalars(select(ServiceTeam).where(ServiceTeam.active.is_(True)))
+            },
         },
     )
 
@@ -876,8 +880,17 @@ def update_schedule_intake_item(
             item.price = Decimal(price.strip())
         except Exception as error:
             raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_CONTENT, detail="Price must be a valid number.") from error
-    item.review_note = review_note.strip() or None
-    has_repeat_warning = "Possible repeat location" in (item.review_note or "")
+    has_repeat_warning = "Possible repeat location" in review_note
+    notes = []
+    if item.service_team_id is None:
+        notes.append("Add team")
+    if not item.customer_name:
+        notes.append("Add customer name")
+    if item.scheduled_time is None:
+        notes.append("Add time")
+    if has_repeat_warning:
+        notes.append("Possible repeat location; confirm separate job")
+    item.review_note = " · ".join(notes) or None
     item.review_status = "ready" if all((item.service_team_id, item.customer_name, item.building_number, item.unit_number, item.raw_service_text, item.scheduled_time)) and not has_repeat_warning else "needs_review"
     session.commit()
     return RedirectResponse(url=app_path(f"/staff/schedule-intake?intake_id={intake_id}"), status_code=status.HTTP_303_SEE_OTHER)
