@@ -12,6 +12,7 @@ LOCATION_PATTERN = re.compile(r"\b(?:b|bldg|building)\s*(\d+)\s*,?\s*(?:unit\s*)
 TIME_PATTERN = re.compile(r"^(\d{1,2})(?::(\d{2}))?\s*(am|pm)?$", re.IGNORECASE)
 PRICE_PATTERN = re.compile(r"^₱?\s*\d+(?:\.\d{2})?$")
 SERVICE_PATTERN = re.compile(r"cleaning|drainpan|check\s*up|checkup|greasetrap|back\s*job", re.IGNORECASE)
+WEEKDAY_PREFIX_PATTERN = re.compile(r"^(?:mon|monday|tue|tuesday|wed|wednesday|thu|thursday|fri|friday|sat|saturday|sun|sunday)\s+", re.IGNORECASE)
 
 
 @dataclass
@@ -25,7 +26,25 @@ class ParsedScheduleItem:
 
     @property
     def review_status(self) -> str:
-        return "ready" if self.raw_service_text and self.scheduled_time else "needs_review"
+        # Team and customer are intentionally empty at intake time. A row
+        # cannot be ready until staff completes those review fields.
+        return "needs_review"
+
+
+def normalize_service(value: str) -> str:
+    cleaned = WEEKDAY_PREFIX_PATTERN.sub("", value.strip())
+    lowered = cleaned.lower()
+    if "drainpan" in lowered:
+        return "Drainpan leak"
+    if "check" in lowered and ("back job" in lowered or "backjob" in lowered):
+        return "Check-up / back job"
+    if "greasetrap" in lowered and "cleaning" in lowered:
+        return "Greasetrap + AC cleaning"
+    if "greasetrap" in lowered:
+        return "Greasetrap"
+    if "cleaning" in lowered:
+        return "AC cleaning"
+    return cleaned
 
 
 def parse_clock(value: str) -> time | None:
@@ -74,8 +93,11 @@ def parse_raw_schedule(raw_message: str) -> list[ParsedScheduleItem]:
             current.price = Decimal(price)
             current.source_line += f"\n{line}"
         elif current and service_line:
+            normalized_service = normalize_service(line)
             current.raw_service_text = (
-                f"{current.raw_service_text} + {line}" if current.raw_service_text else line
+                f"{current.raw_service_text} + {normalized_service}"
+                if current.raw_service_text
+                else normalized_service
             )
             current.source_line += f"\n{line}"
 
