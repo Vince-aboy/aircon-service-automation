@@ -53,7 +53,7 @@
             <tr>
               <td>{% if item.service_team_id %}{{ intake_team_names.get(item.service_team_id, 'Team') }}{% else %}<span class="draft-missing">Missing</span>{% endif %}</td>
               <td>Building {{ item.building_number }}, Unit {{ item.unit_number }}</td>
-              <td>{% if item.customer_name %}{{ item.customer_name }}{% else %}<span class="draft-missing">Missing</span>{% endif %}</td>
+              <td>{% if item.customer_name %}<span class="{% if item.customer_is_provisional %}provisional-customer{% endif %}">{{ item.customer_name }}{% if item.customer_is_provisional %} <small>(temporary)</small>{% endif %}</span>{% else %}<span class="draft-missing">Missing</span>{% endif %}</td>
               <td>{{ item.raw_service_text or 'Missing' }}</td>
               <td>{{ item.scheduled_time.strftime('%I:%M %p') if item.scheduled_time else 'Missing' }}</td>
               <td>{{ item.price if item.price is not none else 'Missing' }}</td>

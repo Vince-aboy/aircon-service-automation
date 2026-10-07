@@ -853,12 +853,13 @@ def create_schedule_intake(
         location_counts[key] = location_counts.get(key, 0) + 1
     for item_index, item in enumerate(parsed_items):
         assigned_team = provisional_team_by_item.get(item_index)
+        provisional_customer = f"Customer {item_index + 1}"
         notes = []
         if assigned_team:
             notes.append(f"Auto-assigned {assigned_team.name} · same-building rule")
         else:
             notes.append("Add team")
-        notes.append("Add customer name")
+        notes.append(f"Replace {provisional_customer} with real name")
         if item.scheduled_time is None:
             notes.append("Add time")
         if location_counts[(item.building_number, item.unit_number)] > 1:
@@ -868,6 +869,8 @@ def create_schedule_intake(
                 schedule_intake_id=intake.id,
                 source_line=item.source_line,
                 service_team_id=assigned_team.id if assigned_team else None,
+                customer_name=provisional_customer,
+                customer_is_provisional=True,
                 building_number=item.building_number,
                 unit_number=item.unit_number,
                 raw_service_text=item.raw_service_text,
@@ -914,7 +917,11 @@ def update_schedule_intake_item(
     item.service_team_id = service_team_id
     item.building_number = building_number
     item.unit_number = unit_number.strip() or None
-    item.customer_name = customer_name.strip() or None
+    submitted_customer_name = customer_name.strip()
+    item.customer_is_provisional = bool(
+        item.customer_is_provisional and submitted_customer_name == item.customer_name
+    )
+    item.customer_name = submitted_customer_name or None
     item.raw_service_text = raw_service_text.strip() or None
     item.scheduled_time = scheduled_time
     item.price = None
@@ -928,14 +935,16 @@ def update_schedule_intake_item(
     notes = []
     if item.service_team_id is None:
         notes.append("Add team")
-    if not item.customer_name:
+    if item.customer_is_provisional:
+        notes.append(f"Replace {item.customer_name} with real name")
+    elif not item.customer_name:
         notes.append("Add customer name")
     if item.scheduled_time is None:
         notes.append("Add time")
     if has_repeat_warning:
         notes.append("Possible repeat location; confirm separate job")
     item.review_note = " · ".join(notes) or None
-    item.review_status = "ready" if all((item.service_team_id, item.customer_name, item.building_number, item.unit_number, item.raw_service_text, item.scheduled_time)) and not has_repeat_warning else "needs_review"
+    item.review_status = "ready" if all((item.service_team_id, item.customer_name, item.building_number, item.unit_number, item.raw_service_text, item.scheduled_time)) and not item.customer_is_provisional and not has_repeat_warning else "needs_review"
     session.commit()
     return RedirectResponse(url=app_path(f"/staff/schedule-intake?intake_id={intake_id}"), status_code=status.HTTP_303_SEE_OTHER)
 
