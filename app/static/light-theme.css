@@ -136,6 +136,10 @@ a.directory-row:hover { background: #f7f7f2; border-color: #adb5a4; }
 .draft-table th { background: #f0f1eb; color: var(--muted); font-size: .7rem; letter-spacing: .04em; text-transform: uppercase; }
 .draft-table tr:last-child td { border-bottom: 0; }
 .draft-missing { background: #fff2d9; border-radius: 4px; color: #795216; display: inline-block; font-size: .78rem; padding: .15rem .3rem; }
+.draft-inline-editable { cursor: pointer; position: relative; }
+.draft-inline-editable:hover, .draft-inline-editable:focus { background: #fff8e9; box-shadow: inset 0 0 0 2px #e5c47b; outline: none; }
+.draft-inline-editable::after { color: #a87922; content: "✎"; font-size: .7rem; margin-left: .35rem; opacity: 0; transition: opacity .15s ease; }
+.draft-inline-editable:hover::after, .draft-inline-editable:focus::after { opacity: 1; }
 .provisional-customer { color: #795216; font-weight: 700; }
 .provisional-customer small { font-size: .68rem; font-weight: 600; }
 .draft-status-ready { background: #e5efe7; border-color: #97b79e; color: #326044; }

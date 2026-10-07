@@ -51,12 +51,12 @@
         <tbody id="draft-schedule-rows">
           {% for item in intake_items %}
             <tr>
-              <td>{% if item.service_team_id %}{{ intake_team_names.get(item.service_team_id, 'Team') }}{% else %}<span class="draft-missing">Missing</span>{% endif %}</td>
-              <td>Building {{ item.building_number }}, Unit {{ item.unit_number }}</td>
-              <td>{% if item.customer_name %}<span class="{% if item.customer_is_provisional %}provisional-customer{% endif %}">{{ item.customer_name }}</span>{% else %}<span class="draft-missing">Missing</span>{% endif %}</td>
-              <td>{{ item.raw_service_text or 'Missing' }}</td>
-              <td>{{ item.scheduled_time.strftime('%I:%M %p') if item.scheduled_time else 'Missing' }}</td>
-              <td>{{ item.price if item.price is not none else 'Missing' }}</td>
+              <td class="draft-inline-editable" data-edit-target="edit-row-{{ item.id }}" data-inline-field="service_team_id" title="Click to edit team">{% if item.service_team_id %}{{ intake_team_names.get(item.service_team_id, 'Team') }}{% else %}<span class="draft-missing">Missing</span>{% endif %}</td>
+              <td class="draft-inline-editable" data-edit-target="edit-row-{{ item.id }}" data-inline-field="building_number" title="Click to edit location">Building {{ item.building_number }}, Unit {{ item.unit_number }}</td>
+              <td class="draft-inline-editable" data-edit-target="edit-row-{{ item.id }}" data-inline-field="customer_name" title="Click to edit customer">{% if item.customer_name %}<span class="{% if item.customer_is_provisional %}provisional-customer{% endif %}">{{ item.customer_name }}</span>{% else %}<span class="draft-missing">Missing</span>{% endif %}</td>
+              <td class="draft-inline-editable" data-edit-target="edit-row-{{ item.id }}" data-inline-field="raw_service_text" title="Click to edit service">{{ item.raw_service_text or 'Missing' }}</td>
+              <td class="draft-inline-editable" data-edit-target="edit-row-{{ item.id }}" data-inline-field="scheduled_time" title="Click to edit time">{{ item.scheduled_time.strftime('%I:%M %p') if item.scheduled_time else 'Missing' }}</td>
+              <td class="draft-inline-editable" data-edit-target="edit-row-{{ item.id }}" data-inline-field="price" title="Click to edit price">{{ item.price if item.price is not none else 'Missing' }}</td>
               <td><span class="draft-status {% if item.review_status == 'ready' %}draft-status-ready{% else %}draft-status-warning{% endif %}">{{ item.review_status.replace('_', ' ') }}</span></td>
               <td class="draft-note-cell">
                 {% set repeat_warning = 'Possible repeat location; confirm separate job' %}
