@@ -198,6 +198,24 @@ a.directory-row:hover { background: #f7f7f2; border-color: #adb5a4; }
 .published-intake-card strong { color: #795216; }
 .published-intake-card span { color: var(--ink); font-size: .82rem; }
 .published-intake-card small { color: #795216; font-size: .7rem; font-weight: 700; }
+.published-intake-section, .dispatch-board { display: none; }
+.team-timeline { display: grid; gap: .9rem; }
+.team-timeline-lane { background: #f0f1eb; border: 1px solid var(--line); border-radius: 10px; padding: .8rem; }
+.team-timeline-lane > header { align-items: center; display: flex; justify-content: space-between; margin-bottom: .6rem; }
+.team-timeline-lane h3 { font-size: 1rem; margin: 0; }
+.team-timeline-lane > header span { color: var(--muted); font-size: .76rem; font-weight: 800; }
+.team-timeline-jobs { display: grid; gap: .45rem; }
+.team-timeline-job { align-items: start; background: #fff; border: 1px solid #d9dcd3; border-left: 4px solid #c18b29; border-radius: 7px; color: var(--ink); display: grid; gap: .7rem; grid-template-columns: 5.8rem minmax(0, 1fr) minmax(11rem, .8fr); padding: .65rem .7rem; text-decoration: none; }
+.team-timeline-job:hover { background: #fff8e9; border-color: #c6a76a; }
+.team-timeline-job time { color: #795216; font-size: .85rem; font-weight: 800; }
+.team-timeline-job strong, .team-timeline-job span { display: block; }
+.team-timeline-job strong { font-size: .87rem; }
+.team-timeline-job span { color: var(--muted); font-size: .76rem; margin-top: .12rem; }
+.team-timeline-job small { color: #596147; font-size: .7rem; font-weight: 700; }
+.team-timeline-job small.provisional-timeline-note { color: #795216; }
+.timeline-assign-form { align-items: end; display: flex; flex-wrap: wrap; gap: .45rem; margin-top: .65rem; }
+.timeline-assign-form select { flex: 1 1 15rem; }
+.timeline-assign-form button { margin: 0; white-space: nowrap; }
 @media (max-width: 700px) {
   .reporting-health-strip { grid-template-columns: 1fr; }
   .schedule-intake-form { grid-template-columns: 1fr; }
@@ -210,6 +228,7 @@ a.directory-row:hover { background: #f7f7f2; border-color: #adb5a4; }
   .clear-intakes-form { margin-left: 0; }
   .draft-edit-form { grid-template-columns: repeat(2, minmax(8rem, 1fr)); }
   .draft-edit-notes { grid-column: span 2; }
+  .team-timeline-job { grid-template-columns: 1fr; gap: .25rem; }
 }
 
 /* Public service website. Preserve the real service artwork. */

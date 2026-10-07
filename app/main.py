@@ -313,6 +313,75 @@ def dispatch_appointments(session: Session, selected_date: date) -> dict[tuple[i
     }
 
 
+def team_timeline_jobs(session: Session, selected_date: date) -> dict[int, list[dict[str, Any]]]:
+    """Return every scheduled job for the selected day grouped by team and time."""
+    timeline: dict[int, list[dict[str, Any]]] = {}
+    shared_rows = session.execute(
+        select(OperationalJob, ServiceTeam)
+        .join(ServiceTeam, OperationalJob.service_team_id == ServiceTeam.id)
+        .where(
+            OperationalJob.scheduled_date == selected_date,
+            OperationalJob.service_team_id.is_not(None),
+            OperationalJob.status != "cancelled",
+        )
+        .order_by(OperationalJob.service_team_id, OperationalJob.scheduled_time, OperationalJob.id)
+    ).all()
+    linked_booking_ids: set[int] = set()
+    for job, team in shared_rows:
+        if job.booking_request_id is not None:
+            linked_booking_ids.add(job.booking_request_id)
+        timeline.setdefault(team.id, []).append(
+            {
+                "time": job.scheduled_time,
+                "time_label": job.scheduled_time.strftime("%I:%M %p") if job.scheduled_time else "Time missing",
+                "service_label": job.service_label,
+                "customer_label": job.customer_label,
+                "address_label": job.address_label,
+                "status": job.status.replace("_", " "),
+                "is_provisional": job.customer_is_provisional,
+                "source_label": "Team intake" if job.source == "team_intake" else "Customer booking",
+                "detail_url": app_path(f"/staff/appointments/{job.appointment_id}") if job.appointment_id else None,
+            }
+        )
+
+    start_of_day = datetime.combine(selected_date, time.min, tzinfo=MANILA_TIMEZONE)
+    end_of_day = datetime.combine(selected_date + timedelta(days=1), time.min, tzinfo=MANILA_TIMEZONE)
+    appointment_rows = session.execute(
+        select(Appointment, BookingRequest, Customer, Address, ServiceTeam, ServiceType)
+        .join(BookingRequest, Appointment.booking_request_id == BookingRequest.id)
+        .join(Customer, BookingRequest.customer_id == Customer.id)
+        .join(Address, BookingRequest.address_id == Address.id)
+        .join(ServiceTeam, Appointment.service_team_id == ServiceTeam.id)
+        .join(ServiceType, BookingRequest.service_type_id == ServiceType.id)
+        .where(
+            Appointment.scheduled_start >= start_of_day,
+            Appointment.scheduled_start < end_of_day,
+            Appointment.status != "cancelled",
+        )
+        .order_by(Appointment.service_team_id, Appointment.scheduled_start)
+    ).all()
+    for appointment, booking, customer, address, team, service_type in appointment_rows:
+        if booking.id in linked_booking_ids:
+            continue
+        local_start = appointment.scheduled_start.astimezone(MANILA_TIMEZONE)
+        timeline.setdefault(team.id, []).append(
+            {
+                "time": local_start.time(),
+                "time_label": local_start.strftime("%I:%M %p"),
+                "service_label": service_type.name,
+                "customer_label": customer.full_name,
+                "address_label": display_address(address),
+                "status": appointment.status.replace("_", " "),
+                "is_provisional": False,
+                "source_label": "Customer booking",
+                "detail_url": app_path(f"/staff/appointments/{appointment.id}"),
+            }
+        )
+    for jobs in timeline.values():
+        jobs.sort(key=lambda job: (job["time"] is None, job["time"] or time.max))
+    return timeline
+
+
 def render_booking_form(
     request: Request,
     session: Session,
@@ -750,18 +819,6 @@ def dispatch_board(
     # selected date. The original preferred date remains visible on the card
     # as customer context, while the appointment date is chosen here.
     assignable_requests = approved_requests
-    published_intake_jobs = list(
-        session.execute(
-            select(OperationalJob, ServiceTeam)
-            .outerjoin(ServiceTeam, OperationalJob.service_team_id == ServiceTeam.id)
-            .where(
-                OperationalJob.source == "team_intake",
-                OperationalJob.scheduled_date == board_date,
-                OperationalJob.status == "scheduled",
-            )
-            .order_by(OperationalJob.service_team_id, OperationalJob.scheduled_time, OperationalJob.id)
-        ).all()
-    )
     return templates.TemplateResponse(
         request,
         "dispatch_board.html",
@@ -769,7 +826,7 @@ def dispatch_board(
             "teams": active_service_teams(session),
             "approved_requests": approved_requests,
             "assignable_requests": assignable_requests,
-            "published_intake_jobs": published_intake_jobs,
+            "timeline_jobs_by_team": team_timeline_jobs(session, board_date),
             "appointments": dispatch_appointments(session, board_date),
             "selected_date": board_date,
             "previous_date": board_date - timedelta(days=1),

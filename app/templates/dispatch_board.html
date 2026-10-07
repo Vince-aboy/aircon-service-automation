@@ -76,8 +76,42 @@
     </section>
 
     <section class="dispatch-section team-section">
-      <h2>Team blocks for {{ selected_date }}</h2>
+      <h2>Team schedule for {{ selected_date }}</h2>
       {% if teams %}
+        <div class="team-timeline" aria-label="Team daily schedule">
+          {% for team in teams %}
+            {% set team_jobs = timeline_jobs_by_team.get(team.id, []) %}
+            <section class="team-timeline-lane">
+              <header><h3>{{ team.name }}</h3><span>{{ team_jobs | length }} job{% if team_jobs | length != 1 %}s{% endif %}</span></header>
+              {% if team_jobs %}
+                <div class="team-timeline-jobs">
+                  {% for job in team_jobs %}
+                    {% if job.detail_url %}<a class="team-timeline-job" href="{{ job.detail_url }}">{% else %}<article class="team-timeline-job">{% endif %}
+                      <time>{{ job.time_label }}</time>
+                      <div><strong>{{ job.service_label }}</strong><span>{{ job.address_label }}</span><span>{{ job.customer_label }}</span></div>
+                      <small class="{% if job.is_provisional %}provisional-timeline-note{% endif %}">{{ job.source_label }} &middot; {{ job.status }}{% if job.is_provisional %} &middot; provisional client{% endif %}</small>
+                    {% if job.detail_url %}</a>{% else %}</article>{% endif %}
+                  {% endfor %}
+                </div>
+              {% else %}
+                <p class="muted">No jobs assigned yet.</p>
+              {% endif %}
+              {% if assignable_requests %}
+                <form class="timeline-assign-form" method="post" action="{{ app_path('/staff/dispatch/assign') }}" data-lock-submit>
+                  <input type="hidden" name="service_team_id" value="{{ team.id }}">
+                  <input type="hidden" name="appointment_date" value="{{ selected_date }}">
+                  <select name="booking_request_id" aria-label="Customer booking for {{ team.name }}">
+                    {% for booking, customer, address, service_type in assignable_requests %}<option value="{{ booking.id }}">{{ booking.reference_code }} &middot; {{ customer.full_name }} &middot; {{ service_type.name }}</option>{% endfor %}
+                  </select>
+                  <select name="slot_key" aria-label="Time block for {{ team.name }}">
+                    {% for slot_key, slot_label in slots %}<option value="{{ slot_key }}">{{ slot_label }}</option>{% endfor %}
+                  </select>
+                  <button type="submit">Schedule customer booking</button>
+                </form>
+              {% endif %}
+            </section>
+          {% endfor %}
+        </div>
         <div class="dispatch-board" role="table" aria-label="Team schedule">
           <div class="dispatch-row dispatch-heading" role="row">
             <div role="columnheader">Team</div>
