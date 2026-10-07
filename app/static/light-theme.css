@@ -226,6 +226,7 @@ a.directory-row:hover { background: #f7f7f2; border-color: #adb5a4; }
 .timeline-assign-form button { margin: 0; white-space: nowrap; }
 @media (max-width: 700px) {
   .sidebar-toggle { display: none; }
+  .admin-sidebar { height: auto; }
   .admin-shell.sidebar-collapsed { display: block; }
   .admin-shell.sidebar-collapsed .admin-sidebar { border-bottom: 1px solid var(--line); display: flex; padding: .8rem; width: auto; }
   .admin-shell.sidebar-collapsed .admin-content { max-width: 1280px; }
