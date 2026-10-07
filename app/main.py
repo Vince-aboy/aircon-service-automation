@@ -813,7 +813,16 @@ def create_schedule_intake(
     intake = ScheduleIntake(schedule_date=schedule_date, raw_message=raw_message.strip())
     session.add(intake)
     session.flush()
+    location_counts: dict[tuple[int, str], int] = {}
     for item in parsed_items:
+        key = (item.building_number, item.unit_number)
+        location_counts[key] = location_counts.get(key, 0) + 1
+    for item in parsed_items:
+        notes = ["Add team", "Add customer name"]
+        if item.scheduled_time is None:
+            notes.append("Add time")
+        if location_counts[(item.building_number, item.unit_number)] > 1:
+            notes.append("Possible repeat location; confirm separate job")
         session.add(
             ScheduleIntakeItem(
                 schedule_intake_id=intake.id,
@@ -824,6 +833,7 @@ def create_schedule_intake(
                 scheduled_time=item.scheduled_time,
                 price=item.price,
                 review_status=item.review_status,
+                review_note=" · ".join(notes),
             )
         )
     intake.status = "ready" if parsed_items and all(item.review_status == "ready" for item in parsed_items) else "draft"

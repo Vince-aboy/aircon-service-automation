@@ -38,6 +38,7 @@
             <th>Time</th>
             <th>Price</th>
             <th>Status</th>
+            <th>Notes</th>
           </tr>
         </thead>
         <tbody id="draft-schedule-rows">
@@ -50,6 +51,7 @@
               <td>{{ item.scheduled_time.strftime('%I:%M %p') if item.scheduled_time else 'Missing' }}</td>
               <td>{{ item.price if item.price is not none else 'Missing' }}</td>
               <td><span class="draft-status {% if item.review_status == 'ready' %}draft-status-ready{% else %}draft-status-warning{% endif %}">{{ item.review_status.replace('_', ' ') }}</span></td>
+              <td class="draft-note-cell">{{ item.review_note or '—' }}</td>
             </tr>
           {% endfor %}
         </tbody>

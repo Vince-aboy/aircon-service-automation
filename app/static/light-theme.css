@@ -131,13 +131,14 @@ a.directory-row:hover { background: #f7f7f2; border-color: #adb5a4; }
 .schedule-intake-actions button { margin-top: 0; white-space: nowrap; }
 .schedule-draft { border-top: 1px solid #e2d3b4; margin-top: 1rem; padding-top: 1rem; }
 .draft-table-wrap { border: 1px solid var(--line); border-radius: 8px; margin-top: .75rem; overflow-x: auto; }
-.draft-table { border-collapse: collapse; min-width: 760px; width: 100%; }
+.draft-table { border-collapse: collapse; min-width: 900px; width: 100%; }
 .draft-table th, .draft-table td { border-bottom: 1px solid var(--line); padding: .7rem .75rem; text-align: left; vertical-align: top; }
 .draft-table th { background: #f0f1eb; color: var(--muted); font-size: .7rem; letter-spacing: .04em; text-transform: uppercase; }
 .draft-table tr:last-child td { border-bottom: 0; }
 .draft-missing { background: #fff2d9; border-radius: 4px; color: #795216; display: inline-block; font-size: .78rem; padding: .15rem .3rem; }
 .draft-status-ready { background: #e5efe7; border-color: #97b79e; color: #326044; }
 .draft-empty { color: var(--muted); text-align: center !important; }
+.draft-note-cell { color: var(--muted); font-size: .78rem; max-width: 18rem; }
 .schedule-draft-note { color: var(--muted); font-size: .8rem; margin: .75rem 0 0; }
 .schedule-intake-page { padding: 1.35rem 1.5rem; }
 .schedule-intake-page .compact-staff-header { padding-bottom: .9rem; }
