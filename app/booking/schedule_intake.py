@@ -13,6 +13,7 @@ DASH_LOCATION_PATTERN = re.compile(r"^\s*(?:b(?:ldg)?\s*)?(\d{1,2})\s*[-/]\s*(\d
 TIME_PATTERN = re.compile(r"^(\d{1,2})(?::(\d{2}))?\s*(am|pm)?$", re.IGNORECASE)
 PRICE_PATTERN = re.compile(r"^₱?\s*\d+(?:\.\d{2})?$")
 SERVICE_PATTERN = re.compile(r"cleaning|drainpan|check\s*up|checkup|greasetrap|back\s*job", re.IGNORECASE)
+PHONE_PATTERN = re.compile(r"^(?:09\d{9}|\+639\d{9}|639\d{9})$")
 WEEKDAY_PREFIX_PATTERN = re.compile(r"^(?:mon|monday|tue|tuesday|wed|wednesday|thu|thursday|fri|friday|sat|saturday|sun|sunday)\s+", re.IGNORECASE)
 
 
@@ -95,6 +96,7 @@ def parse_raw_schedule(raw_message: str) -> list[ParsedScheduleItem]:
     for line in lines:
         location = LOCATION_PATTERN.search(line) or DASH_LOCATION_PATTERN.search(line)
         clock = parse_clock(line)
+        phone = PHONE_PATTERN.match(line.replace(" ", ""))
         price = line.replace("₱", "").strip() if PRICE_PATTERN.match(line) else None
 
         if location:
@@ -113,6 +115,10 @@ def parse_raw_schedule(raw_message: str) -> list[ParsedScheduleItem]:
                 append_service_text(current, inline_text)
         elif current and clock:
             current.scheduled_time = clock
+            current.source_line += f"\n{line}"
+        elif current and phone:
+            # Phone numbers may appear between a customer's name and service.
+            # Preserve them in the raw message, but never interpret them as a price.
             current.source_line += f"\n{line}"
         elif current and price is not None:
             current.price = Decimal(price)

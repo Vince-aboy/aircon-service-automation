@@ -48,6 +48,17 @@ B12 536 check up ac"""
     assert items[5].raw_service_text == "check up ac"
 
 
+def test_parser_does_not_treat_phone_number_as_price() -> None:
+    items = parse_raw_schedule(
+        "B13 1242\nVincent Aboy\n09505581886\nAc cleaning-Late Additional"
+    )
+
+    assert len(items) == 1
+    assert items[0].price is None
+    assert "09505581886" in items[0].source_line
+    assert "Ac cleaning-Late Additional" in items[0].raw_service_text
+
+
 def test_important_staff_note_removes_old_routine_reminders() -> None:
     old_note = (
         "Auto-assigned Team A · same-building rule · "
