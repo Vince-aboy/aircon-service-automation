@@ -157,7 +157,8 @@ class NotificationOutbox(Base):
     __tablename__ = "notification_outbox"
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
-    booking_request_id: Mapped[int] = mapped_column(ForeignKey("booking_requests.id", ondelete="CASCADE"), nullable=False)
+    booking_request_id: Mapped[Optional[int]] = mapped_column(ForeignKey("booking_requests.id", ondelete="CASCADE"), nullable=True)
+    operational_job_id: Mapped[Optional[int]] = mapped_column(ForeignKey("operational_jobs.id", ondelete="CASCADE"), nullable=True)
     event_type: Mapped[str] = mapped_column(String(64), nullable=False)
     channel: Mapped[str] = mapped_column(String(32), nullable=False, server_default="simulated")
     recipient_masked: Mapped[str] = mapped_column(String(100), nullable=False)

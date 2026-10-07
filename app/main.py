@@ -20,7 +20,7 @@ from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
 from app.booking.schedule_intake import parse_raw_schedule
-from app.booking.service import APPOINTMENT_STATUS_TRANSITIONS, DISPATCH_SLOTS, MANILA_TIMEZONE, automatic_delivery_enabled, complete_appointment_shortcut, create_pending_booking, display_address, process_pending_simulated_events, push_one_pending_event_to_n8n, reschedule_appointment, review_booking_request, run_due_delivery_worker_check, schedule_approved_booking, update_appointment_status
+from app.booking.service import APPOINTMENT_STATUS_TRANSITIONS, DISPATCH_SLOTS, MANILA_TIMEZONE, automatic_delivery_enabled, complete_appointment_shortcut, create_pending_booking, display_address, process_pending_simulated_events, push_one_pending_event_to_n8n, record_operational_job_event, reschedule_appointment, review_booking_request, run_due_delivery_worker_check, schedule_approved_booking, update_appointment_status
 from app.booking.validation import BookingRequestInput
 from app.database.models import Address, Appointment, AppointmentStatusHistory, BookingRequest, BookingRequestStatusHistory, Customer, NotificationOutbox, OperationalJob, ScheduleIntake, ScheduleIntakeItem, ServiceTeam, ServiceType, TeamMembership, Technician
 from app.database.session import create_database_engine
@@ -1040,6 +1040,15 @@ def approve_schedule_intake(intake_id: int, session: Session = Depends(get_sessi
                 status="scheduled",
             )
             session.add(job)
+        session.flush()
+        existing_event = session.scalar(
+            select(NotificationOutbox).where(
+                NotificationOutbox.operational_job_id == job.id,
+                NotificationOutbox.event_type == "appointment_scheduled",
+            )
+        )
+        if existing_event is None:
+            record_operational_job_event(session, job=job)
     session.commit()
     return RedirectResponse(
         url=app_path(f"/staff/dispatch?selected_date={intake.schedule_date}&intake_published=1"),

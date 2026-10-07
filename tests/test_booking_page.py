@@ -8,12 +8,13 @@ from sqlalchemy.orm import Session
 from sqlalchemy.pool import StaticPool
 
 from app.database.base import Base
-from app.database.models import Appointment, AppointmentStatusHistory, BookingRequest, BookingRequestStatusHistory, Customer, NotificationOutbox, ServiceTeam, ServiceType, TeamMembership, Technician
+from app.database.models import Appointment, AppointmentStatusHistory, BookingRequest, BookingRequestStatusHistory, Customer, NotificationOutbox, OperationalJob, ScheduleIntake, ServiceTeam, ServiceType, TeamMembership, Technician
 from app.booking.service import (
     automatic_delivery_enabled,
     claim_next_eligible_outbox_event,
     due_outbox_event_count,
     next_retry_time,
+    n8n_event_payload,
     outbox_idempotency_key,
     record_delivery_success,
     record_permanent_delivery_rejection,
@@ -378,6 +379,43 @@ def test_dispatch_board_schedules_an_approved_request_once() -> None:
         outbox_event = session.scalar(select(NotificationOutbox))
         assert outbox_event.event_type == "appointment_scheduled"
         assert outbox_event.status == "pending"
+    finally:
+        session.close()
+        app.dependency_overrides.clear()
+
+
+def test_team_intake_publish_creates_shared_n8n_outbox_event() -> None:
+    client, session = create_test_client()
+    try:
+        response = client.post(
+            "/staff/schedule-intake",
+            data={
+                "schedule_date": str(date.today() + timedelta(days=1)),
+                "raw_message": "B10 354\nDrainpan leak\n8:30 am",
+            },
+            follow_redirects=False,
+        )
+        intake = session.scalar(select(ScheduleIntake))
+        assert response.status_code == 303
+        assert intake is not None
+
+        publish_response = client.post(f"/staff/schedule-intake/{intake.id}/approve", follow_redirects=False)
+
+        job = session.scalar(select(OperationalJob))
+        assert publish_response.status_code == 303
+        assert job is not None
+        event = session.scalar(select(NotificationOutbox).where(NotificationOutbox.operational_job_id == job.id))
+        assert event is not None
+        assert event.booking_request_id is None
+        assert event.event_type == "appointment_scheduled"
+        assert event.status == "pending"
+
+        payload = n8n_event_payload(session, event)
+        assert payload["source"] == "team_intake"
+        assert payload["booking_reference"] == f"INTAKE-{job.id}"
+        assert payload["client"]["name"] == job.customer_label
+        assert payload["service"]["name"] == "Drainpan leak"
+        assert payload["location"]["display"] == "Building 10, Unit 354"
     finally:
         session.close()
         app.dependency_overrides.clear()

@@ -184,6 +184,32 @@ def record_simulated_event(
     return event
 
 
+def record_operational_job_event(
+    session: Session,
+    *,
+    job: OperationalJob,
+    event_type: str = "appointment_scheduled",
+    note: str = "Team intake job published for owner reporting.",
+) -> NotificationOutbox:
+    """Place a shared team-intake job in the existing n8n outbox."""
+    event = NotificationOutbox(
+        operational_job_id=job.id,
+        event_type=event_type,
+        channel="simulated",
+        recipient_masked="owner-reporting",
+        status="pending",
+        payload={
+            "mode": "live_owner_reporting" if is_live_mode() else "synthetic_only",
+            "source": "team_intake",
+            "booking_reference": f"INTAKE-{job.id}",
+            "note": note,
+        },
+    )
+    session.add(event)
+    session.flush()
+    return event
+
+
 def process_pending_simulated_events(session: Session) -> int:
     """Record pending outbox events as locally processed; never deliver a message."""
     events = list(session.scalars(select(NotificationOutbox).where(NotificationOutbox.status == "pending")).all())
@@ -285,6 +311,71 @@ def record_permanent_delivery_rejection(event: NotificationOutbox, rejection_rea
 
 def n8n_event_payload(session: Session, event: NotificationOutbox) -> dict[str, object]:
     """Convert one outbox row and its booking records into the owner-reporting payload."""
+    if event.operational_job_id is not None:
+        job = session.get(OperationalJob, event.operational_job_id)
+        if job is None:
+            raise ValueError("the outbox operational job does not exist")
+        team = session.get(ServiceTeam, job.service_team_id) if job.service_team_id else None
+        occurred_at = event.created_at or datetime.now(UTC)
+        local_occurred_at = occurred_at.astimezone(MANILA_TIMEZONE)
+        scheduled_start = None
+        if job.scheduled_date and job.scheduled_time:
+            scheduled_start = datetime.combine(job.scheduled_date, job.scheduled_time, tzinfo=MANILA_TIMEZONE)
+        booking_reference = str(event.payload.get("booking_reference") or f"INTAKE-{job.id}")
+        live_mode = is_live_mode()
+        return {
+            "event_id": f"outbox-{event.id}" if live_mode else f"synthetic-outbox-{event.id}",
+            "idempotency_key": outbox_idempotency_key(event),
+            "event_type": event.event_type,
+            "note": str(event.payload.get("note", "")),
+            "status": event.status,
+            "occurred_at": occurred_at.isoformat(),
+            "occurred_at_display": f"{local_occurred_at:%b} {local_occurred_at.day}, {local_occurred_at:%Y}, {local_occurred_at:%I:%M %p}".replace(" 0", " ", 1),
+            "customer_id": job.customer_id,
+            "customer_booking_count": 0,
+            "customer_created_at": None,
+            "customer_created_at_display": None,
+            "booking_reference": booking_reference,
+            "booking_status": job.status,
+            "appointment_status": job.status,
+            "synthetic_only": not live_mode,
+            "operation_mode": "live_owner_reporting" if live_mode else "synthetic_only",
+            "source": "team_intake",
+            "client": {
+                "name": job.customer_label,
+                "phone": None,
+                "phone_masked": None,
+                "email": None,
+            },
+            "service": {
+                "name": job.service_label,
+                "aircon_type": None,
+                "unit_count": None,
+            },
+            "location": {
+                "address_line": job.address_label,
+                "display": job.address_label,
+                "barangay": None,
+                "city": None,
+                "coverage_area": None,
+            },
+            "schedule": {
+                "preferred_date": job.scheduled_date.isoformat() if job.scheduled_date else None,
+                "scheduled_date": job.scheduled_date.isoformat() if job.scheduled_date else None,
+                "preferred_window": None,
+                "scheduled_start": scheduled_start.isoformat() if scheduled_start else None,
+                "scheduled_end": None,
+                "time_window": scheduled_start.strftime("%H:%M") if scheduled_start else None,
+                "team": team.name if team else None,
+                "technician": None,
+            },
+            "delivery": {
+                "outbox_status": event.status,
+                "attempt_count": event.attempt_count,
+                "last_error": event.last_error,
+                "next_attempt_at": event.next_attempt_at.isoformat() if event.next_attempt_at else None,
+            },
+        }
     booking = session.get(BookingRequest, event.booking_request_id)
     if booking is None:
         raise ValueError("the outbox booking request does not exist")
