@@ -1,0 +1,21 @@
+{% extends "admin_base.html" %}
+{% block title %}Schedule Intake{% endblock %}
+{% block content %}
+  <section class="staff-page schedule-intake-page">
+    <header class="compact-staff-header">
+      <p class="eyebrow">Operations preparation</p>
+      <h1>Schedule intake</h1>
+      <p class="intro">Turn the team’s informal message into a reviewable draft before anything enters the official schedule.</p>
+    </header>
+    {% include "schedule_intake_panel.html" %}
+    <div class="intake-next-step">
+      <span class="intake-step-number">02</span>
+      <div>
+        <strong>Next: review and confirm</strong>
+        <p>The future backend step will save approved rows as customer requests and appointments.</p>
+      </div>
+      <a class="button-link button-secondary" href="{{ app_path('/staff/dispatch') }}">Open team schedule</a>
+    </div>
+  </section>
+{% endblock %}
+{% block scripts %}<script src="{{ app_path('/static/schedule_intake.js') }}"></script>{% endblock %}

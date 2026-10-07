@@ -768,6 +768,16 @@ def dispatch_board(
     )
 
 
+@app.get("/staff/schedule-intake", response_class=HTMLResponse)
+def schedule_intake(request: Request) -> HTMLResponse:
+    """Render the front-end-only raw schedule intake workspace."""
+    return templates.TemplateResponse(
+        request,
+        "schedule_intake.html",
+        {"selected_date": datetime.now(MANILA_TIMEZONE).date()},
+    )
+
+
 @app.post("/staff/dispatch/assign")
 def assign_dispatch_slot(
     booking_request_id: int = Form(),

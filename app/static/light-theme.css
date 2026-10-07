@@ -139,11 +139,19 @@ a.directory-row:hover { background: #f7f7f2; border-color: #adb5a4; }
 .draft-status-ready { background: #e5efe7; border-color: #97b79e; color: #326044; }
 .draft-empty { color: var(--muted); text-align: center !important; }
 .schedule-draft-note { color: var(--muted); font-size: .8rem; margin: .75rem 0 0; }
+.schedule-intake-page .schedule-intake { margin-top: 1.25rem; }
+.intake-next-step { align-items: center; background: #f0f1eb; border: 1px solid var(--line); border-radius: 10px; display: flex; gap: .8rem; margin-top: 1rem; padding: .8rem 1rem; }
+.intake-step-number { align-items: center; background: #fff; border: 1px solid #c8cebf; border-radius: 7px; color: #596147; display: flex; font-size: .75rem; font-weight: 800; height: 2rem; justify-content: center; width: 2rem; }
+.intake-next-step strong { color: var(--ink); display: block; font-size: .85rem; }
+.intake-next-step p { color: var(--muted); font-size: .78rem; margin: .15rem 0 0; }
+.intake-next-step .button-link { margin: 0 0 0 auto; white-space: nowrap; }
 @media (max-width: 700px) {
   .reporting-health-strip { grid-template-columns: 1fr; }
   .schedule-intake-form { grid-template-columns: 1fr; }
   .schedule-intake-actions { align-items: stretch; }
   .schedule-intake-actions button { flex: 1; }
+  .intake-next-step { align-items: flex-start; flex-wrap: wrap; }
+  .intake-next-step .button-link { margin-left: 2.8rem; }
 }
 
 /* Public service website. Preserve the real service artwork. */

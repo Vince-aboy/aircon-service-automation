@@ -1,0 +1,48 @@
+<section class="schedule-intake" aria-labelledby="schedule-intake-title">
+  <div class="schedule-intake-heading">
+    <div>
+      <p class="eyebrow">01 / Schedule intake</p>
+      <h2 id="schedule-intake-title">Paste the team’s raw schedule</h2>
+      <p class="muted">Paste the message exactly as received. This preview is front-end only and will not create appointments.</p>
+    </div>
+    <span class="intake-badge">Draft only</span>
+  </div>
+  <div class="schedule-intake-form">
+    <label>Schedule date
+      <input id="raw-schedule-date" type="date" value="{{ selected_date }}">
+    </label>
+    <label class="schedule-message-field">Raw schedule message
+      <textarea id="raw-schedule-message" rows="12" placeholder="Example:&#10;B3 1258&#10;AC cleaning&#10;&#10;B5 451&#10;Drainpan leak&#10;300&#10;1:30"></textarea>
+    </label>
+    <div class="schedule-intake-actions">
+      <button id="preview-schedule" type="button">Prepare draft table</button>
+      <button id="clear-schedule" class="button-secondary" type="button">Clear</button>
+    </div>
+  </div>
+  <div class="schedule-draft" id="schedule-draft" hidden>
+    <div class="schedule-draft-heading">
+      <div>
+        <p class="eyebrow">Review before scheduling</p>
+        <h3>Draft schedule</h3>
+      </div>
+      <span class="intake-badge intake-badge-warning">Needs review</span>
+    </div>
+    <div class="draft-table-wrap">
+      <table class="draft-table">
+        <thead>
+          <tr>
+            <th>Team</th>
+            <th>Location</th>
+            <th>Customer name</th>
+            <th>Service</th>
+            <th>Time</th>
+            <th>Price</th>
+            <th>Status</th>
+          </tr>
+        </thead>
+        <tbody id="draft-schedule-rows"></tbody>
+      </table>
+    </div>
+    <p class="schedule-draft-note">Complete the missing details before a future backend step creates official appointments.</p>
+  </div>
+</section>

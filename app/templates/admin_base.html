@@ -18,6 +18,7 @@
       <nav class="admin-nav" aria-label="Owner operations">
         <a{% if request.url.path.endswith('/staff') %} class="active"{% endif %} href="{{ app_path('/staff') }}"><span>⌂</span> Dashboard</a>
         <a{% if '/staff/requests' in request.url.path %} class="active"{% endif %} href="{{ app_path('/staff/requests') }}"><span>▤</span> Service requests</a>
+        <a{% if '/staff/schedule-intake' in request.url.path %} class="active"{% endif %} href="{{ app_path('/staff/schedule-intake') }}"><span>＋</span> Schedule intake</a>
         <a{% if '/staff/dispatch' in request.url.path or '/staff/appointments/' in request.url.path %} class="active"{% endif %} href="{{ app_path('/staff/dispatch') }}"><span>▦</span> Team schedule</a>
         <a{% if request.url.path.endswith('/staff/appointments') %} class="active"{% endif %} href="{{ app_path('/staff/appointments') }}"><span>◫</span> Appointments</a>
         <a{% if '/staff/customers' in request.url.path %} class="active"{% endif %} href="{{ app_path('/staff/customers') }}"><span>◉</span> Customers</a>
