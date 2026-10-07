@@ -830,12 +830,35 @@ def create_schedule_intake(
     intake = ScheduleIntake(schedule_date=schedule_date, raw_message=raw_message.strip())
     session.add(intake)
     session.flush()
+    active_teams = list(session.scalars(select(ServiceTeam).where(ServiceTeam.active.is_(True)).order_by(ServiceTeam.id)))
+    building_groups: dict[int, list[int]] = {}
+    for index, item in enumerate(parsed_items):
+        building_groups.setdefault(item.building_number, []).append(index)
+    team_workloads = {team.id: 0 for team in active_teams}
+    provisional_team_by_item: dict[int, ServiceTeam] = {}
+    tie_cursor = 0
+    for building_number in sorted(building_groups):
+        if not active_teams:
+            break
+        lowest_workload = min(team_workloads.values())
+        candidates = [team for team in active_teams if team_workloads[team.id] == lowest_workload]
+        assigned_team = candidates[tie_cursor % len(candidates)]
+        tie_cursor += 1
+        for item_index in building_groups[building_number]:
+            provisional_team_by_item[item_index] = assigned_team
+        team_workloads[assigned_team.id] += len(building_groups[building_number])
     location_counts: dict[tuple[int, str], int] = {}
     for item in parsed_items:
         key = (item.building_number, item.unit_number)
         location_counts[key] = location_counts.get(key, 0) + 1
-    for item in parsed_items:
-        notes = ["Add team", "Add customer name"]
+    for item_index, item in enumerate(parsed_items):
+        assigned_team = provisional_team_by_item.get(item_index)
+        notes = []
+        if assigned_team:
+            notes.append(f"Auto-assigned {assigned_team.name} · same-building rule")
+        else:
+            notes.append("Add team")
+        notes.append("Add customer name")
         if item.scheduled_time is None:
             notes.append("Add time")
         if location_counts[(item.building_number, item.unit_number)] > 1:
@@ -844,6 +867,7 @@ def create_schedule_intake(
             ScheduleIntakeItem(
                 schedule_intake_id=intake.id,
                 source_line=item.source_line,
+                service_team_id=assigned_team.id if assigned_team else None,
                 building_number=item.building_number,
                 unit_number=item.unit_number,
                 raw_service_text=item.raw_service_text,
