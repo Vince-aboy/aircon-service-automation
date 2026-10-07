@@ -2,10 +2,11 @@
 
 from __future__ import annotations
 
-from datetime import date, datetime
+from datetime import date, datetime, time
+from decimal import Decimal
 from typing import Optional
 
-from sqlalchemy import Boolean, CheckConstraint, Date, DateTime, ForeignKey, Index, Integer, JSON, String, Text, UniqueConstraint, func, text
+from sqlalchemy import Boolean, CheckConstraint, Date, DateTime, ForeignKey, Index, Integer, JSON, Numeric, String, Text, Time, UniqueConstraint, func, text
 from sqlalchemy.orm import Mapped, mapped_column
 
 from app.database.base import Base
@@ -171,4 +172,78 @@ class NotificationOutbox(Base):
     __table_args__ = (
         CheckConstraint("channel = 'simulated'", name="ck_notification_outbox_simulated_channel"),
         CheckConstraint("status IN ('pending', 'recorded', 'failed')", name="ck_notification_outbox_status"),
+    )
+
+
+class ScheduleIntake(Base):
+    """A raw staff schedule message awaiting review and confirmation."""
+
+    __tablename__ = "schedule_intakes"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    schedule_date: Mapped[date] = mapped_column(Date, nullable=False)
+    raw_message: Mapped[str] = mapped_column(Text, nullable=False)
+    status: Mapped[str] = mapped_column(String(32), nullable=False, server_default="draft")
+    source: Mapped[str] = mapped_column(String(32), nullable=False, server_default="manual_paste")
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now(), nullable=False)
+    updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now(), nullable=False)
+
+    __table_args__ = (
+        CheckConstraint(
+            "status IN ('draft', 'ready', 'confirmed', 'cancelled')",
+            name="ck_schedule_intakes_status",
+        ),
+        CheckConstraint(
+            "source = 'manual_paste'",
+            name="ck_schedule_intakes_manual_source",
+        ),
+        Index("ix_schedule_intakes_schedule_date", "schedule_date"),
+    )
+
+
+class ScheduleIntakeItem(Base):
+    """One editable draft row extracted from a raw schedule intake."""
+
+    __tablename__ = "schedule_intake_items"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    schedule_intake_id: Mapped[int] = mapped_column(
+        ForeignKey("schedule_intakes.id", ondelete="CASCADE"), nullable=False
+    )
+    source_line: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
+    service_team_id: Mapped[Optional[int]] = mapped_column(
+        ForeignKey("service_teams.id", ondelete="RESTRICT"), nullable=True
+    )
+    customer_id: Mapped[Optional[int]] = mapped_column(
+        ForeignKey("customers.id", ondelete="RESTRICT"), nullable=True
+    )
+    customer_name: Mapped[Optional[str]] = mapped_column(String(120), nullable=True)
+    service_type_id: Mapped[Optional[int]] = mapped_column(
+        ForeignKey("service_types.id", ondelete="RESTRICT"), nullable=True
+    )
+    raw_service_text: Mapped[Optional[str]] = mapped_column(String(255), nullable=True)
+    building_number: Mapped[Optional[int]] = mapped_column(Integer, nullable=True)
+    unit_number: Mapped[Optional[str]] = mapped_column(String(32), nullable=True)
+    scheduled_time: Mapped[Optional[time]] = mapped_column(Time, nullable=True)
+    price: Mapped[Optional[Decimal]] = mapped_column(Numeric(10, 2), nullable=True)
+    review_status: Mapped[str] = mapped_column(String(32), nullable=False, server_default="needs_review")
+    review_note: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
+    booking_request_id: Mapped[Optional[int]] = mapped_column(
+        ForeignKey("booking_requests.id", ondelete="RESTRICT"), nullable=True, unique=True
+    )
+    appointment_id: Mapped[Optional[int]] = mapped_column(
+        ForeignKey("appointments.id", ondelete="RESTRICT"), nullable=True, unique=True
+    )
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now(), nullable=False)
+    updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now(), nullable=False)
+
+    __table_args__ = (
+        CheckConstraint("building_number IS NULL OR building_number > 0", name="ck_schedule_items_positive_building"),
+        CheckConstraint("price IS NULL OR price >= 0", name="ck_schedule_items_nonnegative_price"),
+        CheckConstraint(
+            "review_status IN ('needs_review', 'ready', 'confirmed', 'skipped')",
+            name="ck_schedule_items_review_status",
+        ),
+        Index("ix_schedule_intake_items_intake_id", "schedule_intake_id"),
+        Index("ix_schedule_intake_items_review_status", "review_status"),
     )

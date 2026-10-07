@@ -15,6 +15,8 @@ def test_initial_schema_contains_all_booking_workflow_tables() -> None:
         "appointments",
         "appointment_status_history",
         "notification_outbox",
+        "schedule_intakes",
+        "schedule_intake_items",
     }
 
 
