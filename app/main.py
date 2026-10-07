@@ -520,33 +520,27 @@ def appointment_directory(
     scheduled_date: date | None = None,
     session: Session = Depends(get_session),
 ) -> HTMLResponse:
-    """List scheduled work with operational filters."""
-    statement = (
-        select(Appointment, BookingRequest, Customer, Address, ServiceTeam, ServiceType)
-        .join(BookingRequest, Appointment.booking_request_id == BookingRequest.id)
-        .join(Customer, BookingRequest.customer_id == Customer.id)
-        .join(Address, BookingRequest.address_id == Address.id)
-        .join(ServiceTeam, Appointment.service_team_id == ServiceTeam.id)
-        .join(ServiceType, BookingRequest.service_type_id == ServiceType.id)
-        .order_by(ServiceTeam.name.asc(), Appointment.scheduled_start.asc())
+    """List every shared operational job with operational filters."""
+    statement = select(OperationalJob, ServiceTeam).outerjoin(
+        ServiceTeam, OperationalJob.service_team_id == ServiceTeam.id
     )
     if q.strip():
         pattern = f"%{q.strip()}%"
         statement = statement.where(
             or_(
-                BookingRequest.reference_code.ilike(pattern),
-                Customer.full_name.ilike(pattern),
-                Customer.mobile.ilike(pattern),
-                Address.address_line.ilike(pattern),
+                OperationalJob.customer_label.ilike(pattern),
+                OperationalJob.address_label.ilike(pattern),
+                OperationalJob.service_label.ilike(pattern),
                 ServiceTeam.name.ilike(pattern),
             )
         )
     if appointment_status:
-        statement = statement.where(Appointment.status == appointment_status)
+        statement = statement.where(OperationalJob.status == appointment_status)
+    else:
+        statement = statement.where(OperationalJob.status != "cancelled")
     if scheduled_date is not None:
-        day_start = datetime.combine(scheduled_date, time.min, tzinfo=MANILA_TIMEZONE)
-        day_end = datetime.combine(scheduled_date + timedelta(days=1), time.min, tzinfo=MANILA_TIMEZONE)
-        statement = statement.where(Appointment.scheduled_start >= day_start, Appointment.scheduled_start < day_end)
+        statement = statement.where(OperationalJob.scheduled_date == scheduled_date)
+    statement = statement.order_by(ServiceTeam.name.asc(), OperationalJob.scheduled_date.asc(), OperationalJob.scheduled_time.asc())
     return templates.TemplateResponse(
         request,
         "appointment_directory.html",
@@ -575,10 +569,29 @@ def customer_directory(request: Request, q: str = "", session: Session = Depends
         ) or 0
         for customer in customers
     }
+    provisional_statement = select(OperationalJob).where(
+        OperationalJob.customer_is_provisional.is_(True),
+        OperationalJob.status != "cancelled",
+    ).order_by(OperationalJob.scheduled_date.desc(), OperationalJob.id.desc())
+    if q.strip():
+        pattern = f"%{q.strip()}%"
+        provisional_statement = provisional_statement.where(
+            or_(
+                OperationalJob.customer_label.ilike(pattern),
+                OperationalJob.address_label.ilike(pattern),
+                OperationalJob.service_label.ilike(pattern),
+            )
+        )
+    provisional_jobs = list(session.scalars(provisional_statement).all())
     return templates.TemplateResponse(
         request,
         "customer_directory.html",
-        {"customers": customers, "booking_counts": booking_counts, "q": q},
+        {
+            "customers": customers,
+            "booking_counts": booking_counts,
+            "provisional_jobs": provisional_jobs,
+            "q": q,
+        },
     )
 
 

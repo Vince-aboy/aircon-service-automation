@@ -7,29 +7,28 @@
   </header>
   <section class="staff-page directory-page">
     <form class="directory-filter-form" method="get" action="{{ app_path('/staff/appointments') }}">
-      <label>Search<input name="q" type="search" value="{{ q }}" placeholder="Reference, customer, phone, address, or team"></label>
-      <label>Status<select name="appointment_status"><option value="">All statuses</option>{% for value, label in [('confirmed','Confirmed'),('en_route','En route'),('in_progress','In progress'),('completed','Completed'),('cancelled','Cancelled')] %}<option value="{{ value }}"{% if appointment_status_filter == value %} selected{% endif %}>{{ label }}</option>{% endfor %}</select></label>
+      <label>Search<input name="q" type="search" value="{{ q }}" placeholder="Client, service, address, or team"></label>
+      <label>Status<select name="appointment_status"><option value="">All statuses</option>{% for value, label in [('pending_review','Pending review'),('approved_for_scheduling','Approved'),('scheduled','Scheduled'),('confirmed','Confirmed'),('en_route','En route'),('in_progress','In progress'),('completed','Completed'),('cancelled','Cancelled')] %}<option value="{{ value }}"{% if appointment_status_filter == value %} selected{% endif %}>{{ label }}</option>{% endfor %}</select></label>
       <label>Date<input name="scheduled_date" type="date" value="{{ scheduled_date_filter or '' }}"></label>
       <button type="submit">Filter</button>
       {% if q or appointment_status_filter or scheduled_date_filter %}<a class="button-link button-secondary" href="{{ app_path('/staff/appointments') }}">Clear</a>{% endif %}
     </form>
-    <p class="queue-count count-pill">{{ appointments|length }} appointment{% if appointments|length != 1 %}s{% endif %}</p>
+    <p class="queue-count count-pill">{{ appointments|length }} job{% if appointments|length != 1 %}s{% endif %}</p>
     {% if appointments %}
       <div class="directory-table appointment-table">
         <div class="directory-row directory-heading"><span>Date & time</span><span>Customer</span><span>Service</span><span>Team</span><span>Status</span></div>
-        {% for appointment, booking, customer, address, team, service_type in appointments %}
-          {% set local_start = to_manila(appointment.scheduled_start) %}
-          <a class="directory-row status-row-{{ appointment.status }}" href="{{ app_path('/staff/appointments/' ~ appointment.id) }}">
-            <span><strong>{{ local_start.strftime('%b %d, %Y') }}</strong><small>{{ local_start.strftime('%I:%M %p') }}</small></span>
-            <span><strong>{{ customer.full_name }}</strong><small>{{ booking.reference_code }}</small></span>
-            <span>{{ service_type.name }}<small>{{ booking.unit_count }} unit{% if booking.unit_count != 1 %}s{% endif %}</small></span>
-            <span><strong>{{ team.name }}</strong><small>{{ address.barangay }}</small></span>
-            <span><b class="status-badge status-{{ appointment.status }}">{{ appointment.status.replace('_',' ') }}</b></span>
+        {% for job, team in appointments %}
+          <a class="directory-row status-row-{{ job.status }}" href="{{ app_path('/staff/dispatch?selected_date=' ~ job.scheduled_date) }}">
+            <span><strong>{{ job.scheduled_date or 'Date missing' }}</strong><small>{{ job.scheduled_time.strftime('%I:%M %p') if job.scheduled_time else 'Time missing' }}</small></span>
+            <span><strong>{{ job.customer_label }}</strong><small>{% if job.customer_is_provisional %}Provisional client{% else %}Verified client{% endif %}</small></span>
+            <span>{{ job.service_label }}<small>{{ job.address_label }}</small></span>
+            <span><strong>{{ team.name if team else 'Team missing' }}</strong></span>
+            <span><b class="status-badge status-{{ job.status }}">{{ job.status.replace('_',' ') }}</b></span>
           </a>
         {% endfor %}
       </div>
     {% else %}
-      <section class="empty-queue"><h2>No appointments found</h2><p>Adjust the filters or schedule an approved request.</p></section>
+      <section class="empty-queue"><h2>No jobs found</h2><p>Adjust the filters or publish an approved intake.</p></section>
     {% endif %}
   </section>
 {% endblock %}
