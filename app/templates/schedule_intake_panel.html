@@ -84,6 +84,7 @@
                   <label>Time<input name="scheduled_time" type="time" value="{{ item.scheduled_time.strftime('%H:%M') if item.scheduled_time else '' }}"></label>
                   <label>Price<input name="price" inputmode="decimal" value="{{ item.price or '' }}"></label>
                   <label class="draft-edit-notes">Notes<input name="review_note" value="{{ item.review_note or '' }}"></label>
+                  <label class="draft-original-message">Original team message<textarea readonly rows="3">{{ item.source_line or '' }}</textarea></label>
                   <div class="draft-edit-actions"><button type="submit">Save row</button><button class="button-secondary draft-cancel-button" type="button" data-edit-target="edit-row-{{ item.id }}">Cancel</button></div>
                 </form>
                 <form class="draft-skip-form" method="post" action="{{ app_path('/staff/schedule-intake/items/' ~ item.id ~ '/skip') }}" data-confirm="Skip this row? It will be preserved in the intake history but removed from active review.">
