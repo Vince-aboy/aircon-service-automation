@@ -232,8 +232,10 @@ a.directory-row:hover { background: #f7f7f2; border-color: #adb5a4; }
   .admin-shell.sidebar-collapsed .admin-content { max-width: 1280px; }
   .reporting-health-strip { grid-template-columns: 1fr; }
   .schedule-intake-form { grid-template-columns: 1fr; }
-  .schedule-intake-actions { align-items: stretch; }
-  .schedule-intake-actions button { flex: 1; }
+  .schedule-intake-page { padding: .75rem; }
+  .schedule-intake-page .schedule-intake-form { grid-template-columns: 1fr; }
+  .schedule-intake-actions { align-items: stretch; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .schedule-intake-actions button { min-width: 0; width: 100%; }
   .intake-next-step { align-items: flex-start; flex-wrap: wrap; }
   .intake-next-step .button-link { margin-left: 2.8rem; }
   .recent-intakes { align-items: stretch; flex-direction: column; }
