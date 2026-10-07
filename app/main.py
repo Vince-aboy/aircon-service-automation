@@ -851,9 +851,17 @@ def create_schedule_intake(
     for item in parsed_items:
         key = (item.building_number, item.unit_number)
         location_counts[key] = location_counts.get(key, 0) + 1
+    location_occurrences: dict[tuple[int, str], int] = {}
     for item_index, item in enumerate(parsed_items):
         assigned_team = provisional_team_by_item.get(item_index)
-        provisional_customer = f"Customer {item_index + 1}"
+        location_key = (item.building_number, item.unit_number)
+        location_occurrences[location_key] = location_occurrences.get(location_key, 0) + 1
+        occurrence_suffix = (
+            f"_{location_occurrences[location_key]}"
+            if location_counts[location_key] > 1
+            else ""
+        )
+        provisional_customer = f"Client_B{item.building_number}_U{item.unit_number}{occurrence_suffix}"
         notes = []
         if assigned_team:
             notes.append(f"Auto-assigned {assigned_team.name} · same-building rule")
