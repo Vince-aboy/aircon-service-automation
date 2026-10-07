@@ -149,6 +149,16 @@ a.directory-row:hover { background: #f7f7f2; border-color: #adb5a4; }
 .schedule-intake-page .schedule-intake-form { grid-template-columns: 12rem minmax(0, 1fr) auto; margin-top: .75rem; }
 .schedule-intake-page .schedule-message-field textarea { min-height: 7rem; }
 .schedule-intake-page .schedule-draft { margin-top: .8rem; padding-top: .8rem; }
+.recent-intakes { align-items: center; background: #f0f1eb; border: 1px solid var(--line); border-radius: 10px; display: flex; gap: 1rem; justify-content: space-between; margin-top: .9rem; padding: .75rem .9rem; }
+.recent-intakes h2 { font-size: .95rem; margin: .1rem 0 0; }
+.recent-intakes .eyebrow { margin: 0; }
+.recent-intake-list { display: flex; flex-wrap: wrap; gap: .45rem; justify-content: flex-end; }
+.recent-intake-link { align-items: center; background: #fff; border: 1px solid var(--line); border-radius: 7px; color: var(--ink); display: flex; gap: .7rem; min-width: 11rem; padding: .45rem .6rem; text-decoration: none; }
+.recent-intake-link:hover, .recent-intake-link.current { background: #fff8e9; border-color: #c6a76a; }
+.recent-intake-link strong, .recent-intake-link small { display: block; }
+.recent-intake-link strong { font-size: .78rem; }
+.recent-intake-link small { color: var(--muted); font-size: .7rem; margin-top: .1rem; }
+.intake-list-status { color: #795216; font-size: .7rem; font-weight: 800; margin-left: auto; }
 .intake-next-step { align-items: center; background: #f0f1eb; border: 1px solid var(--line); border-radius: 10px; display: flex; gap: .8rem; margin-top: 1rem; padding: .8rem 1rem; }
 .intake-step-number { align-items: center; background: #fff; border: 1px solid #c8cebf; border-radius: 7px; color: #596147; display: flex; font-size: .75rem; font-weight: 800; height: 2rem; justify-content: center; width: 2rem; }
 .intake-next-step strong { color: var(--ink); display: block; font-size: .85rem; }
@@ -161,6 +171,8 @@ a.directory-row:hover { background: #f7f7f2; border-color: #adb5a4; }
   .schedule-intake-actions button { flex: 1; }
   .intake-next-step { align-items: flex-start; flex-wrap: wrap; }
   .intake-next-step .button-link { margin-left: 2.8rem; }
+  .recent-intakes { align-items: stretch; flex-direction: column; }
+  .recent-intake-list { justify-content: flex-start; }
 }
 
 /* Public service website. Preserve the real service artwork. */

@@ -7,6 +7,24 @@
       <h1>Schedule intake</h1>
       <p class="intro">Turn the team’s informal message into a reviewable draft before anything enters the official schedule.</p>
     </header>
+    <section class="recent-intakes" aria-labelledby="recent-intakes-title">
+      <div>
+        <p class="eyebrow">Saved work</p>
+        <h2 id="recent-intakes-title">Recent schedule drafts</h2>
+      </div>
+      {% if recent_intakes %}
+        <div class="recent-intake-list">
+          {% for intake in recent_intakes %}
+            <a class="recent-intake-link {% if latest_intake and intake.id == latest_intake.id %}current{% endif %}" href="{{ app_path('/staff/schedule-intake?intake_id=' ~ intake.id) }}">
+              <span><strong>Intake #{{ intake.id }}</strong><small>{{ intake.schedule_date }}</small></span>
+              <span class="intake-list-status">{{ intake.status.replace('_', ' ') }}</span>
+            </a>
+          {% endfor %}
+        </div>
+      {% else %}
+        <p class="muted">No saved schedule drafts yet.</p>
+      {% endif %}
+    </section>
     {% include "schedule_intake_panel.html" %}
     <div class="intake-next-step">
       <span class="intake-step-number">02</span>

@@ -14,7 +14,7 @@ from fastapi.responses import HTMLResponse, RedirectResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from pydantic import BaseModel, ValidationError
-from sqlalchemy import func, or_, select
+from sqlalchemy import desc, func, or_, select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
@@ -773,6 +773,11 @@ def dispatch_board(
 def schedule_intake(request: Request, intake_id: int | None = None, session: Session = Depends(get_session)) -> HTMLResponse:
     """Render the front-end-only raw schedule intake workspace."""
     intake = session.get(ScheduleIntake, intake_id) if intake_id else None
+    recent_intakes = list(
+        session.scalars(
+            select(ScheduleIntake).order_by(desc(ScheduleIntake.id)).limit(10)
+        )
+    )
     intake_items = []
     if intake:
         intake_items = list(
@@ -785,7 +790,12 @@ def schedule_intake(request: Request, intake_id: int | None = None, session: Ses
     return templates.TemplateResponse(
         request,
         "schedule_intake.html",
-        {"selected_date": intake.schedule_date if intake else datetime.now(MANILA_TIMEZONE).date(), "latest_intake": intake, "intake_items": intake_items},
+        {
+            "selected_date": intake.schedule_date if intake else datetime.now(MANILA_TIMEZONE).date(),
+            "latest_intake": intake,
+            "intake_items": intake_items,
+            "recent_intakes": recent_intakes,
+        },
     )
 
 
