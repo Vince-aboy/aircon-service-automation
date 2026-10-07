@@ -1,5 +1,13 @@
 # Worklog History
 
+- `2026-10-08`
+  - Reconciled customer self-bookings and staff team messages into one reporting workflow. Both sources remain in PostgreSQL first, then use the shared n8n outbox and Google Sheets reporting path.
+  - Added commit `2f21837` (`Bridge team intake jobs to n8n outbox`). Team-intake approval now creates a pending `appointment_scheduled` outbox event linked to `OperationalJob`, with the original service text, location, team, schedule date/time, and provisional client label.
+  - Added migration `20261008_0013_shared_outbox_sources.py` and regression coverage. Full verification: `50 passed, 5 skipped`.
+  - Confirmed the VPS worker timer is active every minute and `AIRCON_AUTOMATIC_DELIVERY_ENABLED=true` is configured. A fresh intake is still required for final end-to-end confirmation because existing jobs predate the bridge.
+  - Preserved the mobile layout work: collapsed sidebar, responsive intake editing, mobile-readable draft schedule table, and em-dash display for missing values.
+  - Synchronized the updated project Markdown into the local Second Brain index: 40 files found, 2 new, 6 updated, 32 unchanged, and 131 searchable chunks written.
+
 - `2026-10-03`
   - Completed the owner operations command center: dashboard, request review, daily schedule, appointment directory, customer records, team/technician management, activity history, automation monitor, and settings.
   - Added dispatcher safeguards for future dates, occupied blocks, team/date/time rescheduling, cancellation reasons, internal notes, safe deactivation, membership removal, and failed-event requeue.

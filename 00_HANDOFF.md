@@ -1,5 +1,17 @@
 # Handoff
 
+## Current project state — 2026-10-08
+
+- Customer self-bookings and staff team-intake jobs now share the same PostgreSQL `OperationalJob` and n8n `NotificationOutbox` reporting path.
+- Commit `2f21837` adds the team-intake bridge. Clicking `Approve & Publish` creates one pending n8n outbox event per active intake row, while preserving the original team message wording in the service field.
+- Migration `20261008_0013_shared_outbox_sources.py` allows an outbox event to belong to either a customer booking or a team-intake operational job.
+- Team-intake events use the existing n8n payload shape and Google Sheets reporting branches. Provisional labels such as `Client_B13_U1234` are intentionally preserved until a real customer name is available.
+- The VPS worker timer was verified active and running every minute. `AIRCON_AUTOMATIC_DELIVERY_ENABLED=true` was confirmed. The latest worker logs show no pending event was available; existing Oct. 7–8 jobs were published before this bridge and are not backfilled automatically.
+- Next end-to-end verification: create a new intake → approve and publish → confirm `pending` → wait for the worker → confirm `recorded` → verify n8n and Google Sheets.
+- Mobile/staff UX completed: sidebar hidden by default on small screens, draft schedule table remains horizontally scrollable, empty values display as `—`, and intake editing stacks on phone screens.
+- Appointment and customer directories now include shared team-intake jobs, including provisional customers.
+- Latest local verification after the bridge: `50 passed, 5 skipped`.
+
 ## Version 1 closeout — 2026-10-05
 
 - Balik-Lamig Version 1 is functionally complete and ready to hand off before moving to the Web Profile project.

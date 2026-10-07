@@ -2,6 +2,15 @@
 
 > **Live implementation note — 2026-10-03:** The sections below preserve the broader target design. The verified published workflow currently implements the smaller core path: `Mark Processed` fans out in parallel to `Upsert Daily Schedule Row`, `Upsert Client Summary`, and `Append Service History`; a three-input Merge then feeds a final fixed `automation_status: processed` response. `Cancelled Requests`, owner-facing `Automation Log`, validation/normalization nodes, and other target-design branches remain deferred. See [PHASE_11_LIVE_N8N_REPORTING_VERIFICATION.md](PHASE_11_LIVE_N8N_REPORTING_VERIFICATION.md) for the operational truth.
 
+## Current application bridge — 2026-10-08
+
+- Customer self-bookings and staff team-intake jobs now enter the same SQL outbox before n8n delivery.
+- Team-intake `Approve & Publish` creates a pending `appointment_scheduled` event linked to `OperationalJob`; it does not send directly from the browser.
+- The VPS worker checks the outbox every minute when `AIRCON_AUTOMATIC_DELIVERY_ENABLED=true`. It sends one due event per run, and the local event becomes `recorded` only after n8n returns the expected processed acknowledgement.
+- Team-intake payloads preserve provisional labels and original service wording. Their booking reference is generated as `INTAKE-{operational_job_id}`.
+- The bridge was added in commit `2f21837`; local verification is `50 passed, 5 skipped`.
+- Final verification still required: create one new intake after deployment, approve it, confirm `pending` becomes `recorded`, then verify the n8n execution and Google Sheets row. Existing jobs published before the bridge are not automatically backfilled.
+
 ## Goal
 
 Create an owner-facing reporting workflow for Balik-Lamig events in either local prototype mode or live owner-reporting mode. PostgreSQL remains authoritative; Google Sheets is only a readable operations view. This workflow must not send customer messages, make payments, or change booking records.
@@ -101,6 +110,14 @@ Stable key: `idempotency_key`
 ## Credential and activation boundary
 
 The Google Sheets credential is created only inside n8n. It must not be placed in Git, the VPS environment file, application code, or this documentation. Before live activation, confirm the spreadsheet ID, exact tab names, restricted sharing scope, and the live field mappings. Start with one controlled request, then allow normal delivery after the test passes.
+
+## Current structural update - 2026-10-04
+
+- `Customer Directory` now exists in the owner spreadsheet and contains 11 synthetic PostgreSQL customer rows.
+- Its stable key is PostgreSQL `customer_id` (`customers.id`), never `booking_reference`.
+- The application payload now includes top-level `customer_id`.
+- `Cancelled Requests` and `Automation Log` were removed after explicit approval; delivery trace remains in the PostgreSQL outbox and n8n execution history.
+- Before the next n8n edit, add a fourth parallel Google Sheets branch for `Customer Directory`, expand the Merge to four inputs, and preserve the fixed `automation_status: processed` response.
 
 ## Implementation status
 
