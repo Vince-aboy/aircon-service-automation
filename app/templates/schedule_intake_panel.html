@@ -7,19 +7,19 @@
     </div>
     <span class="intake-badge">Draft only</span>
   </div>
-  <div class="schedule-intake-form">
+  <form class="schedule-intake-form" method="post" action="{{ app_path('/staff/schedule-intake') }}">
     <label>Schedule date
-      <input id="raw-schedule-date" type="date" value="{{ selected_date }}">
+      <input id="raw-schedule-date" name="schedule_date" type="date" value="{{ selected_date }}" required>
     </label>
     <label class="schedule-message-field">Raw schedule message
-      <textarea id="raw-schedule-message" rows="12" placeholder="Example:&#10;B3 1258&#10;AC cleaning&#10;&#10;B5 451&#10;Drainpan leak&#10;300&#10;1:30"></textarea>
+      <textarea id="raw-schedule-message" name="raw_message" rows="12" placeholder="Example:&#10;B3 1258&#10;AC cleaning&#10;&#10;B5 451&#10;Drainpan leak&#10;300&#10;1:30" required>{{ latest_intake.raw_message if latest_intake else '' }}</textarea>
     </label>
     <div class="schedule-intake-actions">
-      <button id="preview-schedule" type="button">Prepare draft table</button>
-      <button id="clear-schedule" class="button-secondary" type="button">Clear</button>
+      <button id="preview-schedule" type="submit">Prepare draft table</button>
+      <button id="clear-schedule" class="button-secondary" type="reset">Clear</button>
     </div>
-  </div>
-  <div class="schedule-draft" id="schedule-draft" hidden>
+  </form>
+  <div class="schedule-draft" id="schedule-draft"{% if not latest_intake %} hidden{% endif %}>
     <div class="schedule-draft-heading">
       <div>
         <p class="eyebrow">Review before scheduling</p>
@@ -40,9 +40,21 @@
             <th>Status</th>
           </tr>
         </thead>
-        <tbody id="draft-schedule-rows"></tbody>
+        <tbody id="draft-schedule-rows">
+          {% for item in intake_items %}
+            <tr>
+              <td><span class="draft-missing">Missing</span></td>
+              <td>Building {{ item.building_number }}, Unit {{ item.unit_number }}</td>
+              <td><span class="draft-missing">Missing</span></td>
+              <td>{{ item.raw_service_text or 'Missing' }}</td>
+              <td>{{ item.scheduled_time.strftime('%I:%M %p') if item.scheduled_time else 'Missing' }}</td>
+              <td>{{ item.price if item.price is not none else 'Missing' }}</td>
+              <td><span class="draft-status {% if item.review_status == 'ready' %}draft-status-ready{% else %}draft-status-warning{% endif %}">{{ item.review_status.replace('_', ' ') }}</span></td>
+            </tr>
+          {% endfor %}
+        </tbody>
       </table>
     </div>
-    <p class="schedule-draft-note">Complete the missing details before a future backend step creates official appointments.</p>
+    <p class="schedule-draft-note">Saved intake #{{ latest_intake.id if latest_intake else '—' }}. Complete the missing details before a future confirmation step creates official appointments.</p>
   </div>
 </section>

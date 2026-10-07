@@ -18,9 +18,10 @@ from sqlalchemy import func, or_, select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
+from app.booking.schedule_intake import parse_raw_schedule
 from app.booking.service import APPOINTMENT_STATUS_TRANSITIONS, DISPATCH_SLOTS, MANILA_TIMEZONE, automatic_delivery_enabled, complete_appointment_shortcut, create_pending_booking, display_address, process_pending_simulated_events, push_one_pending_event_to_n8n, reschedule_appointment, review_booking_request, run_due_delivery_worker_check, schedule_approved_booking, update_appointment_status
 from app.booking.validation import BookingRequestInput
-from app.database.models import Address, Appointment, AppointmentStatusHistory, BookingRequest, BookingRequestStatusHistory, Customer, NotificationOutbox, ServiceTeam, ServiceType, TeamMembership, Technician
+from app.database.models import Address, Appointment, AppointmentStatusHistory, BookingRequest, BookingRequestStatusHistory, Customer, NotificationOutbox, ScheduleIntake, ScheduleIntakeItem, ServiceTeam, ServiceType, TeamMembership, Technician
 from app.database.session import create_database_engine
 from app.core.project_info import is_live_mode
 
@@ -769,13 +770,55 @@ def dispatch_board(
 
 
 @app.get("/staff/schedule-intake", response_class=HTMLResponse)
-def schedule_intake(request: Request) -> HTMLResponse:
+def schedule_intake(request: Request, intake_id: int | None = None, session: Session = Depends(get_session)) -> HTMLResponse:
     """Render the front-end-only raw schedule intake workspace."""
+    intake = session.get(ScheduleIntake, intake_id) if intake_id else None
+    intake_items = []
+    if intake:
+        intake_items = list(
+            session.scalars(
+                select(ScheduleIntakeItem)
+                .where(ScheduleIntakeItem.schedule_intake_id == intake.id)
+                .order_by(ScheduleIntakeItem.id)
+            )
+        )
     return templates.TemplateResponse(
         request,
         "schedule_intake.html",
-        {"selected_date": datetime.now(MANILA_TIMEZONE).date()},
+        {"selected_date": intake.schedule_date if intake else datetime.now(MANILA_TIMEZONE).date(), "latest_intake": intake, "intake_items": intake_items},
     )
+
+
+@app.post("/staff/schedule-intake", response_class=RedirectResponse)
+def create_schedule_intake(
+    schedule_date: date = Form(),
+    raw_message: str = Form(),
+    session: Session = Depends(get_session),
+) -> RedirectResponse:
+    """Save a pasted staff message and its editable draft rows."""
+    if not raw_message.strip():
+        raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_CONTENT, detail="Paste a schedule message first.")
+
+    parsed_items = parse_raw_schedule(raw_message)
+    intake = ScheduleIntake(schedule_date=schedule_date, raw_message=raw_message.strip())
+    session.add(intake)
+    session.flush()
+    for item in parsed_items:
+        session.add(
+            ScheduleIntakeItem(
+                schedule_intake_id=intake.id,
+                source_line=item.source_line,
+                building_number=item.building_number,
+                unit_number=item.unit_number,
+                raw_service_text=item.raw_service_text,
+                scheduled_time=item.scheduled_time,
+                price=item.price,
+                review_status=item.review_status,
+            )
+        )
+    intake.status = "ready" if parsed_items and all(item.review_status == "ready" for item in parsed_items) else "draft"
+    session.commit()
+    return RedirectResponse(url=app_path(f"/staff/schedule-intake?intake_id={intake.id}"), status_code=status.HTTP_303_SEE_OTHER)
 
 
 @app.post("/staff/dispatch/assign")
