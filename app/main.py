@@ -451,18 +451,24 @@ def staff_dashboard(request: Request, session: Session = Depends(get_session)) -
     today = datetime.now(MANILA_TIMEZONE).date()
     start_of_day = datetime.combine(today, time.min, tzinfo=MANILA_TIMEZONE)
     end_of_day = datetime.combine(today + timedelta(days=1), time.min, tzinfo=MANILA_TIMEZONE)
+    pending_intake_items = session.scalar(
+        select(func.count())
+        .select_from(ScheduleIntakeItem)
+        .join(ScheduleIntake, ScheduleIntakeItem.schedule_intake_id == ScheduleIntake.id)
+        .where(ScheduleIntake.status != "confirmed", ScheduleIntakeItem.review_status != "skipped")
+    ) or 0
     metrics = {
-        "pending_review": session.scalar(
+        "pending_review": (session.scalar(
             select(func.count()).select_from(BookingRequest).where(BookingRequest.status == "pending_review")
-        ) or 0,
+        ) or 0) + pending_intake_items,
         "awaiting_assignment": session.scalar(
-            select(func.count()).select_from(BookingRequest).where(BookingRequest.status == "approved_for_scheduling")
+            select(func.count()).select_from(OperationalJob).where(
+                OperationalJob.status == "approved_for_scheduling", OperationalJob.service_team_id.is_(None)
+            )
         ) or 0,
         "today_appointments": session.scalar(
-            select(func.count()).select_from(Appointment).where(
-                Appointment.scheduled_start >= start_of_day,
-                Appointment.scheduled_start < end_of_day,
-                Appointment.status != "cancelled",
+            select(func.count()).select_from(OperationalJob).where(
+                OperationalJob.scheduled_date == today, OperationalJob.status != "cancelled"
             )
         ) or 0,
         "active_teams": session.scalar(
@@ -475,23 +481,20 @@ def staff_dashboard(request: Request, session: Session = Depends(get_session)) -
             select(func.count()).select_from(NotificationOutbox).where(NotificationOutbox.status == "failed")
         ) or 0,
     }
-    upcoming_appointments = list(
-        session.execute(
-            select(Appointment, BookingRequest, Customer, ServiceTeam, ServiceType)
-            .join(BookingRequest, Appointment.booking_request_id == BookingRequest.id)
-            .join(Customer, BookingRequest.customer_id == Customer.id)
-            .join(ServiceTeam, Appointment.service_team_id == ServiceTeam.id)
-            .join(ServiceType, BookingRequest.service_type_id == ServiceType.id)
-            .where(Appointment.scheduled_start >= start_of_day, Appointment.status != "cancelled")
-            .order_by(Appointment.scheduled_start.asc())
+    upcoming_jobs = list(
+        session.scalars(
+            select(OperationalJob)
+            .where(OperationalJob.scheduled_date >= today, OperationalJob.status != "cancelled")
+            .order_by(OperationalJob.scheduled_date.asc(), OperationalJob.scheduled_time.asc())
             .limit(6)
-        ).all()
+        )
     )
-    appointment_status_counts = {
-        appointment_status: session.scalar(
-            select(func.count()).select_from(Appointment).where(Appointment.status == appointment_status)
+    team_names = {team.id: team.name for team in session.scalars(select(ServiceTeam))}
+    job_status_counts = {
+        job_status: session.scalar(
+            select(func.count()).select_from(OperationalJob).where(OperationalJob.status == job_status)
         ) or 0
-        for appointment_status in ("confirmed", "en_route", "in_progress", "completed", "cancelled")
+        for job_status in ("pending_review", "scheduled", "confirmed", "en_route", "in_progress", "completed", "cancelled")
     }
     reporting_health = automation_health(session)
     return templates.TemplateResponse(
@@ -500,8 +503,9 @@ def staff_dashboard(request: Request, session: Session = Depends(get_session)) -
         {
             "metrics": metrics,
             "today": today,
-            "upcoming_appointments": upcoming_appointments,
-            "appointment_status_counts": appointment_status_counts,
+            "upcoming_jobs": upcoming_jobs,
+            "team_names": team_names,
+            "job_status_counts": job_status_counts,
             "automatic_delivery_enabled": automatic_delivery_enabled(),
             "reporting_health": reporting_health,
         },

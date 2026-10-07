@@ -23,22 +23,21 @@
       </div>
     </article>
     <article class="dashboard-panel">
-      <div class="panel-heading"><div><p class="eyebrow">Forward schedule</p><h2>Upcoming appointments</h2></div><a class="panel-link" href="{{ app_path('/staff/dispatch') }}">Open schedule &rarr;</a></div>
-      {% if upcoming_appointments %}
+      <div class="panel-heading"><div><p class="eyebrow">Forward schedule</p><h2>Upcoming jobs</h2></div><a class="panel-link" href="{{ app_path('/staff/dispatch') }}">Open schedule &rarr;</a></div>
+      {% if upcoming_jobs %}
         <div class="upcoming-list">
-          {% for appointment, booking, customer, team, service_type in upcoming_appointments %}
-            {% set local_start = to_manila(appointment.scheduled_start) %}
-            <a href="{{ app_path('/staff/appointments/' ~ appointment.id) }}"><time datetime="{{ local_start.isoformat() }}"><strong>{{ local_start.strftime('%b %d') }}</strong><span>{{ local_start.strftime('%I:%M %p') }}</span></time><div><strong>{{ customer.full_name }}</strong><span>{{ service_type.name }} · {{ team.name }}</span></div><span class="status-badge status-{{ appointment.status }}">{{ appointment.status.replace('_', ' ') }}</span></a>
+          {% for job in upcoming_jobs %}
+            <a href="{{ app_path('/staff/dispatch?selected_date=' ~ job.scheduled_date) }}"><time datetime="{{ job.scheduled_date }}"><strong>{{ job.scheduled_date.strftime('%b %d') }}</strong><span>{{ job.scheduled_time.strftime('%I:%M %p') if job.scheduled_time else 'Time missing' }}</span></time><div><strong>{{ job.customer_label }}</strong><span>{{ job.service_label }} · {{ team_names.get(job.service_team_id, 'Team missing') }}</span></div><span class="status-badge status-{{ job.status }}">{{ job.status.replace('_', ' ') }}</span></a>
           {% endfor %}
         </div>
-      {% else %}<p class="muted">No upcoming appointments are scheduled.</p>{% endif %}
+      {% else %}<p class="muted">No upcoming jobs are scheduled.</p>{% endif %}
     </article>
   </section>
 
   <section class="dashboard-grid dashboard-secondary-grid">
     <article class="dashboard-panel">
       <div class="panel-heading"><div><p class="eyebrow">Job lifecycle</p><h2>Appointment statuses</h2></div></div>
-      <dl class="status-summary">{% for label, key in [('Confirmed', 'confirmed'), ('En route', 'en_route'), ('In progress', 'in_progress'), ('Completed', 'completed'), ('Cancelled', 'cancelled')] %}<div><dt>{{ label }}</dt><dd class="status-text status-text-{{ key }}">{{ appointment_status_counts[key] }}</dd></div>{% endfor %}</dl>
+      <dl class="status-summary">{% for label, key in [('Pending review', 'pending_review'), ('Scheduled', 'scheduled'), ('Confirmed', 'confirmed'), ('En route', 'en_route'), ('In progress', 'in_progress'), ('Completed', 'completed'), ('Cancelled', 'cancelled')] %}<div><dt>{{ label }}</dt><dd class="status-text status-text-{{ key }}">{{ job_status_counts[key] }}</dd></div>{% endfor %}</dl>
     </article>
     <article class="dashboard-panel dashboard-panel-technical">
       <div class="panel-heading"><div><p class="eyebrow">Owner reporting</p><h2>Automation health</h2></div><span class="health-badge {% if reporting_health.failed or reporting_health.retrying %}health-error{% else %}health-good{% endif %}">{{ reporting_health.state }}</span></div>
