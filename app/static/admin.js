@@ -39,7 +39,7 @@ if (adminShell && sidebarToggle) {
   };
 
   try {
-    setSidebarCollapsed(window.localStorage.getItem("balik-lamig-sidebar-collapsed") === "true");
+    setSidebarCollapsed(window.localStorage.getItem("balik-lamig-sidebar-collapsed") !== "false");
   } catch (_) {
     setSidebarCollapsed(false);
   }
