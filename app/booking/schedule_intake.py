@@ -82,11 +82,20 @@ def parse_raw_schedule(raw_message: str) -> list[ParsedScheduleItem]:
     parsed: list[ParsedScheduleItem] = []
     current: ParsedScheduleItem | None = None
 
+    def append_service_text(item: ParsedScheduleItem, text: str) -> None:
+        """Keep the team's wording verbatim for the staff-facing service field."""
+        wording = text.strip()
+        if wording:
+            item.raw_service_text = (
+                f"{item.raw_service_text}\n{wording}"
+                if item.raw_service_text
+                else wording
+            )
+
     for line in lines:
         location = LOCATION_PATTERN.search(line) or DASH_LOCATION_PATTERN.search(line)
         clock = parse_clock(line)
         price = line.replace("₱", "").strip() if PRICE_PATTERN.match(line) else None
-        service_line = normalize_service(line)
 
         if location:
             if current:
@@ -96,26 +105,23 @@ def parse_raw_schedule(raw_message: str) -> list[ParsedScheduleItem]:
                 building_number=int(location.group(1)),
                 unit_number=location.group(2),
             )
-            inline_service = normalize_service(line)
-            if inline_service:
-                current.raw_service_text = inline_service
+            # A message may put the request on the same line as the location,
+            # for example: "B12 536 check up ac". Keep only that request text;
+            # never replace the team's wording with a normalized label.
+            inline_text = line[location.end() :].strip(" ,-:")
+            if inline_text and inline_text.lower() not in {"po", "opo"}:
+                append_service_text(current, inline_text)
         elif current and clock:
             current.scheduled_time = clock
             current.source_line += f"\n{line}"
         elif current and price is not None:
             current.price = Decimal(price)
             current.source_line += f"\n{line}"
-        elif current and service_line:
-            normalized_service = normalize_service(line)
-            current.raw_service_text = (
-                f"{current.raw_service_text} + {normalized_service}"
-                if current.raw_service_text
-                else normalized_service
-            )
-            current.source_line += f"\n{line}"
         elif current:
-            # Keep every unrecognised instruction for staff review. It remains
-            # available with the draft even when it is not a structured field.
+            # The message itself is the source of truth. Keep every line in
+            # Service exactly as the team sent it, including instructions and
+            # spelling, while Time and Price remain separate structured fields.
+            append_service_text(current, line)
             current.source_line += f"\n{line}"
 
     if current:

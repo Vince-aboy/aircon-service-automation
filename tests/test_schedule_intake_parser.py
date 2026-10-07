@@ -8,7 +8,7 @@ def test_parser_handles_common_team_message_typos_and_preserves_original_lines()
         """B13 1234
 Replace aac
 Ac cleaning
-Check drainpan by
+Checj drainpan by
 Lagyn alambre
 
 13-673 po
@@ -36,12 +36,12 @@ B12 536 check up ac"""
         (9, "1146"),
         (12, "536"),
     ]
-    assert items[0].raw_service_text == "AC replacement + AC cleaning + Drainpan check / repair"
+    assert items[0].raw_service_text == "Replace aac\nAc cleaning\nChecj drainpan by\nLagyn alambre"
     assert "Lagyn alambre" in items[0].source_line
-    assert items[1].raw_service_text == "PVC work"
+    assert items[1].raw_service_text == "Pvc\nHintayin tawag ko"
     assert "Hintayin tawag ko" in items[1].source_line
-    assert items[2].raw_service_text == "Drainpan leak"
+    assert items[2].raw_service_text == "Drainpab leak"
     assert items[2].scheduled_time == time(8, 30)
-    assert items[3].raw_service_text == "AC cleaning"
-    assert items[4].raw_service_text == "AC pull-out / collection"
-    assert items[5].raw_service_text == "AC check-up"
+    assert items[3].raw_service_text == "Ac cleanint"
+    assert items[4].raw_service_text == "Kuhain ac na binebenta"
+    assert items[5].raw_service_text == "check up ac"

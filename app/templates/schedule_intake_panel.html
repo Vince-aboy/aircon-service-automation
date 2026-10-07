@@ -54,7 +54,7 @@
               <td class="draft-inline-editable" data-edit-target="edit-row-{{ item.id }}" data-inline-field="service_team_id" title="Click to edit team">{% if item.service_team_id %}{{ intake_team_names.get(item.service_team_id, 'Team') }}{% else %}<span class="draft-missing">Missing</span>{% endif %}</td>
               <td class="draft-inline-editable" data-edit-target="edit-row-{{ item.id }}" data-inline-field="building_number" title="Click to edit location">Building {{ item.building_number }}, Unit {{ item.unit_number }}</td>
               <td class="draft-inline-editable" data-edit-target="edit-row-{{ item.id }}" data-inline-field="customer_name" title="Click to edit customer">{% if item.customer_name %}<span class="{% if item.customer_is_provisional %}provisional-customer{% endif %}">{{ item.customer_name }}</span>{% else %}<span class="draft-missing">Missing</span>{% endif %}</td>
-              <td class="draft-inline-editable" data-edit-target="edit-row-{{ item.id }}" data-inline-field="raw_service_text" title="Click to edit service">{{ item.raw_service_text or 'Missing' }}</td>
+              <td class="draft-inline-editable draft-service-cell" data-edit-target="edit-row-{{ item.id }}" data-inline-field="raw_service_text" title="Click to edit service">{{ item.raw_service_text or 'Missing' }}</td>
               <td class="draft-inline-editable" data-edit-target="edit-row-{{ item.id }}" data-inline-field="scheduled_time" title="Click to edit time">{{ item.scheduled_time.strftime('%I:%M %p') if item.scheduled_time else 'Missing' }}</td>
               <td class="draft-inline-editable" data-edit-target="edit-row-{{ item.id }}" data-inline-field="price" title="Click to edit price">{{ item.price if item.price is not none else 'Missing' }}</td>
               <td><span class="draft-status {% if item.review_status == 'ready' %}draft-status-ready{% else %}draft-status-warning{% endif %}">{{ item.review_status.replace('_', ' ') }}</span></td>
@@ -80,7 +80,7 @@
                   <label>Building<input name="building_number" type="number" min="1" value="{{ item.building_number or '' }}"></label>
                   <label>Unit<input name="unit_number" value="{{ item.unit_number or '' }}"></label>
                   <label>Customer name<input name="customer_name" value="{{ item.customer_name or '' }}"></label>
-                  <label>Service<input name="raw_service_text" value="{{ item.raw_service_text or '' }}"></label>
+                  <label>Service<textarea name="raw_service_text" rows="4">{{ item.raw_service_text or '' }}</textarea></label>
                   <label>Time<input name="scheduled_time" type="time" value="{{ item.scheduled_time.strftime('%H:%M') if item.scheduled_time else '' }}"></label>
                   <label>Price<input name="price" inputmode="decimal" value="{{ item.price or '' }}"></label>
                   <label class="draft-edit-notes">Notes<input name="review_note" value="{{ item.review_note or '' }}"></label>

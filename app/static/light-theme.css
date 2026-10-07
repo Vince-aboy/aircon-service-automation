@@ -158,6 +158,7 @@ a.directory-row:hover { background: #f7f7f2; border-color: #adb5a4; }
 .draft-edit-notes { grid-column: span 2; }
 .draft-original-message { grid-column: span 4; }
 .draft-original-message textarea { background: #f7f5ee; border-color: #c8cebf; font-family: inherit; min-height: 4rem; resize: vertical; }
+.draft-service-cell { white-space: pre-line; }
 .draft-edit-actions { align-items: end; display: flex; gap: .45rem; }
 .draft-edit-actions button { margin: 0; padding: .52rem .7rem; white-space: nowrap; }
 .draft-skip-form { margin-top: .55rem; }
