@@ -60,7 +60,7 @@
               <td><span class="draft-status {% if item.review_status == 'ready' %}draft-status-ready{% else %}draft-status-warning{% endif %}">{{ item.review_status.replace('_', ' ') }}</span></td>
               <td class="draft-note-cell">
                 {% set repeat_warning = 'Possible repeat location; confirm separate job' %}
-                {% set regular_note = (item.review_note or '').replace(' · ' ~ repeat_warning, '') %}
+                {% set regular_note = (item.review_note or '').replace(repeat_warning, '').replace(' · ', '').strip() %}
                 {% if regular_note %}<span>{{ regular_note }}</span>{% endif %}
                 {% if repeat_warning in (item.review_note or '') %}<span class="draft-note-alert">{{ repeat_warning }}</span>{% endif %}
                 {% if not item.review_note %}—{% endif %}
@@ -83,7 +83,7 @@
                   <label>Service<textarea name="raw_service_text" rows="4">{{ item.raw_service_text or '' }}</textarea></label>
                   <label>Time<input name="scheduled_time" type="time" value="{{ item.scheduled_time.strftime('%H:%M') if item.scheduled_time else '' }}"></label>
                   <label>Price<input name="price" inputmode="decimal" value="{{ item.price or '' }}"></label>
-                  <label class="draft-edit-notes">Notes<input name="review_note" value="{{ item.review_note or '' }}"></label>
+                  <label class="draft-edit-notes">Important alert / staff note (optional)<input name="review_note" value="{{ item.review_note or '' }}" placeholder="Example: Call customer before dispatch"></label>
                   <label class="draft-original-message">Original team message<textarea readonly rows="3">{{ item.source_line or '' }}</textarea></label>
                   <div class="draft-edit-actions"><button type="submit">Save row</button><button class="button-secondary draft-cancel-button" type="button" data-edit-target="edit-row-{{ item.id }}">Cancel</button></div>
                 </form>

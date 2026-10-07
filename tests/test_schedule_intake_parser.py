@@ -1,6 +1,7 @@
 from datetime import time
 
 from app.booking.schedule_intake import parse_raw_schedule
+from app.main import REPEAT_LOCATION_WARNING, important_staff_note
 
 
 def test_parser_handles_common_team_message_typos_and_preserves_original_lines() -> None:
@@ -45,3 +46,14 @@ B12 536 check up ac"""
     assert items[3].raw_service_text == "Ac cleanint"
     assert items[4].raw_service_text == "Kuhain ac na binebenta"
     assert items[5].raw_service_text == "check up ac"
+
+
+def test_important_staff_note_removes_old_routine_reminders() -> None:
+    old_note = (
+        "Auto-assigned Team A · same-building rule · "
+        "Replace Client_B3_U244 with real name · Add time · "
+        f"{REPEAT_LOCATION_WARNING}"
+    )
+
+    assert important_staff_note(old_note) == ""
+    assert important_staff_note(f"Call first · {REPEAT_LOCATION_WARNING}") == "Call first"

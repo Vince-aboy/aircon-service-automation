@@ -6,6 +6,7 @@ from collections.abc import Generator
 from pathlib import Path
 from datetime import date, datetime, time, timedelta
 import os
+import re
 from typing import Any
 
 from fastapi import Depends, FastAPI, Form, HTTPException, Request, status
@@ -54,6 +55,23 @@ templates.env.globals["staff_operator_name"] = lambda: (
 )
 templates.env.globals["manila_now"] = lambda: datetime.now(MANILA_TIMEZONE)
 templates.env.globals["to_manila"] = lambda value: value.astimezone(MANILA_TIMEZONE)
+
+REPEAT_LOCATION_WARNING = "Possible repeat location; confirm separate job"
+
+
+def important_staff_note(value: str) -> str:
+    """Keep staff-entered alerts, while removing former routine system reminders."""
+    note = value.strip()
+    for pattern in (
+        r"Auto-assigned.*?same-building rule",
+        r"Replace\s+Client_.*?\s+with real name",
+        r"Add team",
+        r"Add customer name",
+        r"Add time",
+        re.escape(REPEAT_LOCATION_WARNING),
+    ):
+        note = re.sub(pattern, "", note, flags=re.IGNORECASE)
+    return re.sub(r"(?:\s*[·]\s*){2,}", " · ", note).strip(" ·")
 
 
 def automation_health(session: Session) -> dict[str, object]:
@@ -935,15 +953,8 @@ def create_schedule_intake(
         )
         provisional_customer = f"Client_B{item.building_number}_U{item.unit_number}{occurrence_suffix}"
         notes = []
-        if assigned_team:
-            notes.append(f"Auto-assigned {assigned_team.name} · same-building rule")
-        else:
-            notes.append("Add team")
-        notes.append(f"Replace {provisional_customer} with real name")
-        if item.scheduled_time is None:
-            notes.append("Add time")
         if location_counts[(item.building_number, item.unit_number)] > 1:
-            notes.append("Possible repeat location; confirm separate job")
+            notes.append(REPEAT_LOCATION_WARNING)
         session.add(
             ScheduleIntakeItem(
                 schedule_intake_id=intake.id,
@@ -957,7 +968,7 @@ def create_schedule_intake(
                 scheduled_time=item.scheduled_time,
                 price=item.price,
                 review_status=item.review_status,
-                review_note=" · ".join(notes),
+                review_note=" · ".join(notes) or None,
             )
         )
     intake.status = "ready" if parsed_items and all(item.review_status == "ready" for item in parsed_items) else "draft"
@@ -1060,18 +1071,24 @@ def update_schedule_intake_item(
             item.price = Decimal(price.strip())
         except Exception as error:
             raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_CONTENT, detail="Price must be a valid number.") from error
-    has_repeat_warning = "Possible repeat location" in review_note
+    matching_active_items = session.scalar(
+        select(func.count())
+        .select_from(ScheduleIntakeItem)
+        .where(
+            ScheduleIntakeItem.schedule_intake_id == intake_id,
+            ScheduleIntakeItem.id != item.id,
+            ScheduleIntakeItem.review_status != "skipped",
+            ScheduleIntakeItem.building_number == item.building_number,
+            ScheduleIntakeItem.unit_number == item.unit_number,
+        )
+    ) or 0
+    has_repeat_warning = matching_active_items > 0
     notes = []
-    if item.service_team_id is None:
-        notes.append("Add team")
-    if item.customer_is_provisional:
-        notes.append(f"Replace {item.customer_name} with real name")
-    elif not item.customer_name:
-        notes.append("Add customer name")
-    if item.scheduled_time is None:
-        notes.append("Add time")
+    staff_alert = important_staff_note(review_note)
+    if staff_alert:
+        notes.append(staff_alert)
     if has_repeat_warning:
-        notes.append("Possible repeat location; confirm separate job")
+        notes.append(REPEAT_LOCATION_WARNING)
     item.review_note = " · ".join(notes) or None
     item.review_status = "ready" if all((item.service_team_id, item.customer_name, item.building_number, item.unit_number, item.raw_service_text, item.scheduled_time)) and not item.customer_is_provisional and not has_repeat_warning else "needs_review"
     session.commit()
