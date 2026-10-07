@@ -14,7 +14,7 @@ from fastapi.responses import HTMLResponse, RedirectResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from pydantic import BaseModel, ValidationError
-from sqlalchemy import desc, func, or_, select
+from sqlalchemy import delete, desc, func, or_, select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
@@ -851,6 +851,14 @@ def create_schedule_intake(
     intake.status = "ready" if parsed_items and all(item.review_status == "ready" for item in parsed_items) else "draft"
     session.commit()
     return RedirectResponse(url=app_path(f"/staff/schedule-intake?intake_id={intake.id}"), status_code=status.HTTP_303_SEE_OTHER)
+
+
+@app.post("/staff/schedule-intake/clear", response_class=RedirectResponse)
+def clear_schedule_intakes(session: Session = Depends(get_session)) -> RedirectResponse:
+    """Delete all raw schedule intake test data, including its draft rows."""
+    session.execute(delete(ScheduleIntake))
+    session.commit()
+    return RedirectResponse(url=app_path("/staff/schedule-intake"), status_code=status.HTTP_303_SEE_OTHER)
 
 
 @app.post("/staff/schedule-intake/items/{item_id}", response_class=RedirectResponse)

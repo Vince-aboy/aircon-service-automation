@@ -8,7 +8,7 @@
       <p class="intro">Turn the team’s informal message into a reviewable draft before anything enters the official schedule.</p>
     </header>
     <section class="recent-intakes" aria-labelledby="recent-intakes-title">
-      <div>
+      <div class="recent-intakes-title">
         <p class="eyebrow">Saved work</p>
         <h2 id="recent-intakes-title">Recent schedule drafts</h2>
       </div>
@@ -21,6 +21,9 @@
             </a>
           {% endfor %}
         </div>
+        <form class="clear-intakes-form" method="post" action="{{ app_path('/staff/schedule-intake/clear') }}" data-confirm="Delete all saved schedule drafts and their rows? This cannot be undone.">
+          <button class="danger-button" type="submit">Delete all drafts</button>
+        </form>
       {% else %}
         <p class="muted">No saved schedule drafts yet.</p>
       {% endif %}
