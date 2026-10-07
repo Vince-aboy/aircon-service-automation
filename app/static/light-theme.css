@@ -139,6 +139,8 @@ a.directory-row:hover { background: #f7f7f2; border-color: #adb5a4; }
 .draft-status-ready { background: #e5efe7; border-color: #97b79e; color: #326044; }
 .draft-empty { color: var(--muted); text-align: center !important; }
 .draft-note-cell { color: var(--muted); font-size: .78rem; max-width: 18rem; }
+.draft-note-cell span { display: block; }
+.draft-note-alert { background: #f7e8e5; border: 1px solid #d0a39e; border-radius: 5px; color: #973e36; font-weight: 800; margin-top: .35rem; padding: .2rem .35rem; }
 .schedule-draft-note { color: var(--muted); font-size: .8rem; margin: .75rem 0 0; }
 .schedule-intake-page { padding: 1.35rem 1.5rem; }
 .schedule-intake-page .compact-staff-header { padding-bottom: .9rem; }

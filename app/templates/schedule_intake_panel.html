@@ -51,7 +51,13 @@
               <td>{{ item.scheduled_time.strftime('%I:%M %p') if item.scheduled_time else 'Missing' }}</td>
               <td>{{ item.price if item.price is not none else 'Missing' }}</td>
               <td><span class="draft-status {% if item.review_status == 'ready' %}draft-status-ready{% else %}draft-status-warning{% endif %}">{{ item.review_status.replace('_', ' ') }}</span></td>
-              <td class="draft-note-cell">{{ item.review_note or '—' }}</td>
+              <td class="draft-note-cell">
+                {% set repeat_warning = 'Possible repeat location; confirm separate job' %}
+                {% set regular_note = (item.review_note or '').replace(' · ' ~ repeat_warning, '') %}
+                {% if regular_note %}<span>{{ regular_note }}</span>{% endif %}
+                {% if repeat_warning in (item.review_note or '') %}<span class="draft-note-alert">{{ repeat_warning }}</span>{% endif %}
+                {% if not item.review_note %}—{% endif %}
+              </td>
             </tr>
           {% endfor %}
         </tbody>
