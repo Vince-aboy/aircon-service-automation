@@ -52,6 +52,11 @@ section + section, .staff-header, .dispatch-section, .detail-section,
 .upcoming-list time, .team-management-section { border-color: var(--line); }
 .admin-sidebar { background: #eeeee7; border-color: var(--line); }
 .admin-topbar { background: rgba(246,245,241,.97); border-color: var(--line); backdrop-filter: none; }
+.sidebar-toggle { align-items: center; background: #fff; border: 1px solid #a7ada0; border-radius: 7px; color: var(--ink); display: inline-flex; font-size: .76rem; font-weight: 800; gap: .35rem; margin: 0; padding: .4rem .55rem; }
+.sidebar-toggle:hover { background: #f0f1eb; }
+.admin-shell.sidebar-collapsed { grid-template-columns: 0 minmax(0, 1fr); }
+.admin-shell.sidebar-collapsed .admin-sidebar { border: 0; overflow: hidden; padding-left: 0; padding-right: 0; width: 0; }
+.admin-shell.sidebar-collapsed .admin-content { max-width: none; }
 .admin-brand-mark { background: var(--gold); color: var(--ink); box-shadow: none; }
 .admin-nav a, .admin-nav a span { color: #53594f; }
 .admin-nav a:hover { background: #e4e6dc; color: var(--ink); }
@@ -220,6 +225,10 @@ a.directory-row:hover { background: #f7f7f2; border-color: #adb5a4; }
 .timeline-assign-form select { flex: 1 1 15rem; }
 .timeline-assign-form button { margin: 0; white-space: nowrap; }
 @media (max-width: 700px) {
+  .sidebar-toggle { display: none; }
+  .admin-shell.sidebar-collapsed { display: block; }
+  .admin-shell.sidebar-collapsed .admin-sidebar { border-bottom: 1px solid var(--line); display: flex; padding: .8rem; width: auto; }
+  .admin-shell.sidebar-collapsed .admin-content { max-width: 1280px; }
   .reporting-health-strip { grid-template-columns: 1fr; }
   .schedule-intake-form { grid-template-columns: 1fr; }
   .schedule-intake-actions { align-items: stretch; }

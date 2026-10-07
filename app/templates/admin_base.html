@@ -9,8 +9,8 @@
   {% block head %}{% endblock %}
 </head>
 <body class="admin-body">
-  <div class="admin-shell">
-    <aside class="admin-sidebar">
+  <div class="admin-shell" id="admin-shell">
+    <aside class="admin-sidebar" id="admin-sidebar">
       <a class="admin-brand" href="{{ app_path('/staff') }}">
         <span class="admin-brand-mark">BL</span>
         <span><strong>Balik-Lamig</strong><small>Owner Operations</small></span>
@@ -31,7 +31,10 @@
     </aside>
     <div class="admin-workspace">
       <header class="admin-topbar">
-        <div>
+        <div class="admin-topbar-status">
+          <button class="sidebar-toggle" id="sidebar-toggle" type="button" aria-controls="admin-sidebar" aria-expanded="true" title="Hide navigation menu">
+            <span aria-hidden="true">☰</span><span class="sidebar-toggle-label">Hide menu</span>
+          </button>
           <span class="live-dot" aria-hidden="true"></span>
           <strong>{{ operation_mode_label() }}</strong>
         </div>
