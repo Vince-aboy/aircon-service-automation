@@ -139,7 +139,16 @@ a.directory-row:hover { background: #f7f7f2; border-color: #adb5a4; }
 .draft-status-ready { background: #e5efe7; border-color: #97b79e; color: #326044; }
 .draft-empty { color: var(--muted); text-align: center !important; }
 .schedule-draft-note { color: var(--muted); font-size: .8rem; margin: .75rem 0 0; }
-.schedule-intake-page .schedule-intake { margin-top: 1.25rem; }
+.schedule-intake-page { padding: 1.35rem 1.5rem; }
+.schedule-intake-page .compact-staff-header { padding-bottom: .9rem; }
+.schedule-intake-page .compact-staff-header h1 { font-size: clamp(1.7rem, 3vw, 2.2rem); }
+.schedule-intake-page .compact-staff-header .intro { font-size: .9rem; }
+.schedule-intake-page .schedule-intake { margin-top: .9rem; padding: .9rem; }
+.schedule-intake-page .schedule-intake-heading h2 { font-size: 1.05rem; }
+.schedule-intake-page .schedule-intake-heading .muted { font-size: .82rem; }
+.schedule-intake-page .schedule-intake-form { grid-template-columns: 12rem minmax(0, 1fr) auto; margin-top: .75rem; }
+.schedule-intake-page .schedule-message-field textarea { min-height: 7rem; }
+.schedule-intake-page .schedule-draft { margin-top: .8rem; padding-top: .8rem; }
 .intake-next-step { align-items: center; background: #f0f1eb; border: 1px solid var(--line); border-radius: 10px; display: flex; gap: .8rem; margin-top: 1rem; padding: .8rem 1rem; }
 .intake-step-number { align-items: center; background: #fff; border: 1px solid #c8cebf; border-radius: 7px; color: #596147; display: flex; font-size: .75rem; font-weight: 800; height: 2rem; justify-content: center; width: 2rem; }
 .intake-next-step strong { color: var(--ink); display: block; font-size: .85rem; }
