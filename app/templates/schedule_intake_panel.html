@@ -33,6 +33,7 @@
         {% if show_skipped %}<a href="{{ app_path('/staff/schedule-intake?intake_id=' ~ latest_intake.id) }}">Hide skipped</a>{% else %}<a href="{{ app_path('/staff/schedule-intake?intake_id=' ~ latest_intake.id ~ '&show_skipped=true') }}">Show skipped</a>{% endif %}
       </div>
     {% endif %}
+    <p class="mobile-table-hint">Swipe the table sideways to view every column.</p>
     <div class="draft-table-wrap">
       <table class="draft-table">
         <thead>
