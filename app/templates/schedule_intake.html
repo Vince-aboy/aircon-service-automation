@@ -36,6 +36,13 @@
         <p>The future backend step will save approved rows as customer requests and appointments.</p>
       </div>
       <a class="button-link button-secondary" href="{{ app_path('/staff/dispatch') }}">Open team schedule</a>
+      {% if latest_intake and latest_intake.status != 'confirmed' %}
+        <form method="post" action="{{ app_path('/staff/schedule-intake/' ~ latest_intake.id ~ '/approve') }}" data-confirm="Approve this intake and publish its active rows to Team Schedule?">
+          <button type="submit">Approve &amp; publish</button>
+        </form>
+      {% elif latest_intake %}
+        <span class="intake-badge intake-badge-success">Published to team schedule</span>
+      {% endif %}
     </div>
   </section>
 {% endblock %}

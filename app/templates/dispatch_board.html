@@ -36,6 +36,27 @@
     {% if job_updated %}
       <p class="staff-feedback">Job status updated to {{ job_updated }}. No customer message was created.</p>
     {% endif %}
+    {% if intake_published %}
+      <p class="staff-feedback">Intake approved and published to this team schedule as provisional jobs.</p>
+    {% endif %}
+
+    <section class="dispatch-section published-intake-section">
+      <h2>Published intake jobs</h2>
+      {% if published_intake_items %}
+        <div class="published-intake-list">
+          {% for item, team in published_intake_items %}
+            <article class="published-intake-card">
+              <strong>{{ item.scheduled_time.strftime('%I:%M %p') if item.scheduled_time else 'Time missing' }}</strong>
+              <span>{{ team.name if team else 'Unassigned team' }} · {{ item.raw_service_text or 'Service missing' }}</span>
+              <span>Building {{ item.building_number }}, Unit {{ item.unit_number }} · {{ item.customer_name or 'Client missing' }}</span>
+              <small>Provisional job · replace client label with real customer</small>
+            </article>
+          {% endfor %}
+        </div>
+      {% else %}
+        <p class="muted">No approved intake jobs for this date.</p>
+      {% endif %}
+    </section>
 
     <section class="dispatch-section approved-section">
       <h2>Approved requests waiting for a team</h2>

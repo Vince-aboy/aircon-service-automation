@@ -123,6 +123,7 @@ a.directory-row:hover { background: #f7f7f2; border-color: #adb5a4; }
 .schedule-intake-heading .muted { margin: 0; max-width: 48rem; }
 .intake-badge, .draft-status { background: #edf0e8; border: 1px solid #b3bea8; border-radius: 999px; color: #42533a; font-size: .72rem; font-weight: 800; padding: .35rem .6rem; white-space: nowrap; }
 .intake-badge-warning, .draft-status-warning { background: #fff2d9; border-color: #d1b079; color: #795216; }
+.intake-badge-success { background: #e5efe7; border-color: #97b79e; color: #326044; }
 .schedule-intake-form { display: grid; gap: .85rem; grid-template-columns: minmax(10rem, 16rem) minmax(0, 1fr) auto; margin-top: 1rem; }
 .schedule-intake-form label { align-content: start; }
 .schedule-message-field { min-width: 0; }
@@ -190,6 +191,13 @@ a.directory-row:hover { background: #f7f7f2; border-color: #adb5a4; }
 .intake-next-step strong { color: var(--ink); display: block; font-size: .85rem; }
 .intake-next-step p { color: var(--muted); font-size: .78rem; margin: .15rem 0 0; }
 .intake-next-step .button-link { margin: 0 0 0 auto; white-space: nowrap; }
+.intake-next-step form { margin: 0 0 0 auto; }
+.intake-next-step form button { margin: 0; white-space: nowrap; }
+.published-intake-list { display: grid; gap: .6rem; grid-template-columns: repeat(auto-fit, minmax(16rem, 1fr)); }
+.published-intake-card { background: #fff8e9; border: 1px solid #d1b079; border-radius: 8px; display: grid; gap: .2rem; padding: .7rem .8rem; }
+.published-intake-card strong { color: #795216; }
+.published-intake-card span { color: var(--ink); font-size: .82rem; }
+.published-intake-card small { color: #795216; font-size: .7rem; font-weight: 700; }
 @media (max-width: 700px) {
   .reporting-health-strip { grid-template-columns: 1fr; }
   .schedule-intake-form { grid-template-columns: 1fr; }

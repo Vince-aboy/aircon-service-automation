@@ -25,7 +25,7 @@
         <p class="eyebrow">Review before scheduling</p>
         <h3>Draft schedule</h3>
       </div>
-      <span class="intake-badge intake-badge-warning">Needs review</span>
+      {% if latest_intake and latest_intake.status == 'confirmed' %}<span class="intake-badge intake-badge-success">Published</span>{% else %}<span class="intake-badge intake-badge-warning">Needs review</span>{% endif %}
     </div>
     {% if skipped_count %}
       <div class="skipped-row-notice">

@@ -739,6 +739,7 @@ def dispatch_board(
     selected_date: date | None = None,
     scheduled: str | None = None,
     job_updated: str | None = None,
+    intake_published: str | None = None,
     demo: bool = False,
     session: Session = Depends(get_session),
 ) -> HTMLResponse:
@@ -749,6 +750,19 @@ def dispatch_board(
     # selected date. The original preferred date remains visible on the card
     # as customer context, while the appointment date is chosen here.
     assignable_requests = approved_requests
+    published_intake_items = list(
+        session.execute(
+            select(ScheduleIntakeItem, ServiceTeam)
+            .join(ScheduleIntake, ScheduleIntakeItem.schedule_intake_id == ScheduleIntake.id)
+            .outerjoin(ServiceTeam, ScheduleIntakeItem.service_team_id == ServiceTeam.id)
+            .where(
+                ScheduleIntake.schedule_date == board_date,
+                ScheduleIntake.status == "confirmed",
+                ScheduleIntakeItem.review_status == "confirmed",
+            )
+            .order_by(ScheduleIntakeItem.service_team_id, ScheduleIntakeItem.scheduled_time, ScheduleIntakeItem.id)
+        ).all()
+    )
     return templates.TemplateResponse(
         request,
         "dispatch_board.html",
@@ -756,6 +770,7 @@ def dispatch_board(
             "teams": active_service_teams(session),
             "approved_requests": approved_requests,
             "assignable_requests": assignable_requests,
+            "published_intake_items": published_intake_items,
             "appointments": dispatch_appointments(session, board_date),
             "selected_date": board_date,
             "previous_date": board_date - timedelta(days=1),
@@ -764,6 +779,7 @@ def dispatch_board(
             "slots": [(key, label) for key, (label, _, _) in DISPATCH_SLOTS.items()],
             "scheduled": scheduled,
             "job_updated": job_updated,
+            "intake_published": intake_published,
             "demo_preview": demo,
         },
     )
@@ -899,6 +915,32 @@ def clear_schedule_intakes(session: Session = Depends(get_session)) -> RedirectR
     session.execute(delete(ScheduleIntake))
     session.commit()
     return RedirectResponse(url=app_path("/staff/schedule-intake"), status_code=status.HTTP_303_SEE_OTHER)
+
+
+@app.post("/staff/schedule-intake/{intake_id}/approve", response_class=RedirectResponse)
+def approve_schedule_intake(intake_id: int, session: Session = Depends(get_session)) -> RedirectResponse:
+    """Publish reviewed intake rows to the team schedule as provisional jobs."""
+    intake = session.get(ScheduleIntake, intake_id)
+    if intake is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Schedule intake not found.")
+    active_items = list(
+        session.scalars(
+            select(ScheduleIntakeItem).where(
+                ScheduleIntakeItem.schedule_intake_id == intake.id,
+                ScheduleIntakeItem.review_status != "skipped",
+            )
+        )
+    )
+    if not active_items:
+        raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_CONTENT, detail="There are no active rows to approve.")
+    intake.status = "confirmed"
+    for item in active_items:
+        item.review_status = "confirmed"
+    session.commit()
+    return RedirectResponse(
+        url=app_path(f"/staff/dispatch?selected_date={intake.schedule_date}&intake_published=1"),
+        status_code=status.HTTP_303_SEE_OTHER,
+    )
 
 
 @app.post("/staff/schedule-intake/items/{item_id}", response_class=RedirectResponse)
