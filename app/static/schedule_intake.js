@@ -6,6 +6,13 @@
 
   if (!message || !clearButton || !draft) return;
 
+  document.querySelectorAll("[data-edit-target]").forEach((button) => {
+    button.addEventListener("click", () => {
+      const target = document.getElementById(button.dataset.editTarget);
+      if (target) target.hidden = !target.hidden;
+    });
+  });
+
   clearButton.addEventListener("click", () => {
     window.setTimeout(() => {
       message.value = "";

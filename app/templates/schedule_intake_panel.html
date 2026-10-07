@@ -39,6 +39,7 @@
             <th>Price</th>
             <th>Status</th>
             <th>Notes</th>
+            <th>Actions</th>
           </tr>
         </thead>
         <tbody id="draft-schedule-rows">
@@ -57,6 +58,28 @@
                 {% if regular_note %}<span>{{ regular_note }}</span>{% endif %}
                 {% if repeat_warning in (item.review_note or '') %}<span class="draft-note-alert">{{ repeat_warning }}</span>{% endif %}
                 {% if not item.review_note %}—{% endif %}
+              </td>
+              <td><button class="draft-edit-button" type="button" data-edit-target="edit-row-{{ item.id }}">Edit</button></td>
+            </tr>
+            <tr class="draft-edit-row" id="edit-row-{{ item.id }}" hidden>
+              <td colspan="9">
+                <form class="draft-edit-form" method="post" action="{{ app_path('/staff/schedule-intake/items/' ~ item.id) }}">
+                  <input type="hidden" name="intake_id" value="{{ latest_intake.id }}">
+                  <label>Team
+                    <select name="service_team_id">
+                      <option value="">Select team</option>
+                      {% for team in intake_teams %}<option value="{{ team.id }}"{% if item.service_team_id == team.id %} selected{% endif %}>{{ team.name }}</option>{% endfor %}
+                    </select>
+                  </label>
+                  <label>Building<input name="building_number" type="number" min="1" value="{{ item.building_number or '' }}"></label>
+                  <label>Unit<input name="unit_number" value="{{ item.unit_number or '' }}"></label>
+                  <label>Customer name<input name="customer_name" value="{{ item.customer_name or '' }}"></label>
+                  <label>Service<input name="raw_service_text" value="{{ item.raw_service_text or '' }}"></label>
+                  <label>Time<input name="scheduled_time" type="time" value="{{ item.scheduled_time.strftime('%H:%M') if item.scheduled_time else '' }}"></label>
+                  <label>Price<input name="price" inputmode="decimal" value="{{ item.price or '' }}"></label>
+                  <label class="draft-edit-notes">Notes<input name="review_note" value="{{ item.review_note or '' }}"></label>
+                  <div class="draft-edit-actions"><button type="submit">Save row</button><button class="button-secondary draft-cancel-button" type="button" data-edit-target="edit-row-{{ item.id }}">Cancel</button></div>
+                </form>
               </td>
             </tr>
           {% endfor %}

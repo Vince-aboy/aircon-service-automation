@@ -131,7 +131,7 @@ a.directory-row:hover { background: #f7f7f2; border-color: #adb5a4; }
 .schedule-intake-actions button { margin-top: 0; white-space: nowrap; }
 .schedule-draft { border-top: 1px solid #e2d3b4; margin-top: 1rem; padding-top: 1rem; }
 .draft-table-wrap { border: 1px solid var(--line); border-radius: 8px; margin-top: .75rem; overflow-x: auto; }
-.draft-table { border-collapse: collapse; min-width: 900px; width: 100%; }
+.draft-table { border-collapse: collapse; min-width: 1040px; width: 100%; }
 .draft-table th, .draft-table td { border-bottom: 1px solid var(--line); padding: .7rem .75rem; text-align: left; vertical-align: top; }
 .draft-table th { background: #f0f1eb; color: var(--muted); font-size: .7rem; letter-spacing: .04em; text-transform: uppercase; }
 .draft-table tr:last-child td { border-bottom: 0; }
@@ -141,6 +141,15 @@ a.directory-row:hover { background: #f7f7f2; border-color: #adb5a4; }
 .draft-note-cell { color: var(--muted); font-size: .78rem; max-width: 18rem; }
 .draft-note-cell span { display: block; }
 .draft-note-alert { background: #f7e8e5; border: 1px solid #d0a39e; border-radius: 5px; color: #973e36; font-weight: 800; margin-top: .35rem; padding: .2rem .35rem; }
+.draft-edit-button { background: transparent; border: 1px solid #a7ada0; color: var(--ink); font-size: .75rem; margin: 0; padding: .35rem .55rem; }
+.draft-edit-button:hover { background: #f7e7c4; }
+.draft-edit-row td { background: #f0f1eb; padding: .85rem; }
+.draft-edit-form { align-items: end; display: grid; gap: .6rem; grid-template-columns: repeat(4, minmax(8rem, 1fr)); }
+.draft-edit-form label { font-size: .75rem; }
+.draft-edit-form input, .draft-edit-form select { font-size: .8rem; padding: .45rem .55rem; }
+.draft-edit-notes { grid-column: span 2; }
+.draft-edit-actions { align-items: end; display: flex; gap: .45rem; }
+.draft-edit-actions button { margin: 0; padding: .52rem .7rem; white-space: nowrap; }
 .schedule-draft-note { color: var(--muted); font-size: .8rem; margin: .75rem 0 0; }
 .schedule-intake-page { padding: 1.35rem 1.5rem; }
 .schedule-intake-page .compact-staff-header { padding-bottom: .9rem; }
@@ -176,6 +185,8 @@ a.directory-row:hover { background: #f7f7f2; border-color: #adb5a4; }
   .intake-next-step .button-link { margin-left: 2.8rem; }
   .recent-intakes { align-items: stretch; flex-direction: column; }
   .recent-intake-list { justify-content: flex-start; }
+  .draft-edit-form { grid-template-columns: repeat(2, minmax(8rem, 1fr)); }
+  .draft-edit-notes { grid-column: span 2; }
 }
 
 /* Public service website. Preserve the real service artwork. */

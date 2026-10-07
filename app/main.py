@@ -795,6 +795,7 @@ def schedule_intake(request: Request, intake_id: int | None = None, session: Ses
             "latest_intake": intake,
             "intake_items": intake_items,
             "recent_intakes": recent_intakes,
+            "intake_teams": list(session.scalars(select(ServiceTeam).where(ServiceTeam.active.is_(True)).order_by(ServiceTeam.name))),
         },
     )
 
@@ -839,6 +840,47 @@ def create_schedule_intake(
     intake.status = "ready" if parsed_items and all(item.review_status == "ready" for item in parsed_items) else "draft"
     session.commit()
     return RedirectResponse(url=app_path(f"/staff/schedule-intake?intake_id={intake.id}"), status_code=status.HTTP_303_SEE_OTHER)
+
+
+@app.post("/staff/schedule-intake/items/{item_id}", response_class=RedirectResponse)
+def update_schedule_intake_item(
+    item_id: int,
+    intake_id: int = Form(),
+    service_team_id: int | None = Form(None),
+    building_number: int | None = Form(None),
+    unit_number: str = Form(""),
+    customer_name: str = Form(""),
+    raw_service_text: str = Form(""),
+    scheduled_time: time | None = Form(None),
+    price: str = Form(""),
+    review_note: str = Form(""),
+    session: Session = Depends(get_session),
+) -> RedirectResponse:
+    """Save edits to one draft row without creating operational records."""
+    item = session.get(ScheduleIntakeItem, item_id)
+    if item is None or item.schedule_intake_id != intake_id:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Schedule draft row not found.")
+    if building_number is not None and building_number <= 0:
+        raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_CONTENT, detail="Building number must be positive.")
+
+    item.service_team_id = service_team_id
+    item.building_number = building_number
+    item.unit_number = unit_number.strip() or None
+    item.customer_name = customer_name.strip() or None
+    item.raw_service_text = raw_service_text.strip() or None
+    item.scheduled_time = scheduled_time
+    item.price = None
+    if price.strip():
+        try:
+            from decimal import Decimal
+            item.price = Decimal(price.strip())
+        except Exception as error:
+            raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_CONTENT, detail="Price must be a valid number.") from error
+    item.review_note = review_note.strip() or None
+    has_repeat_warning = "Possible repeat location" in (item.review_note or "")
+    item.review_status = "ready" if all((item.service_team_id, item.customer_name, item.building_number, item.unit_number, item.raw_service_text, item.scheduled_time)) and not has_repeat_warning else "needs_review"
+    session.commit()
+    return RedirectResponse(url=app_path(f"/staff/schedule-intake?intake_id={intake_id}"), status_code=status.HTTP_303_SEE_OTHER)
 
 
 @app.post("/staff/dispatch/assign")
