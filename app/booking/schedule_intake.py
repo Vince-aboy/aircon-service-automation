@@ -22,6 +22,8 @@ class ParsedScheduleItem:
     source_line: str
     building_number: int
     unit_number: str
+    customer_name: str | None = None
+    customer_phone: str | None = None
     raw_service_text: str | None = None
     scheduled_time: time | None = None
     price: Decimal | None = None
@@ -120,6 +122,10 @@ def parse_raw_schedule(raw_message: str) -> list[ParsedScheduleItem]:
             # Phone numbers may appear between a customer's name and service.
             # Preserve them in the raw message, but never interpret them as a price.
             current.source_line += f"\n{line}"
+            if current.raw_service_text and current.customer_name is None:
+                current.customer_name = current.raw_service_text
+                current.raw_service_text = None
+            current.customer_phone = line.replace(" ", "")
         elif current and price is not None:
             current.price = Decimal(price)
             current.source_line += f"\n{line}"

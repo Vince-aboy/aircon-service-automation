@@ -977,8 +977,9 @@ def create_schedule_intake(
                 schedule_intake_id=intake.id,
                 source_line=item.source_line,
                 service_team_id=assigned_team.id if assigned_team else None,
-                customer_name=provisional_customer,
-                customer_is_provisional=True,
+                customer_name=item.customer_name or provisional_customer,
+                customer_phone=item.customer_phone,
+                customer_is_provisional=not bool(item.customer_name),
                 building_number=item.building_number,
                 unit_number=item.unit_number,
                 raw_service_text=item.raw_service_text,
@@ -1029,6 +1030,7 @@ def approve_schedule_intake(intake_id: int, session: Session = Depends(get_sessi
                 schedule_intake_item_id=item.id,
                 customer_id=item.customer_id,
                 customer_label=item.customer_name or "Client missing",
+                customer_phone=item.customer_phone,
                 customer_is_provisional=item.customer_is_provisional,
                 address_label=f"Building {item.building_number}, Unit {item.unit_number}",
                 service_type_id=item.service_type_id,
@@ -1064,6 +1066,7 @@ def update_schedule_intake_item(
     building_number: int | None = Form(None),
     unit_number: str = Form(""),
     customer_name: str = Form(""),
+    customer_phone: str = Form(""),
     raw_service_text: str = Form(""),
     scheduled_time: time | None = Form(None),
     price: str = Form(""),
@@ -1088,6 +1091,7 @@ def update_schedule_intake_item(
         item.customer_is_provisional and submitted_customer_name == item.customer_name
     )
     item.customer_name = submitted_customer_name or None
+    item.customer_phone = customer_phone.strip() or None
     item.raw_service_text = raw_service_text.strip() or None
     item.scheduled_time = scheduled_time
     item.price = None

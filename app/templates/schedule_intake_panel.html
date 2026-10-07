@@ -41,6 +41,7 @@
             <th>Team</th>
             <th>Location</th>
             <th>Customer name</th>
+            <th>Phone</th>
             <th>Service</th>
             <th>Time</th>
             <th>Price</th>
@@ -55,6 +56,7 @@
               <td data-label="Team" class="draft-inline-editable" data-edit-target="edit-row-{{ item.id }}" data-inline-field="service_team_id" title="Click to edit team">{% if item.service_team_id %}{{ intake_team_names.get(item.service_team_id, 'Team') }}{% else %}—{% endif %}</td>
               <td data-label="Location" class="draft-inline-editable" data-edit-target="edit-row-{{ item.id }}" data-inline-field="building_number" title="Click to edit location">Building {{ item.building_number }}, Unit {{ item.unit_number }}</td>
               <td data-label="Customer name" class="draft-inline-editable" data-edit-target="edit-row-{{ item.id }}" data-inline-field="customer_name" title="Click to edit customer">{% if item.customer_name %}<span class="{% if item.customer_is_provisional %}provisional-customer{% endif %}">{{ item.customer_name }}</span>{% else %}—{% endif %}</td>
+              <td data-label="Phone" class="draft-inline-editable" data-edit-target="edit-row-{{ item.id }}" data-inline-field="customer_phone" title="Click to edit phone">{{ item.customer_phone or '—' }}</td>
               <td data-label="Service" class="draft-inline-editable draft-service-cell" data-edit-target="edit-row-{{ item.id }}" data-inline-field="raw_service_text" title="Click to edit service">{{ item.raw_service_text or '—' }}</td>
               <td data-label="Time" class="draft-inline-editable" data-edit-target="edit-row-{{ item.id }}" data-inline-field="scheduled_time" title="Click to edit time">{{ item.scheduled_time.strftime('%I:%M %p') if item.scheduled_time else '—' }}</td>
               <td data-label="Price" class="draft-inline-editable" data-edit-target="edit-row-{{ item.id }}" data-inline-field="price" title="Click to edit price">{{ item.price if item.price is not none else '—' }}</td>
@@ -69,7 +71,7 @@
               <td data-label="Actions">{% if latest_intake.status == 'confirmed' %}<span class="muted">Published</span>{% else %}<button class="draft-edit-button" type="button" data-edit-target="edit-row-{{ item.id }}">Edit</button>{% endif %}</td>
             </tr>
             <tr class="draft-edit-row" id="edit-row-{{ item.id }}" hidden{% if latest_intake.status == 'confirmed' %} aria-hidden="true"{% endif %}>
-              <td colspan="9">
+              <td colspan="10">
                 <form class="draft-edit-form" method="post" action="{{ app_path('/staff/schedule-intake/items/' ~ item.id) }}">
                   <input type="hidden" name="intake_id" value="{{ latest_intake.id }}">
                   <label>Team
@@ -81,6 +83,7 @@
                   <label>Building<input name="building_number" type="number" min="1" value="{{ item.building_number or '' }}"></label>
                   <label>Unit<input name="unit_number" value="{{ item.unit_number or '' }}"></label>
                   <label>Customer name<input name="customer_name" value="{{ item.customer_name or '' }}"></label>
+                  <label>Phone<input name="customer_phone" type="tel" value="{{ item.customer_phone or '' }}"></label>
                   <label>Service<textarea name="raw_service_text" rows="4">{{ item.raw_service_text or '' }}</textarea></label>
                   <label>Time<input name="scheduled_time" type="time" value="{{ item.scheduled_time.strftime('%H:%M') if item.scheduled_time else '' }}"></label>
                   <label>Price<input name="price" inputmode="decimal" value="{{ item.price or '' }}"></label>

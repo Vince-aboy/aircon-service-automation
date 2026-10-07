@@ -343,8 +343,8 @@ def n8n_event_payload(session: Session, event: NotificationOutbox) -> dict[str, 
             "source": "team_intake",
             "client": {
                 "name": job.customer_label,
-                "phone": None,
-                "phone_masked": None,
+                "phone": job.customer_phone,
+                "phone_masked": job.customer_phone,
                 "email": None,
             },
             "service": {

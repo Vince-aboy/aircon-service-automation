@@ -20,7 +20,7 @@
         {% for job, team in appointments %}
           <a class="directory-row status-row-{{ job.status }}" href="{{ app_path('/staff/dispatch?selected_date=' ~ job.scheduled_date) }}">
             <span><strong>{{ job.scheduled_date or 'Date missing' }}</strong><small>{{ job.scheduled_time.strftime('%I:%M %p') if job.scheduled_time else 'Time missing' }}</small></span>
-            <span><strong>{{ job.customer_label }}</strong><small>{% if job.customer_is_provisional %}Provisional client{% else %}Verified client{% endif %}</small></span>
+            <span><strong>{{ job.customer_label }}</strong><small>{{ job.customer_phone or ('Provisional client' if job.customer_is_provisional else 'Verified client') }}</small></span>
             <span>{{ job.service_label }}<small>{{ job.address_label }}</small></span>
             <span><strong>{{ team.name if team else 'Team missing' }}</strong></span>
             <span><b class="status-badge status-{{ job.status }}">{{ job.status.replace('_',' ') }}</b></span>

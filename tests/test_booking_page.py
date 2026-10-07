@@ -391,7 +391,7 @@ def test_team_intake_publish_creates_shared_n8n_outbox_event() -> None:
             "/staff/schedule-intake",
             data={
                 "schedule_date": str(date.today() + timedelta(days=1)),
-                "raw_message": "B10 354\nDrainpan leak\n8:30 am",
+                "raw_message": "B10 354\nVincent Aboy\n09505581886\nDrainpan leak\n8:30 am",
             },
             follow_redirects=False,
         )
@@ -414,6 +414,7 @@ def test_team_intake_publish_creates_shared_n8n_outbox_event() -> None:
         assert payload["source"] == "team_intake"
         assert payload["booking_reference"] == f"INTAKE-{job.id}"
         assert payload["client"]["name"] == job.customer_label
+        assert payload["client"]["phone"] == "09505581886"
         assert payload["service"]["name"] == "Drainpan leak"
         assert payload["location"]["display"] == "Building 10, Unit 354"
     finally:

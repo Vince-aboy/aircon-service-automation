@@ -54,6 +54,8 @@ def test_parser_does_not_treat_phone_number_as_price() -> None:
     )
 
     assert len(items) == 1
+    assert items[0].customer_name == "Vincent Aboy"
+    assert items[0].customer_phone == "09505581886"
     assert items[0].price is None
     assert "09505581886" in items[0].source_line
     assert "Ac cleaning-Late Additional" in items[0].raw_service_text

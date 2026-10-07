@@ -219,6 +219,7 @@ class ScheduleIntakeItem(Base):
         ForeignKey("customers.id", ondelete="RESTRICT"), nullable=True
     )
     customer_name: Mapped[Optional[str]] = mapped_column(String(120), nullable=True)
+    customer_phone: Mapped[Optional[str]] = mapped_column(String(32), nullable=True)
     customer_is_provisional: Mapped[bool] = mapped_column(Boolean, nullable=False, server_default="false")
     service_type_id: Mapped[Optional[int]] = mapped_column(
         ForeignKey("service_types.id", ondelete="RESTRICT"), nullable=True
@@ -271,6 +272,7 @@ class OperationalJob(Base):
         ForeignKey("customers.id", ondelete="RESTRICT"), nullable=True
     )
     customer_label: Mapped[str] = mapped_column(String(120), nullable=False)
+    customer_phone: Mapped[Optional[str]] = mapped_column(String(32), nullable=True)
     customer_is_provisional: Mapped[bool] = mapped_column(Boolean, nullable=False, server_default="false")
     address_label: Mapped[str] = mapped_column(String(255), nullable=False)
     service_type_id: Mapped[Optional[int]] = mapped_column(
