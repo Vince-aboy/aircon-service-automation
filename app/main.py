@@ -770,7 +770,7 @@ def dispatch_board(
 
 
 @app.get("/staff/schedule-intake", response_class=HTMLResponse)
-def schedule_intake(request: Request, intake_id: int | None = None, session: Session = Depends(get_session)) -> HTMLResponse:
+def schedule_intake(request: Request, intake_id: int | None = None, show_skipped: bool = False, session: Session = Depends(get_session)) -> HTMLResponse:
     """Render the front-end-only raw schedule intake workspace."""
     intake = session.get(ScheduleIntake, intake_id) if intake_id else None
     recent_intakes = list(
@@ -779,21 +779,24 @@ def schedule_intake(request: Request, intake_id: int | None = None, session: Ses
         )
     )
     intake_items = []
+    all_intake_items = []
     if intake:
-        intake_items = list(
+        all_intake_items = list(
             session.scalars(
                 select(ScheduleIntakeItem)
                 .where(ScheduleIntakeItem.schedule_intake_id == intake.id)
                 .order_by(ScheduleIntakeItem.id)
             )
         )
-        intake_items.sort(
+        all_intake_items.sort(
             key=lambda item: (
                 item.building_number if item.building_number is not None else 10**9,
                 int(item.unit_number) if item.unit_number and item.unit_number.isdigit() else 10**9,
                 item.id,
             )
         )
+    skipped_count = sum(item.review_status == "skipped" for item in all_intake_items)
+    intake_items = all_intake_items if show_skipped else [item for item in all_intake_items if item.review_status != "skipped"]
     return templates.TemplateResponse(
         request,
         "schedule_intake.html",
@@ -807,6 +810,8 @@ def schedule_intake(request: Request, intake_id: int | None = None, session: Ses
                 team.id: team.name
                 for team in session.scalars(select(ServiceTeam).where(ServiceTeam.active.is_(True)))
             },
+            "show_skipped": show_skipped,
+            "skipped_count": skipped_count,
         },
     )
 

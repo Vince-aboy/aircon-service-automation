@@ -27,6 +27,12 @@
       </div>
       <span class="intake-badge intake-badge-warning">Needs review</span>
     </div>
+    {% if skipped_count %}
+      <div class="skipped-row-notice">
+        <span>{{ skipped_count }} skipped row{% if skipped_count != 1 %}s{% endif %} hidden from active review.</span>
+        {% if show_skipped %}<a href="{{ app_path('/staff/schedule-intake?intake_id=' ~ latest_intake.id) }}">Hide skipped</a>{% else %}<a href="{{ app_path('/staff/schedule-intake?intake_id=' ~ latest_intake.id ~ '&show_skipped=true') }}">Show skipped</a>{% endif %}
+      </div>
+    {% endif %}
     <div class="draft-table-wrap">
       <table class="draft-table">
         <thead>
