@@ -150,6 +150,8 @@ a.directory-row:hover { background: #f7f7f2; border-color: #adb5a4; }
 .draft-edit-notes { grid-column: span 2; }
 .draft-edit-actions { align-items: end; display: flex; gap: .45rem; }
 .draft-edit-actions button { margin: 0; padding: .52rem .7rem; white-space: nowrap; }
+.draft-skip-form { margin-top: .55rem; }
+.draft-skip-form button.text-action { font-size: .75rem; margin: 0; padding: .2rem 0; }
 .schedule-draft-note { color: var(--muted); font-size: .8rem; margin: .75rem 0 0; }
 .schedule-intake-page { padding: 1.35rem 1.5rem; }
 .schedule-intake-page .compact-staff-header { padding-bottom: .9rem; }

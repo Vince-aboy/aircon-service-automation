@@ -80,6 +80,10 @@
                   <label class="draft-edit-notes">Notes<input name="review_note" value="{{ item.review_note or '' }}"></label>
                   <div class="draft-edit-actions"><button type="submit">Save row</button><button class="button-secondary draft-cancel-button" type="button" data-edit-target="edit-row-{{ item.id }}">Cancel</button></div>
                 </form>
+                <form class="draft-skip-form" method="post" action="{{ app_path('/staff/schedule-intake/items/' ~ item.id ~ '/skip') }}" data-confirm="Skip this row? It will be preserved in the intake history but removed from active review.">
+                  <input type="hidden" name="intake_id" value="{{ latest_intake.id }}">
+                  <button class="text-action" type="submit">Skip duplicate / invalid row</button>
+                </form>
               </td>
             </tr>
           {% endfor %}

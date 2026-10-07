@@ -883,6 +883,22 @@ def update_schedule_intake_item(
     return RedirectResponse(url=app_path(f"/staff/schedule-intake?intake_id={intake_id}"), status_code=status.HTTP_303_SEE_OTHER)
 
 
+@app.post("/staff/schedule-intake/items/{item_id}/skip", response_class=RedirectResponse)
+def skip_schedule_intake_item(
+    item_id: int,
+    intake_id: int = Form(),
+    session: Session = Depends(get_session),
+) -> RedirectResponse:
+    """Mark one draft row skipped while preserving the raw intake history."""
+    item = session.get(ScheduleIntakeItem, item_id)
+    if item is None or item.schedule_intake_id != intake_id:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Schedule draft row not found.")
+    item.review_status = "skipped"
+    item.review_note = "Skipped by staff" if not item.review_note else f"Skipped by staff · {item.review_note}"
+    session.commit()
+    return RedirectResponse(url=app_path(f"/staff/schedule-intake?intake_id={intake_id}"), status_code=status.HTTP_303_SEE_OTHER)
+
+
 @app.post("/staff/dispatch/assign")
 def assign_dispatch_slot(
     booking_request_id: int = Form(),
