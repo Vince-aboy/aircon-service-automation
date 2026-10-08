@@ -87,9 +87,9 @@
                 <div class="team-timeline-jobs">
                   {% for job in team_jobs %}
                     {% if job.detail_url %}<a class="team-timeline-job" href="{{ job.detail_url }}">{% else %}<article class="team-timeline-job">{% endif %}
-                      <time>{{ job.time_label }}</time>
+                      <time{% if not job.time %} class="time-warning"{% endif %}>{{ job.time_label }}</time>
                       <div><strong>{{ job.service_label }}</strong><span>{{ job.address_label }}</span><span>{{ job.customer_label }}</span>{% if job.customer_phone %}<span>{{ job.customer_phone }}</span>{% endif %}</div>
-                      <small class="{% if job.is_provisional %}provisional-timeline-note{% endif %}">{{ job.source_label }} &middot; {{ job.status }}{% if job.is_provisional %} &middot; provisional client{% endif %}</small>
+                      {% if job.is_provisional %}<small class="provisional-timeline-note">Provisional client</small>{% endif %}
                     {% if job.detail_url %}</a>{% else %}</article>{% endif %}
                   {% endfor %}
                 </div>

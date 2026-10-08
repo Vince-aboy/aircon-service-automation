@@ -351,7 +351,7 @@ def team_timeline_jobs(session: Session, selected_date: date) -> dict[int, list[
         timeline.setdefault(team.id, []).append(
             {
                 "time": job.scheduled_time,
-                "time_label": job.scheduled_time.strftime("%I:%M %p") if job.scheduled_time else "Time missing",
+                "time_label": job.scheduled_time.strftime("%I:%M %p") if job.scheduled_time else "Time to confirm",
                 "service_label": job.service_label,
                 "customer_label": job.customer_label,
                 "customer_phone": job.customer_phone,
@@ -389,6 +389,7 @@ def team_timeline_jobs(session: Session, selected_date: date) -> dict[int, list[
                 "time_label": local_start.strftime("%I:%M %p"),
                 "service_label": service_type.name,
                 "customer_label": customer.full_name,
+                "customer_phone": customer.mobile,
                 "address_label": display_address(address),
                 "status": appointment.status.replace("_", " "),
                 "is_provisional": False,
