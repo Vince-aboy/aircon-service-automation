@@ -856,6 +856,11 @@ def dispatch_board(
     # selected date. The original preferred date remains visible on the card
     # as customer context, while the appointment date is chosen here.
     assignable_requests = approved_requests
+    timeline_jobs = team_timeline_jobs(session, board_date)
+    daily_job_count = sum(len(jobs) for jobs in timeline_jobs.values())
+    missing_time_count = sum(
+        job["time"] is None for jobs in timeline_jobs.values() for job in jobs
+    )
     return templates.TemplateResponse(
         request,
         "dispatch_board.html",
@@ -863,7 +868,9 @@ def dispatch_board(
             "teams": active_service_teams(session),
             "approved_requests": approved_requests,
             "assignable_requests": assignable_requests,
-            "timeline_jobs_by_team": team_timeline_jobs(session, board_date),
+            "timeline_jobs_by_team": timeline_jobs,
+            "daily_job_count": daily_job_count,
+            "missing_time_count": missing_time_count,
             "appointments": dispatch_appointments(session, board_date),
             "selected_date": board_date,
             "previous_date": board_date - timedelta(days=1),

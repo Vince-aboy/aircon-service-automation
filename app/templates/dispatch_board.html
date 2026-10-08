@@ -76,7 +76,10 @@
     </section>
 
     <section class="dispatch-section team-section">
-      <h2>Team schedule for {{ selected_date }}</h2>
+      <div class="team-schedule-heading">
+        <div><p class="eyebrow">Daily team schedule</p><h2>{{ selected_date.strftime('%B') }} {{ selected_date.day }}, {{ selected_date.year }}</h2></div>
+        <p><strong>{{ daily_job_count }}</strong> job{% if daily_job_count != 1 %}s{% endif %} &middot; <strong>{{ teams|length }}</strong> teams{% if missing_time_count %} &middot; <strong>{{ missing_time_count }}</strong> time{% if missing_time_count != 1 %}s{% endif %} to confirm{% endif %}</p>
+      </div>
       {% if teams %}
         <div class="team-timeline" aria-label="Team daily schedule">
           {% for team in teams %}
@@ -89,7 +92,6 @@
                     {% if job.detail_url %}<a class="team-timeline-job" href="{{ job.detail_url }}">{% else %}<article class="team-timeline-job">{% endif %}
                       <time{% if not job.time %} class="time-warning"{% endif %}>{{ job.time_label }}</time>
                       <div><strong>{{ job.service_label }}</strong><span>{{ job.address_label }}</span><span>{{ job.customer_label }}</span>{% if job.customer_phone %}<span>{{ job.customer_phone }}</span>{% endif %}</div>
-                      {% if job.is_provisional %}<small class="provisional-timeline-note">Provisional client</small>{% endif %}
                     {% if job.detail_url %}</a>{% else %}</article>{% endif %}
                   {% endfor %}
                 </div>
