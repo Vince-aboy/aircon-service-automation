@@ -214,13 +214,13 @@ a.directory-row:hover { background: #f7f7f2; border-color: #adb5a4; }
 .team-timeline-lane h3 { font-size: 1rem; margin: 0; }
 .team-timeline-lane > header span { color: var(--muted); font-size: .76rem; font-weight: 800; }
 .team-timeline-jobs { display: grid; gap: .45rem; }
-.team-timeline-job { align-items: start; background: #fff; border: 1px solid #d9dcd3; border-left: 4px solid #c18b29; border-radius: 7px; color: var(--ink); display: grid; gap: .7rem; grid-template-columns: 5.8rem minmax(0, 1fr) minmax(11rem, .8fr); padding: .65rem .7rem; text-decoration: none; }
+.team-timeline-job { align-items: start; background: #fff; border: 1px solid #d9dcd3; border-left: 4px solid #c18b29; border-radius: 7px; color: var(--ink); display: grid; gap: .15rem .7rem; grid-template-columns: 6rem minmax(0, 1fr); padding: .65rem .7rem; text-decoration: none; }
 .team-timeline-job:hover { background: #fff8e9; border-color: #c6a76a; }
 .team-timeline-job time { color: #795216; font-size: .85rem; font-weight: 800; }
 .team-timeline-job strong, .team-timeline-job span { display: block; }
 .team-timeline-job strong { font-size: .87rem; }
 .team-timeline-job span { color: var(--muted); font-size: .76rem; margin-top: .12rem; }
-.team-timeline-job small { color: #596147; font-size: .7rem; font-weight: 700; }
+.team-timeline-job small { background: #f4eddd; border: 1px solid #dec58f; border-radius: 999px; color: #795216; display: inline-block; font-size: .68rem; font-weight: 700; grid-column: 2; justify-self: start; padding: .18rem .45rem; }
 .team-timeline-job small.provisional-timeline-note { color: #795216; }
 .timeline-assign-form { align-items: end; display: flex; flex-wrap: wrap; gap: .45rem; margin-top: .65rem; }
 .timeline-assign-form select { flex: 1 1 15rem; }
@@ -262,6 +262,7 @@ a.directory-row:hover { background: #f7f7f2; border-color: #adb5a4; }
   .recent-intake-list { justify-content: flex-start; }
   .clear-intakes-form { margin-left: 0; }
   .team-timeline-job { grid-template-columns: 1fr; gap: .25rem; }
+  .team-timeline-job small { grid-column: 1; }
 }
 
 /* Public service website. Preserve the real service artwork. */

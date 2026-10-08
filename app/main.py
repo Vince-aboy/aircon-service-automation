@@ -354,6 +354,7 @@ def team_timeline_jobs(session: Session, selected_date: date) -> dict[int, list[
                 "time_label": job.scheduled_time.strftime("%I:%M %p") if job.scheduled_time else "Time missing",
                 "service_label": job.service_label,
                 "customer_label": job.customer_label,
+                "customer_phone": job.customer_phone,
                 "address_label": job.address_label,
                 "status": job.status.replace("_", " "),
                 "is_provisional": job.customer_is_provisional,
