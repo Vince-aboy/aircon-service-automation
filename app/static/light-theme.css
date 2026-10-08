@@ -213,6 +213,10 @@ a.directory-row:hover { background: #f7f7f2; border-color: #adb5a4; }
 .team-schedule-heading h2 { margin: 0; }
 .team-schedule-heading > p { color: var(--muted); font-size: .78rem; margin: 0; }
 .team-schedule-heading > p strong { color: var(--ink); }
+.team-schedule-actions { align-items: end; display: flex; gap: .75rem; }
+.team-schedule-actions p { color: var(--muted); font-size: .78rem; margin: 0; }
+.team-schedule-actions p strong { color: var(--ink); }
+.print-schedule-button { margin: 0; white-space: nowrap; }
 .team-timeline { align-items: start; display: grid; gap: .9rem; grid-template-columns: repeat(2, minmax(0, 1fr)); }
 .team-timeline > .team-timeline-lane { background: #f0f1eb; border: 1px solid var(--line); border-radius: 10px; margin: 0; padding: .7rem; }
 .team-timeline-lane > header { align-items: center; display: flex; justify-content: space-between; margin-bottom: .6rem; }
@@ -271,8 +275,48 @@ a.directory-row:hover { background: #f7f7f2; border-color: #adb5a4; }
   .recent-intake-list { justify-content: flex-start; }
   .clear-intakes-form { margin-left: 0; }
   .team-schedule-heading { align-items: flex-start; flex-direction: column; gap: .35rem; }
+  .team-schedule-actions { align-items: flex-start; flex-direction: column; gap: .5rem; }
   .team-timeline-job { grid-template-columns: 1fr; gap: .25rem; }
   .team-timeline-job small { grid-column: 1; }
+}
+
+@media print {
+  @page { size: landscape; margin: 0.45in; }
+
+  html, body { background: #fff !important; color: #222620 !important; }
+  body { font-size: 10pt; }
+  .admin-sidebar,
+  .admin-topbar,
+  .dispatch-header-controls,
+  .dispatch-layout > nav.day-navigation,
+  .staff-feedback,
+  .published-intake-section,
+  .approved-section,
+  .dispatch-board,
+  .timeline-assign-form,
+  .print-schedule-button,
+  .job-modal { display: none !important; }
+  .admin-shell,
+  .admin-workspace,
+  .admin-content,
+  .dispatch-layout { display: block !important; margin: 0 !important; max-width: none !important; padding: 0 !important; width: auto !important; }
+  .dispatch-layout > .staff-header { display: none !important; }
+  .team-section { border: 0 !important; margin: 0 !important; padding: 0 !important; }
+  .team-schedule-heading { align-items: end; border-bottom: 1px solid #c8cebf; display: flex; justify-content: space-between; margin-bottom: .35in; padding-bottom: .12in; }
+  .team-schedule-heading .eyebrow { color: #596147; font-size: 9pt; }
+  .team-schedule-heading h2 { font-size: 18pt; }
+  .team-schedule-actions { display: block; }
+  .team-schedule-actions p { font-size: 9pt; }
+  .team-timeline { align-items: start; display: grid !important; gap: .22in; grid-template-columns: repeat(2, minmax(0, 1fr)) !important; }
+  .team-timeline > .team-timeline-lane { background: #f0f1eb !important; border: 1px solid #c8cebf !important; break-inside: avoid; padding: .12in; }
+  .team-timeline-lane > header { margin-bottom: .1in; }
+  .team-timeline-lane h3 { font-size: 13pt; }
+  .team-timeline-job { background: #fff !important; border-color: #d9dcd3 !important; border-left: 3px solid #c18b29 !important; break-inside: avoid; color: #222620 !important; grid-template-columns: 1.05in minmax(0, 1fr); padding: .1in; }
+  .team-timeline-job time { font-size: 9pt; }
+  .team-timeline-job time.time-warning { font-size: 8pt; }
+  .team-timeline-job strong { font-size: 10pt; }
+  .team-timeline-job span { font-size: 8.5pt; }
+  a { color: inherit !important; text-decoration: none !important; }
 }
 
 /* Public service website. Preserve the real service artwork. */

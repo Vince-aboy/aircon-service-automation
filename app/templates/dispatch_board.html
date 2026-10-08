@@ -78,7 +78,10 @@
     <section class="dispatch-section team-section">
       <div class="team-schedule-heading">
         <div><p class="eyebrow">Daily team schedule</p><h2>{{ selected_date.strftime('%B') }} {{ selected_date.day }}, {{ selected_date.year }}</h2></div>
-        <p><strong>{{ daily_job_count }}</strong> job{% if daily_job_count != 1 %}s{% endif %} &middot; <strong>{{ teams|length }}</strong> teams{% if missing_time_count %} &middot; <strong>{{ missing_time_count }}</strong> time{% if missing_time_count != 1 %}s{% endif %} to confirm{% endif %}</p>
+        <div class="team-schedule-actions">
+          <p><strong>{{ daily_job_count }}</strong> job{% if daily_job_count != 1 %}s{% endif %} &middot; <strong>{{ teams|length }}</strong> teams{% if missing_time_count %} &middot; <strong>{{ missing_time_count }}</strong> time{% if missing_time_count != 1 %}s{% endif %} to confirm{% endif %}</p>
+          <button class="button-secondary print-schedule-button" type="button" onclick="window.print()">Print schedule</button>
+        </div>
       </div>
       {% if teams %}
         <div class="team-timeline" aria-label="Team daily schedule">
